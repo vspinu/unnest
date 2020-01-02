@@ -1,4 +1,10 @@
+
+#ifndef UNNEST_H
+#define UNNEST_H
+
 #include "Rinternals.h"
+
+SEXP rep_vector(SEXP x, R_xlen_t N);
 
 /* #define USE_SPP */
 
@@ -21,3 +27,6 @@
 /* template<typename T1, typename T2> */
 /* using hashmap = std::unordered_map<T1, T2>; */
 /* #endif */
+
+
+#endif // UNNEST_H
