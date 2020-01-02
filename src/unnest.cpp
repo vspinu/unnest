@@ -21,13 +21,11 @@ struct hash_pair {
 typedef unordered_map<pair<uint_fast32_t, const char*>, uint_fast32_t, hash_pair> pair2ix_map;
 typedef unordered_map<uint_fast32_t, pair<uint_fast32_t, const char*>> ix2pair_map;
 
-/// Unnester
-
 struct Node {
-  uint_fast32_t iname;
+  uint_fast32_t ix;
   SEXP obj;
 
-  Node(uint_fast32_t iname, SEXP obj): iname(iname), obj(obj) {};
+  Node(uint_fast32_t ix, SEXP obj): ix(ix), obj(obj) {};
 };
 
 class Unnester {
@@ -35,66 +33,74 @@ class Unnester {
  private:
 
   string delimiter = ".";
-
   pair2ix_map p2i;
   ix2pair_map i2p;
 
-  // conventions:
-  //  iname: index name
-  //  pname: pair name, <iname, char* name>
-  uint_fast32_t next_iname = 1;
+  vector<string> num_cache;
 
-  void add_nodes(deque<Node>& els, SEXP x, uint_fast32_t parent_iname) {
+  uint_fast32_t next_ix = 1;
 
-	SEXP names = Rf_getAttrib(x, R_NamesSymbol);
-	if (names == R_NilValue)
-	  Rf_error("Unnesting unnamed list elements is not yet implemented");
+  void add_nodes(deque<Node>& els, SEXP x, uint_fast32_t parent_ix) {
 
 	R_xlen_t N = XLENGTH(x);
 
+	SEXP names = Rf_getAttrib(x, R_NamesSymbol);
+	bool has_names = names != R_NilValue;
+	if (!has_names) {
+	  if (num_cache.size() < N) {
+		num_cache.reserve(N);
+		for (R_xlen_t i = num_cache.size(); i < N; i++) {
+		  num_cache.push_back(to_string(i+1));
+		}
+	  }
+	}
+
 	for (R_xlen_t i = 0; i < N; i++) {
 
-	  const char* cname = CHAR(STRING_ELT(names, i));
-	  auto pname = make_pair(parent_iname, cname);
-	  uint_fast32_t iname;
+	  const char* cname =
+		has_names ? CHAR(STRING_ELT(names, i)) : num_cache[i].c_str();
+
+	  //  pname: aka pair name, <parent ix, char* this name>
+	  auto pname = make_pair(parent_ix, cname);
+	  uint_fast32_t ix;
 
 	  pair2ix_map::iterator pnameit = p2i.find(pname);
 	  if (pnameit == p2i.end()) {
-		iname = next_iname++;
-		p2i.insert(make_pair(pname, iname));
-		i2p.insert(make_pair(iname, pname));
+		ix = next_ix++;
+		p2i.insert(make_pair(pname, ix));
+		i2p.insert(make_pair(ix, pname));
 	  } else {
-		iname = pnameit->second;
+		ix = pnameit->second;
 	  }
 
 	  SEXP el = VECTOR_ELT(x, i);
 
 	  if (XLENGTH(el) > 0)  {
 		if (TYPEOF(el) == VECSXP) {
-		  add_nodes(els, el, iname);
+		  add_nodes(els, el, ix);
 		} else {
-		  els.push_front(Node(iname, el));
+		  els.push_front(Node(ix, el));
 		}
 	  }
 	}
 
   }
 
-  string full_name(uint_fast32_t iname) {
+  string full_name(uint_fast32_t ix) {
 
-	if (iname == 0)
+	if (ix == 0)
 	  return "";
 
 	forward_list<const char*> acc;
 	ix2pair_map::iterator pit;
 
 	do {
-	  pit = i2p.find(iname);
+	  pit = i2p.find(ix);
 	  if (pit == i2p.end())
 		Rf_error("[Bug] Iname not in the hashmap, please report");
-	  iname = pit->second.first;
+	  ix = pit->second.first;
 	  acc.push_front(pit->second.second);
-	} while (iname != 0);
+	} while (ix != 0);
 
 	string out = acc.front();
 	acc.pop_front();
@@ -117,27 +123,30 @@ class Unnester {
 	SEXP out = PROTECT(Rf_allocVector(VECSXP, nodes.size()));
 	SEXP names = PROTECT(Rf_allocVector(STRSXP, nodes.size()));
 
-	R_xlen_t i = 0, max_len = 1, protects = 3;
+	R_xlen_t
+	  i = nodes.size() - 1,
+	  max_len = 1,
+	  protects = 3;
 
-	for (auto& node: nodes) {
+	for (Node& node: nodes) {
 	  // Cross-product.
 	  // All are non-empty vectors.
 	  max_len = XLENGTH(node.obj) * max_len;
 	}
 
-	for (auto& node : nodes) {
-	  string name = full_name(node.iname);
+	for (Node& node : nodes) {
+	  string name = full_name(node.ix);
 	  R_xlen_t this_len = XLENGTH(node.obj);
 	  SEXP obj;
 	  if (this_len == max_len) {
 		obj = node.obj;
 	  } else {
-		obj = PROTECT(rep(node.obj, max_len));
+		obj = PROTECT(rep_vector(node.obj, max_len));
 		protects++;
 	  }
 	  SET_VECTOR_ELT(out, i, obj);
 	  SET_STRING_ELT(names, i, Rf_mkCharLenCE(name.c_str(), name.size(), CE_UTF8));
-	  i++;
+	  i--;
 	}
 
 	// build data.frame
