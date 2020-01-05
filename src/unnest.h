@@ -4,7 +4,20 @@
 
 #include "Rinternals.h"
 
+#define DEBUG
+
+#ifdef DEBUG
+#define P(...) printf(__VA_ARGS__)
+#else
+#define P(...)
+#endif
+
+
 SEXP rep_vector(SEXP x, R_xlen_t N);
+
+SEXP make_na_vector(SEXPTYPE type, R_xlen_t len);
+
+void fill_vector(SEXP source, SEXP target, R_xlen_t from, R_xlen_t to);
 
 /* #define USE_SPP */
 
