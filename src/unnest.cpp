@@ -1,11 +1,16 @@
 #include <vector>
 #include <string>
 #include <deque>
+#include <tuple>
+#include <memory>
+#include <algorithm>
 #include <utility>
 #include <forward_list>
 #include <unordered_map>
 #include <unordered_set>
 #include "unnest.h"
+
+#undef nrows
 
 using namespace std;
 
@@ -22,12 +27,97 @@ struct hash_pair {
 typedef unordered_map<pair<uint_fast32_t, const char*>, uint_fast32_t, hash_pair> pair2ix_map;
 typedef unordered_map<uint_fast32_t, pair<uint_fast32_t, const char*>> ix2pair_map;
 
-struct Node {
+class Node {
+ public:
   uint_fast32_t ix;
-  SEXP obj;
+  virtual R_xlen_t size() const = 0;
+  virtual SEXPTYPE type() const = 0;
+  virtual void copy_into(SEXP target, R_xlen_t start, R_xlen_t end) const = 0;
+  virtual ~Node() {};
 
-  Node(uint_fast32_t ix, SEXP obj): ix(ix), obj(obj) {};
+ protected:
+  Node (uint_fast32_t ix): ix(ix) {};
 };
+
+class SexpNode: public Node {
+ public:
+  SEXP obj;
+  SexpNode(uint_fast32_t ix, SEXP obj): Node(ix), obj(obj) {};
+  R_xlen_t size() const override {
+    return XLENGTH(obj);
+  }
+  SEXPTYPE type() const override {
+    return TYPEOF(obj);
+  }
+  void copy_into(SEXP target, R_xlen_t start, R_xlen_t end) const override {
+    P("sexp copy: type:%s, start:%ld, end:%ld\n",
+      Rf_type2char(TYPEOF(target)), start, end);
+    fill_vector(obj, target, start, end);
+  }
+};
+
+class RangeNode: public Node {
+
+  R_xlen_t _size = 0;
+  SEXPTYPE _type = NILSXP;
+  vector<tuple<R_xlen_t, R_xlen_t, unique_ptr<Node>>> range_pnodes;
+
+ public:
+
+  RangeNode(uint_fast32_t ix): Node(ix) {};
+  RangeNode(uint_fast32_t ix, R_xlen_t size): Node(ix), _size(size) {};
+
+  void push(R_xlen_t start, R_xlen_t end, unique_ptr<Node> pnode) {
+    if (range_pnodes.size() == 0) {
+      _type = pnode->type();
+    } else {
+      if (_type != pnode->type()) {
+        _type = VECSXP;
+      }
+    }
+    range_pnodes.emplace_back(start, end, move(pnode));
+  }
+
+  R_xlen_t size() const override {
+    return _size;
+  }
+
+  void set_size(R_xlen_t size) {
+    _size = size;
+  }
+
+  SEXPTYPE type() const override {
+    return _type;
+  }
+
+  void copy_into(SEXP target, R_xlen_t start, R_xlen_t end) const override {
+    P("range copy: type:%s, start:%ld, end:%ld\n",
+      Rf_type2char(TYPEOF(target)), start, end);
+    R_xlen_t N = range_pnodes.size();
+    vector<R_xlen_t> sizes;
+    sizes.reserve(N);
+    for (size_t i = 0; i < N; i++) {
+      sizes[i] = (get<2>(range_pnodes[i]))->size();
+    }
+	for (R_xlen_t i = start, n = 0; n < N && i < end; n++) {
+      const auto& t = range_pnodes[n];
+      const unique_ptr<Node>& p = get<2>(t);
+      R_xlen_t nexti = i + get<1>(t) - get<0>(t);
+      p->copy_into(target, i, nexti);
+      i = nexti;
+      if (++n == N)
+        n = 0;
+    }
+  }
+};
+
+
+
+struct NodeAccumulator {
+  R_xlen_t nrows = 1;
+  deque<unique_ptr<Node>> pnodes;
+};
+
 
 class Unnester {
 
@@ -39,28 +129,6 @@ class Unnester {
   vector<string> num_cache;
   string delimiter = ".";
   uint_fast32_t next_ix = 1;
-
-  R_xlen_t max_len(const deque<Node>& nodes) {
-    R_xlen_t max_len = 1;
-    for (const Node& node: nodes) {
-      if (Rf_isFrame(node.obj)) {
-        max_len *= nrows(CAR(node.obj)); // from nrows
-      } else {
-        max_len *= XLENGTH(node.obj);
-      }
-    }
-    return max_len;
-  }
-
-  R_xlen_t max_len(const deque<Node>& nodes, unordered_set<uint_fast32_t> multitypes) {
-    R_xlen_t max_len = 1;
-    for (const Node& node: nodes) {
-      if (multitypes.find(node.ix) == multitypes.end()) {
-        max_len = XLENGTH(node.obj) * max_len;
-      }
-    }
-    return max_len;
-  }
 
   void populate_num_cache(R_xlen_t N) {
     if (num_cache.size() < N) {
@@ -84,125 +152,7 @@ class Unnester {
     } else {
       ix = pnameit->second;
     }
-
     return ix;
-  }
-
-  inline void add_node(deque<Node>& acc, SEXP x, uint_fast32_t ix) {
-    R_xlen_t N = XLENGTH(x);
-    bool stack = Rf_getAttrib(x, R_NamesSymbol) == R_NilValue;
-
-    if (N > 0)  {
-      if (TYPEOF(x) == VECSXP) {
-        if (stack) {
-          add_stacked_nodes(acc, x, ix);
-        } else {
-          add_nodes(acc, x, ix);
-        }
-      } else {
-        acc.push_front(Node(ix, x));
-      }
-    }
-  }
-
-  void add_nodes(deque<Node>& acc, SEXP x, uint_fast32_t parent_ix) {
-
-	R_xlen_t N = XLENGTH(x);
-
-	SEXP names = Rf_getAttrib(x, R_NamesSymbol);
-	bool has_names = names != R_NilValue;
-	if (!has_names) {
-      populate_num_cache(N);
-	}
-
-	for (R_xlen_t i = 0; i < N; i++) {
-
-      P("N: i:%ld type:%s\n", i, Rf_type2char(TYPEOF(x)));
-
-      const char* cname =
-		has_names ? CHAR(STRING_ELT(names, i)) : num_cache[i].c_str();
-
-	  add_node(acc,
-               VECTOR_ELT(x, i),
-               child_ix(parent_ix, cname));
-	}
-  }
-
-  void add_stacked_nodes(deque<Node>& acc, SEXP x, uint_fast32_t parent_ix) {
-    R_xlen_t N = XLENGTH(x);
-
-    unordered_map<uint_fast32_t, SEXPTYPE> i2type;
-    unordered_set<uint_fast32_t> multitypes;
-    vector<deque<Node>> nodes_vec(N);
-
-    for (R_xlen_t i = 0; i < N; i++) {
-      P("S: i:%ld type:%s\n", i, Rf_type2char(TYPEOF(x)));
-
-      add_node(nodes_vec[i],
-               VECTOR_ELT(x, i),
-               parent_ix);
-
-      for (Node& node: nodes_vec[i]) {
-        SEXPTYPE node_type = TYPEOF(node.obj);
-        auto typeit = i2type.find(node.ix);
-        if (typeit == i2type.end()) {
-          i2type.insert(make_pair(node.ix, node_type));
-        } else {
-          if ((typeit->second == VECSXP) &&
-              (typeit->second != node_type)) {
-            P("mtype: %s!=%s\n", Rf_type2char(typeit->second), Rf_type2char(node_type));
-            multitypes.insert(node.ix);
-            typeit->second = VECSXP;
-          }
-        }
-      }
-    }
-
-    R_xlen_t len = 0;
-    vector<R_xlen_t> lens(N);
-    for (R_xlen_t i = 0; i < N; i++) {
-      lens[i] = max_len(nodes_vec[i], multitypes);
-      len += lens[i];
-    }
-
-    P("len:%ld\n", len);
-
-    // initialize out-nodes
-    unordered_map<uint_fast32_t, Node> out_nodes;
-
-    SEXP out = PROTECT(Rf_allocVector(VECSXP, i2type.size()));
-    // FIXME: Invalid data.frame. Differentiate between our and user data.frames.
-    Rf_setAttrib(out, R_ClassSymbol, ScalarString(mkChar("data.frame")));
-
-    R_xlen_t i = 0;
-    for (auto& pair: i2type) {
-      SEXP vec = make_na_vector(pair.second, len);
-      SET_VECTOR_ELT(out, i, vec);
-      out_nodes.insert(make_pair(pair.first, Node(pair.first, vec)));
-    }
-
-    // fill out nodes
-    R_xlen_t from = 0;
-    for (R_xlen_t i = 0; i < N; i++) {
-      P("i:%ld\n", i);
-      R_len_t to = from + lens[i];
-      for (Node& node: nodes_vec[i]) {
-        Node target = out_nodes.find(node.ix)->second;
-        if (multitypes.find(node.ix) == multitypes.end()) {
-          fill_vector(node.obj, target.obj, from, to);
-          Rf_PrintValue(target.obj);
-        } else {
-          for (R_xlen_t j = from; j < from + lens[i]; j++) {
-            SET_VECTOR_ELT(target.obj, j, lazy_duplicate(node.obj));
-          }
-        }
-      }
-      from = to;
-    }
-
-    UNPROTECT(1);
-    acc.push_front(Node(parent_ix, out));
-
   }
 
   string full_name(uint_fast32_t ix) {
@@ -231,55 +181,121 @@ class Unnester {
 	return out;
   }
 
+  inline void add_node(NodeAccumulator& acc, SEXP x, uint_fast32_t ix) {
+    R_xlen_t N = XLENGTH(x);
+    bool stack = Rf_getAttrib(x, R_NamesSymbol) == R_NilValue;
+
+    if (N > 0) {
+      if (TYPEOF(x) == VECSXP) {
+        if (stack) {
+          add_stacked_nodes(acc, x, ix);
+        } else {
+          add_nodes(acc, x, ix);
+        }
+        P("added vec node:%s\n", full_name(ix).c_str());
+      } else {
+        acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
+        acc.nrows *= N;
+        P("added sexp node:%s\n", full_name(ix).c_str());
+      }
+    }
+
+    P("added node acc size:%ld  nrow:%ld\n", acc.pnodes.size(), acc.nrows);
+
+  }
+
+  void add_nodes(NodeAccumulator& acc, SEXP& x, uint_fast32_t parent_ix) {
+
+	R_xlen_t N = XLENGTH(x);
+
+	SEXP names = Rf_getAttrib(x, R_NamesSymbol);
+	bool has_names = names != R_NilValue;
+	if (!has_names) {
+      populate_num_cache(N);
+	}
+
+	for (R_xlen_t i = 0; i < N; i++) {
+
+      const char* cname =
+		has_names ? CHAR(STRING_ELT(names, i)) : num_cache[i].c_str();
+
+	  add_node(acc,
+               VECTOR_ELT(x, i),
+               child_ix(parent_ix, cname));
+	}
+
+    P("added nodes acc size:%ld  nrow:%ld\n", acc.pnodes.size(), acc.nrows);
+
+  }
+
+  void add_stacked_nodes(NodeAccumulator& acc, SEXP x, uint_fast32_t parent_ix) {
+    R_xlen_t N = XLENGTH(x);
+
+    R_xlen_t beg = 0, end=0;
+
+    unordered_map<uint_fast32_t, unique_ptr<RangeNode>> out_nodes;
+
+    for (R_xlen_t i = 0; i < N; i++) {
+
+      NodeAccumulator iacc;
+      add_node(iacc,
+               VECTOR_ELT(x, i),
+               parent_ix);
+      end += iacc.nrows;
+
+      // move to out_nodes
+      while (!iacc.pnodes.empty()) {
+        unique_ptr<Node>& ip = iacc.pnodes.front();
+        auto oit = out_nodes.find(ip->ix);
+        if (oit == out_nodes.end()) {
+          unique_ptr<RangeNode> pr = make_unique<RangeNode>(ip->ix);
+          pr->push(beg, end, move(ip));
+          P("stacking node:%s type:%s\n", full_name(pr->ix).c_str(), Rf_type2char(pr->type()));
+          out_nodes.emplace(pr->ix, move(pr));
+        } else {
+          oit->second->push(beg, end, move(ip));
+        }
+        iacc.pnodes.pop_front();
+      }
+      beg = end;
+    }
+
+    for (auto& on: out_nodes) {
+      on.second->set_size(end);
+      P("stacked node:%s type:%s, size:%ld\n",
+        full_name(on.second->ix).c_str(), Rf_type2char(on.second->type()), on.second->size());
+      acc.pnodes.push_front(move(on.second));
+    }
+
+    acc.nrows *= end;
+
+    P("stacked acc size:%ld  nrow:%ld\n", acc.pnodes.size(), acc.nrows);
+  }
+
+
 
  public:
 
   SEXP process(SEXP x) {
 
-	deque<Node> raw_nodes, nodes;
-	add_nodes(rawnodes, x, 0);
+	NodeAccumulator acc;
+	add_nodes(acc, x, 0);
 
-	R_xlen_t out_len = max_len(nodes);
+    P("FINAL: nrow:%ld ncol:%ld\n", acc.nrows, acc.pnodes.size());
+    SEXP out = PROTECT(Rf_allocVector(VECSXP, acc.pnodes.size()));
+    SEXP names = PROTECT(Rf_allocVector(STRSXP, acc.pnodes.size()));
 
-    for (Node& node: raw_nodes) {
-      if (isFrame(node.obj)) {
-        // unnest data.frames
-        R_xlen_t df_len = XLENGTH(node.obj);
-        if (df_len > 0) {
-          SEXP df = node.obj;
-          SEXP df_names = Rf_getAttrib(df, R_NamesSymbol);
-          uint_fast32_t parent_ix = node.ix;
-          node.obj = R_NilValue;
-          for (R_xlen_t i = 0; i < df_len; i++) {
-            Node node = Node(child_ix(parent_ix, CHAR(STRING_ELT(df_names, i))),
-                             VECTOR_ELT(df, i));
-            nodes.push_front(node);
-          }
-        } else {
-          // remove NULL objects
-          if (node.obj != R_NilValue) {
-            nodes.push_front(node);
-          }
-        }
-      }
-    }
+    R_xlen_t i = acc.pnodes.size() - 1;
 
-    SEXP out = PROTECT(Rf_allocVector(VECSXP, nodes.size()));
-    SEXP names = PROTECT(Rf_allocVector(STRSXP, nodes.size()));
-
-    R_xlen_t i = nodes.size() - 1,
-
-	for (Node& node : nodes) {
-      bool is_frame = Rf_isFrame(node.obj);
-	  R_xlen_t this_len = is_frame ? XLENGTH(CAR(node.obj)) : XLENGTH(node.obj);
-	  SEXP obj;
-	  if (this_len == out_len) {
-		obj = node.obj;
-	  } else {
-		obj = rep_vector(node.obj, out_len);
-	  }
+	for (unique_ptr<Node>& p: acc.pnodes) {
+      P("alloc type: %s\n", Rf_type2char(p->type()));
+      if (p->type() == VECSXP)
+        Rf_error("Cannot handle irregular types yet");
+	  /* SEXP obj = Rf_allocVector(p->type(), acc.nrows); */
+      SEXP obj = make_na_vector(p->type(), acc.nrows);
 	  SET_VECTOR_ELT(out, i, obj);
-      string name = full_name(node.ix);
+      p->copy_into(obj, 0, acc.nrows);
+      string name = full_name(p->ix);
 	  SET_STRING_ELT(names, i, Rf_mkCharLenCE(name.c_str(), name.size(), CE_UTF8));
 	  i--;
 	}
@@ -287,7 +303,7 @@ class Unnester {
 	// build data.frame
 	SEXP row_names = PROTECT(Rf_allocVector(INTSXP, 2));
 	INTEGER(row_names)[0] = NA_INTEGER;
-	INTEGER(row_names)[1] = -out_len;
+	INTEGER(row_names)[1] = acc.nrows;
 	Rf_setAttrib(out, R_ClassSymbol, ScalarString(mkChar("data.frame")));
 	Rf_setAttrib(out, R_RowNamesSymbol, row_names);
 	Rf_setAttrib(out, R_NamesSymbol, names);

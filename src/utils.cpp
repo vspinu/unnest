@@ -1,5 +1,6 @@
 #include <deque>
 #include <cstring>
+#include <algorithm>
 #include "unnest.h"
 
 
@@ -12,7 +13,7 @@
   } while (0)
 
 
-#define MemNA(p,n,na)  memset(p, na, (R_SIZE_T)(n) * sizeof(*p))
+#define FillNA(p,n,na)  std::fill(p, p + n, na)
 
 void fill_vector(SEXP source, SEXP target, R_xlen_t from, R_xlen_t to) {
 
@@ -21,7 +22,8 @@ void fill_vector(SEXP source, SEXP target, R_xlen_t from, R_xlen_t to) {
     Rf_error("[Bug] Cannot replicate empty vector");
 
   if (TYPEOF(source) != TYPEOF(target))
-    Rf_error("[Bug] Type of source must be the same as of the target");
+    Rf_error("[Bug] Type of source (%s) must be the same as that of the target (%s)",
+             Rf_type2char(TYPEOF(source)), Rf_type2char(TYPEOF(target)));
 
   switch (TYPEOF(target)) {
    case LGLSXP:
@@ -89,18 +91,29 @@ SEXP make_na_vector(SEXPTYPE type, R_xlen_t len) {
   switch (type) {
    case INTSXP:
    case LGLSXP:
-     MemNA(INTEGER(out), len, NA_INTEGER); break;
+     FillNA(INTEGER(out), len, NA_INTEGER); break;
    case REALSXP:
-     MemNA(REAL(out), len, NA_REAL); break;
+     FillNA(REAL(out), len, NA_REAL); break;
+   case STRSXP:
+     {
+       SEXP* sdata = STRING_PTR(out);
+       for (R_xlen_t i = 0; i < len; i++) {
+         sdata[i] = R_NaString;
+       }
+     }
+     break;
    case CPLXSXP:
-     MemNA(COMPLEX(out), len, NA_REAL); break;
+     {
+       Rcomplex* cdata = COMPLEX(out);
+       for (R_xlen_t i = 0; i < len; i++) {
+         cdata[i].r = NA_REAL;
+         cdata[i].i = NA_REAL;
+       }
+     }
+     break;
    case RAWSXP:
      // for RAW we set 0s
-     MemNA(RAW(out), len, 0); break;
-   case STRSXP:
-     SEXP* data = STRING_PTR(out);
-     for (R_xlen_t i = 0; i < len; i++)
-       data[i] = R_NaString;
+     FillNA(RAW(out), len, 0);
   }
   // list/expression are already initialized to "NULL" by allocVector
   return out;
