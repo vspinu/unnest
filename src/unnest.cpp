@@ -1,18 +1,13 @@
-#include <vector>
-#include <string>
 #include <deque>
-#include <tuple>
-#include <memory>
 #include <algorithm>
 #include <utility>
 #include <forward_list>
 #include <unordered_map>
 #include <unordered_set>
+#include "Node.h"
 #include "unnest.h"
 
 #undef nrows
-
-using namespace std;
 
 struct hash_pair {
   template <class T1, class T2>
@@ -26,92 +21,6 @@ struct hash_pair {
 
 typedef unordered_map<pair<uint_fast32_t, const char*>, uint_fast32_t, hash_pair> pair2ix_map;
 typedef unordered_map<uint_fast32_t, pair<uint_fast32_t, const char*>> ix2pair_map;
-
-class Node {
- public:
-  uint_fast32_t ix;
-  virtual R_xlen_t size() const = 0;
-  virtual SEXPTYPE type() const = 0;
-  virtual void copy_into(SEXP target, R_xlen_t start, R_xlen_t end) const = 0;
-  virtual ~Node() {};
-
- protected:
-  Node (uint_fast32_t ix): ix(ix) {};
-};
-
-class SexpNode: public Node {
- public:
-  SEXP obj;
-  SexpNode(uint_fast32_t ix, SEXP obj): Node(ix), obj(obj) {};
-  R_xlen_t size() const override {
-    return XLENGTH(obj);
-  }
-  SEXPTYPE type() const override {
-    return TYPEOF(obj);
-  }
-  void copy_into(SEXP target, R_xlen_t start, R_xlen_t end) const override {
-    P("sexp copy: type:%s, start:%ld, end:%ld\n",
-      Rf_type2char(TYPEOF(target)), start, end);
-    fill_vector(obj, target, start, end);
-  }
-};
-
-class RangeNode: public Node {
-
-  R_xlen_t _size = 0;
-  SEXPTYPE _type = NILSXP;
-  vector<tuple<R_xlen_t, R_xlen_t, unique_ptr<Node>>> range_pnodes;
-
- public:
-
-  RangeNode(uint_fast32_t ix): Node(ix) {};
-  RangeNode(uint_fast32_t ix, R_xlen_t size): Node(ix), _size(size) {};
-
-  void push(R_xlen_t start, R_xlen_t end, unique_ptr<Node> pnode) {
-    if (range_pnodes.size() == 0) {
-      _type = pnode->type();
-    } else {
-      if (_type != pnode->type()) {
-        _type = VECSXP;
-      }
-    }
-    range_pnodes.emplace_back(start, end, move(pnode));
-  }
-
-  R_xlen_t size() const override {
-    return _size;
-  }
-
-  void set_size(R_xlen_t size) {
-    _size = size;
-  }
-
-  SEXPTYPE type() const override {
-    return _type;
-  }
-
-  void copy_into(SEXP target, R_xlen_t start, R_xlen_t end) const override {
-    P("range copy: type:%s, start:%ld, end:%ld\n",
-      Rf_type2char(TYPEOF(target)), start, end);
-    R_xlen_t N = range_pnodes.size();
-    vector<R_xlen_t> sizes;
-    sizes.reserve(N);
-    for (size_t i = 0; i < N; i++) {
-      sizes[i] = (get<2>(range_pnodes[i]))->size();
-    }
-	for (R_xlen_t i = start, n = 0; n < N && i < end; n++) {
-      const auto& t = range_pnodes[n];
-      const unique_ptr<Node>& p = get<2>(t);
-      R_xlen_t nexti = i + get<1>(t) - get<0>(t);
-      p->copy_into(target, i, nexti);
-      i = nexti;
-      if (++n == N)
-        n = 0;
-    }
-  }
-};
-
-
 
 struct NodeAccumulator {
   R_xlen_t nrows = 1;
@@ -189,19 +98,20 @@ class Unnester {
       if (TYPEOF(x) == VECSXP) {
         if (stack) {
           add_stacked_nodes(acc, x, ix);
+          P("added stacked node:%s(%ld) acc[%ld,%ld]\n",
+            full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
         } else {
           add_nodes(acc, x, ix);
+          P("added vec node:%s(%ld) acc[%ld,%ld]\n",
+            full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
         }
-        P("added vec node:%s\n", full_name(ix).c_str());
       } else {
         acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
         acc.nrows *= N;
-        P("added sexp node:%s\n", full_name(ix).c_str());
+        P("added sexp node:%s(%ld) acc[%ld,%ld]\n",
+          full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
       }
     }
-
-    P("added node acc size:%ld  nrow:%ld\n", acc.pnodes.size(), acc.nrows);
-
   }
 
   void add_nodes(NodeAccumulator& acc, SEXP& x, uint_fast32_t parent_ix) {
@@ -223,9 +133,6 @@ class Unnester {
                VECTOR_ELT(x, i),
                child_ix(parent_ix, cname));
 	}
-
-    P("added nodes acc size:%ld  nrow:%ld\n", acc.pnodes.size(), acc.nrows);
-
   }
 
   void add_stacked_nodes(NodeAccumulator& acc, SEXP x, uint_fast32_t parent_ix) {
@@ -250,9 +157,14 @@ class Unnester {
         if (oit == out_nodes.end()) {
           unique_ptr<RangeNode> pr = make_unique<RangeNode>(ip->ix);
           pr->push(beg, end, move(ip));
-          P("stacking node:%s type:%s\n", full_name(pr->ix).c_str(), Rf_type2char(pr->type()));
+          P("stacking new node:%s type:%s range:%ld-%ld Nnodes:%ld\n",
+            full_name(pr->ix).c_str(), Rf_type2char(pr->type()),
+            beg, end, pr->pnodes.size());
           out_nodes.emplace(pr->ix, move(pr));
         } else {
+          P("stacking old node:%s type:%s range:%ld-%ld Nnodes:%ld\n",
+            full_name(ip->ix).c_str(), Rf_type2char(ip->type()),
+            beg, end, oit->second->pnodes.size()+1);
           oit->second->push(beg, end, move(ip));
         }
         iacc.pnodes.pop_front();
@@ -268,8 +180,6 @@ class Unnester {
     }
 
     acc.nrows *= end;
-
-    P("stacked acc size:%ld  nrow:%ld\n", acc.pnodes.size(), acc.nrows);
   }
 
 

@@ -46,6 +46,8 @@ void fill_vector(SEXP source, SEXP target, R_xlen_t from, R_xlen_t to) {
      Rf_error("Cannot unnest lists with elements of type %s", Rf_type2char(TYPEOF(source)));
   }
 
+  // FIXME: Add factor levels
+
 }
 
 SEXP rep_vector(SEXP x, R_xlen_t N) {
