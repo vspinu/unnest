@@ -3,14 +3,32 @@
 #define UNNEST_NODE_H
 
 #include <tuple>
+#include <cstring>
 #include "common.h"
 
 class Spec {
  public:
-  uint_fast32_t oix; // original name
-  uint_fast32_t nix; // new name
-  Spec (uint_fast32_t oix, uint_fast32_t nix): oix(oix), nix(nix) {};
+  SEXP node;
+  SEXP name;
+  bool stack;
+  vector<unique_ptr<const Spec>> children;
+  Spec (): node(R_NilValue), name(R_NilValue) {};
+  Spec (SEXP node, SEXP name): node(node), name(name) {};
 };
+
+const Spec NilSpec = Spec(R_NilValue, R_NilValue);
+
+inline bool isSpec(SEXP s)
+{
+    SEXP cls;
+    if (OBJECT(s)) {
+      cls = getAttrib(s, R_ClassSymbol);
+      for (int i = 0; i < LENGTH(cls); i++)
+	    if (!strcmp(CHAR(STRING_ELT(cls, i)), "unnest.spec"))
+          return true;
+    }
+    return false;
+}
 
 class Node {
  public:

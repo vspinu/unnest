@@ -90,18 +90,17 @@ class Unnester {
 	return out;
   }
 
-  inline void add_node(NodeAccumulator& acc, SEXP x, uint_fast32_t ix) {
+  inline void add_node(NodeAccumulator& acc, const Spec& spec,
+                       SEXP x, uint_fast32_t ix) {
     R_xlen_t N = XLENGTH(x);
-    bool stack = Rf_getAttrib(x, R_NamesSymbol) == R_NilValue;
-
     if (N > 0) {
       if (TYPEOF(x) == VECSXP) {
-        if (stack) {
-          add_stacked_nodes(acc, x, ix);
+        if (spec.stack) {
+          add_stacked_nodes(acc, spec, x, ix);
           P("added stacked node:%s(%ld) acc[%ld,%ld]\n",
             full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
         } else {
-          add_nodes(acc, x, ix);
+          add_vec_nodes(acc, spec, x, ix);
           P("added vec node:%s(%ld) acc[%ld,%ld]\n",
             full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
         }
@@ -114,40 +113,66 @@ class Unnester {
     }
   }
 
-  void add_nodes(NodeAccumulator& acc, SEXP& x, uint_fast32_t parent_ix) {
-
-	R_xlen_t N = XLENGTH(x);
-
-	SEXP names = Rf_getAttrib(x, R_NamesSymbol);
-	bool has_names = names != R_NilValue;
-	if (!has_names) {
+  void add_vec_nodes(NodeAccumulator& acc, const Spec& spec,
+                     SEXP x, uint_fast32_t ix) {
+    R_xlen_t N = XLENGTH(x);
+    SEXP names = Rf_getAttrib(x, R_NamesSymbol);
+    bool has_names = names != R_NilValue;
+    if (!has_names) {
       populate_num_cache(N);
-	}
+    }
 
-	for (R_xlen_t i = 0; i < N; i++) {
-
-      const char* cname =
-		has_names ? CHAR(STRING_ELT(names, i)) : num_cache[i].c_str();
-
-	  add_node(acc,
-               VECTOR_ELT(x, i),
-               child_ix(parent_ix, cname));
-	}
+    if (&spec == &NilSpec || spec.children.size() == 0) {
+      for (R_xlen_t i = 0; i < N; i++) {
+        const char* cname =
+          has_names ? CHAR(STRING_ELT(names, i)) : num_cache[i].c_str();
+        add_node(acc,
+                 NilSpec,
+                 VECTOR_ELT(x, i),
+                 child_ix(ix, cname));
+      }
+    } else {
+      for (R_xlen_t i = 0; i < N; i++) {
+        SEXP nm = STRING_ELT(names, i);
+        for (const auto& pspec: spec.children) {
+          if (pspec->node == R_NilValue || pspec->node == nm) {
+            const char* cname;
+            if (pspec->name != R_NilValue) {
+              cname = CHAR(pspec->name);
+            } else {
+              cname = has_names ? CHAR(STRING_ELT(names, i)) : num_cache[i].c_str();
+            }
+            add_node(acc,
+                     *pspec,
+                     VECTOR_ELT(x, i),
+                     child_ix(ix, cname));
+          }
+        }
+      }
+    }
   }
 
-  void add_stacked_nodes(NodeAccumulator& acc, SEXP x, uint_fast32_t parent_ix) {
+  void add_stacked_nodes(NodeAccumulator& acc, const Spec& spec,
+                         SEXP x, uint_fast32_t ix) {
     R_xlen_t N = XLENGTH(x);
-
     R_xlen_t beg = 0, end=0;
-
     unordered_map<uint_fast32_t, unique_ptr<RangeNode>> out_nodes;
 
-    for (R_xlen_t i = 0; i < N; i++) {
+    SEXP names = Rf_getAttrib(x, R_NamesSymbol);
+    bool has_names = names != R_NilValue;
 
+    for (R_xlen_t i = 0; i < N; i++) {
       NodeAccumulator iacc;
-      add_node(iacc,
-               VECTOR_ELT(x, i),
-               parent_ix);
+      if (&spec == &NilSpec || spec.children.size() == 0) {
+        add_node(iacc, NilSpec, VECTOR_ELT(x, i), ix);
+      } else {
+        SEXP nm = STRING_ELT(names, i);
+        for (const auto& pspec: spec.children) {
+          if (pspec->node == R_NilValue || pspec->node == nm) {
+            add_node(iacc, *pspec, VECTOR_ELT(x, i), ix);
+          }
+        }
+      }
       end += iacc.nrows;
 
       // move to out_nodes
@@ -182,14 +207,71 @@ class Unnester {
     acc.nrows *= end;
   }
 
+  Spec list2spec(SEXP lspec) {
+    if (TYPEOF(lspec) != VECSXP)
+      Rf_error("'lspec' must be a list");
+    if (!isSpec(lspec))
+      Rf_error("'lspec' must be of S3 class 'unnest.spec'");
 
+    SEXP names = Rf_getAttrib(lspec, R_NamesSymbol);
+    if (names == R_NilValue)
+      Rf_error("unnest.spec must have non-nil names");
+
+    R_xlen_t N = LENGTH(lspec);
+    bool
+      done_node = false, done_name = false,
+      done_children = false, done_stack = false;
+    SEXP children = R_NilValue;
+    Spec spec;
+    spec.name = R_NilValue;
+    spec.node = R_NilValue;
+
+    /* for (R_xlen_t i = 0; i < N; i++) { */
+    /*   SEXP obj = VECTOR_ELT(lspec, i); */
+    /*   if (obj != R_NilValue) { */
+    /*     const char* nm = CHAR(STRING_ELT(names, i)); */
+    /*     if (!done_node && !strcmp(nm, "node")) { */
+    /*       if (TYPEOF(obj) != STRSXP || XLENGTH(obj) != 0) */
+    /*         Rf_error("spec 'node' field must be a string vector of length 1"); */
+    /*       spec.node = STRING_ELT(obj, 0); */
+    /*       done_node = true; */
+    /*     } else  if (!done_name && !strcmp(nm, "name")) { */
+    /*       if (TYPEOF(obj) != STRSXP || XLENGTH(obj) != 0) */
+    /*         Rf_error("spec 'name' field must be a string vector of length 1"); */
+    /*       spec.name = STRING_ELT(obj, 0); */
+    /*       done_name = true; */
+    /*     } else if (!done_stack && !strcmp(nm, "stack")) { */
+    /*       if (TYPEOF(obj) != LGLSXP || XLENGTH(obj) != 0) */
+    /*         Rf_error("spec 'stack' field must be a logical vector of length 1"); */
+    /*       spec.stack = LOGICAL(obj)[0]; */
+    /*       done_stack = true; */
+    /*     } else if (!done_children && !strcmp(nm, "children")) { */
+    /*       if (TYPEOF(obj) != VECSXP) */
+    /*         Rf_error("spec 'children' field must be a list"); */
+    /*       children = obj; */
+    /*       done_children = true; */
+    /*     } */
+    /*   } */
+    /* } */
+
+    /* if (children != R_NilValue) { */
+    /*   R_xlen_t NC = XLENGTH(children); */
+    /*   /\* spec.children.reserve(NC); *\/ */
+    /*   for (R_xlen_t c = 0; c < NC; c++) { */
+    /*     SEXP ch = VECTOR_ELT(children, c); */
+    /*     spec.children.push_back(move(make_unique<Spec>(move(list2spec(ch))))); */
+    /*   } */
+    /* } */
+    return spec;
+  }
 
  public:
 
-  SEXP process(SEXP x) {
+  SEXP process(SEXP x, SEXP lspec) {
+    const Spec spec = (lspec == R_NilValue) ? NilSpec : move(list2spec(lspec));
 
 	NodeAccumulator acc;
-	add_nodes(acc, x, 0);
+	add_node(acc, spec, x, 0);
 
     P("FINAL: nrow:%ld ncol:%ld\n", acc.nrows, acc.pnodes.size());
     SEXP out = PROTECT(Rf_allocVector(VECSXP, acc.pnodes.size()));
@@ -223,7 +305,7 @@ class Unnester {
   }
 };
 
-extern "C" SEXP C_unnest(SEXP x) {
+extern "C" SEXP C_unnest(SEXP x, SEXP lspec) {
   SEXPTYPE type = TYPEOF(x);
   if (TYPEOF(x) != VECSXP) {
 	Rf_error("x must be a list vector");
@@ -231,5 +313,5 @@ extern "C" SEXP C_unnest(SEXP x) {
 
   Unnester unnester;
 
-  return unnester.process(x);
+  return unnester.process(x, lspec);
 }
