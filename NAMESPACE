@@ -2,7 +2,7 @@
 
 S3method(print,unnest.spec)
 S3method(str,unnest.spec)
-export(e)
+export(s)
 export(spec)
 export(unnest)
 importFrom(Rcpp,sourceCpp)
