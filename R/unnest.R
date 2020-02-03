@@ -1,5 +1,7 @@
 
-.post_normalizer <- function(el) {
+inset <- `[<-`
+
+normalize_spec <- function(el) {
   if (!is.list(el))
     return(el)
   if (identical(class(el), "unnest.spec"))
@@ -18,7 +20,7 @@
         nms[[1]] <- "node"
       } else {
         stop(sprintf("Unspecified node name in spec node. Must be either unnamed first element or element with name 'node'.\n%s",
-                     spec_el_to_char(el)),
+                     spec_el_to_char(inset(el, "children", NULL))),
              call. = FALSE)
       }
     }
@@ -41,24 +43,21 @@
     for (node in rev(node[-length(node)])) {
       if (grepl("^\\[[0-9]+\\]$", node))
         node <- as.integer(substr(node, 2, nchar(node) - 1))
-      el <- list(node = node,
-                 children = list(el))
+      el <- unnest.spec(list(node = node,
+                             children = list(unnest.spec(el))))
     }
   }
-  structure(el, class = "unnest.spec")
+  unnest.spec(el)
 }
 
-normalize_spec <- function(spec) {
-  out <- rmap(spec, .fpost = .post_normalizer)
-  structure(out, class = "unnest.spec")
+unnest.spec <- function(x) {
+  structure(x, class = "unnest.spec")
 }
 
 #' @export
 str.unnest.spec <- function(object, nest.lev = 0, no.list = FALSE, ...) {
-  if (nest.lev == 0) {
-      cat("Unnest Spec:\n")
-  }
-  utils:::str.default(object, nest.lev = nest.lev, no.list = nest.lev == 0, ...)
+  cat("<unnest.spec>\n")
+  utils:::str.default(object, nest.lev = nest.lev, no.list = T, ...)
 }
 
 #' @export
@@ -67,15 +66,11 @@ print.unnest.spec <- function(x, ...) {
 }
 
 #' @export
-e <- list
-
-#' @export
-spec <- function(...) {
-  sapply(list(...), normalize_spec, simplify = FALSE)
+s <- function(...) {
+  normalize_spec(list(...))
 }
 
-
 #' @export
-unnest <- function(list) {
-  .Call(C_unnest, list)
+unnest <- function(list, spec = NULL) {
+  .Call(C_unnest, list,  spec)
 }
