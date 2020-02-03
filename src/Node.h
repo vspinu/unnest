@@ -11,7 +11,8 @@ class Spec {
   SEXP node;
   SEXP name;
   bool stack;
-  vector<unique_ptr<const Spec>> children;
+  vector<Spec> children;
+  /* vector<unique_ptr<const Spec>> children; */
   Spec (): node(R_NilValue), name(R_NilValue) {};
   Spec (SEXP node, SEXP name): node(node), name(name) {};
 };

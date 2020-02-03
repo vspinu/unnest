@@ -135,15 +135,15 @@ class Unnester {
       for (R_xlen_t i = 0; i < N; i++) {
         SEXP nm = STRING_ELT(names, i);
         for (const auto& pspec: spec.children) {
-          if (pspec->node == R_NilValue || pspec->node == nm) {
+          if (pspec.node == R_NilValue || pspec.node == nm) {
             const char* cname;
-            if (pspec->name != R_NilValue) {
-              cname = CHAR(pspec->name);
+            if (pspec.name != R_NilValue) {
+              cname = CHAR(pspec.name);
             } else {
               cname = has_names ? CHAR(STRING_ELT(names, i)) : num_cache[i].c_str();
             }
             add_node(acc,
-                     *pspec,
+                     pspec,
                      VECTOR_ELT(x, i),
                      child_ix(ix, cname));
           }
@@ -168,8 +168,8 @@ class Unnester {
       } else {
         SEXP nm = STRING_ELT(names, i);
         for (const auto& pspec: spec.children) {
-          if (pspec->node == R_NilValue || pspec->node == nm) {
-            add_node(iacc, *pspec, VECTOR_ELT(x, i), ix);
+          if (pspec.node == R_NilValue || pspec.node == nm) {
+            add_node(iacc, pspec, VECTOR_ELT(x, i), ix);
           }
         }
       }
@@ -226,42 +226,42 @@ class Unnester {
     spec.name = R_NilValue;
     spec.node = R_NilValue;
 
-    /* for (R_xlen_t i = 0; i < N; i++) { */
-    /*   SEXP obj = VECTOR_ELT(lspec, i); */
-    /*   if (obj != R_NilValue) { */
-    /*     const char* nm = CHAR(STRING_ELT(names, i)); */
-    /*     if (!done_node && !strcmp(nm, "node")) { */
-    /*       if (TYPEOF(obj) != STRSXP || XLENGTH(obj) != 0) */
-    /*         Rf_error("spec 'node' field must be a string vector of length 1"); */
-    /*       spec.node = STRING_ELT(obj, 0); */
-    /*       done_node = true; */
-    /*     } else  if (!done_name && !strcmp(nm, "name")) { */
-    /*       if (TYPEOF(obj) != STRSXP || XLENGTH(obj) != 0) */
-    /*         Rf_error("spec 'name' field must be a string vector of length 1"); */
-    /*       spec.name = STRING_ELT(obj, 0); */
-    /*       done_name = true; */
-    /*     } else if (!done_stack && !strcmp(nm, "stack")) { */
-    /*       if (TYPEOF(obj) != LGLSXP || XLENGTH(obj) != 0) */
-    /*         Rf_error("spec 'stack' field must be a logical vector of length 1"); */
-    /*       spec.stack = LOGICAL(obj)[0]; */
-    /*       done_stack = true; */
-    /*     } else if (!done_children && !strcmp(nm, "children")) { */
-    /*       if (TYPEOF(obj) != VECSXP) */
-    /*         Rf_error("spec 'children' field must be a list"); */
-    /*       children = obj; */
-    /*       done_children = true; */
-    /*     } */
-    /*   } */
-    /* } */
+    for (R_xlen_t i = 0; i < N; i++) {
+      SEXP obj = VECTOR_ELT(lspec, i);
+      if (obj != R_NilValue) {
+        const char* nm = CHAR(STRING_ELT(names, i));
+        if (!done_node && !strcmp(nm, "node")) {
+          if (TYPEOF(obj) != STRSXP || XLENGTH(obj) != 0)
+            Rf_error("spec 'node' field must be a string vector of length 1");
+          spec.node = STRING_ELT(obj, 0);
+          done_node = true;
+        } else  if (!done_name && !strcmp(nm, "name")) {
+          if (TYPEOF(obj) != STRSXP || XLENGTH(obj) != 0)
+            Rf_error("spec 'name' field must be a string vector of length 1");
+          spec.name = STRING_ELT(obj, 0);
+          done_name = true;
+        } else if (!done_stack && !strcmp(nm, "stack")) {
+          if (TYPEOF(obj) != LGLSXP || XLENGTH(obj) != 0)
+            Rf_error("spec 'stack' field must be a logical vector of length 1");
+          spec.stack = LOGICAL(obj)[0];
+          done_stack = true;
+        } else if (!done_children && !strcmp(nm, "children")) {
+          if (TYPEOF(obj) != VECSXP)
+            Rf_error("spec 'children' field must be a list");
+          children = obj;
+          done_children = true;
+        }
+      }
+    }
 
-    /* if (children != R_NilValue) { */
-    /*   R_xlen_t NC = XLENGTH(children); */
-    /*   /\* spec.children.reserve(NC); *\/ */
-    /*   for (R_xlen_t c = 0; c < NC; c++) { */
-    /*     SEXP ch = VECTOR_ELT(children, c); */
-    /*     spec.children.push_back(move(make_unique<Spec>(move(list2spec(ch))))); */
-    /*   } */
-    /* } */
+    if (children != R_NilValue) {
+      R_xlen_t NC = XLENGTH(children);
+      spec.children.reserve(NC);
+      for (R_xlen_t c = 0; c < NC; c++) {
+        SEXP ch = VECTOR_ELT(children, c);
+        spec.children.emplace_back(list2spec(ch));
+      }
+    }
     return spec;
   }
 
