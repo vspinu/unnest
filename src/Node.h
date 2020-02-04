@@ -31,6 +31,7 @@ inline bool isSpec(SEXP s)
     return false;
 }
 
+
 class Node {
  public:
   uint_fast32_t ix;
