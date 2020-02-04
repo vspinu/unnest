@@ -4,17 +4,35 @@
 
 #include <tuple>
 #include <cstring>
+#include <sstream>
 #include "common.h"
 
 class Spec {
  public:
   SEXP node;
   SEXP name;
-  bool stack;
   vector<Spec> children;
-  /* vector<unique_ptr<const Spec>> children; */
-  Spec (): node(R_NilValue), name(R_NilValue) {};
-  Spec (SEXP node, SEXP name): node(node), name(name) {};
+  bool stack = false;
+
+  Spec(): node(R_NilValue), name(R_NilValue) {};
+  Spec(SEXP node, SEXP name): node(node), name(name) {};
+
+  void print() const {
+    printf("[node:%s, name:%s, stack:%d]\n",
+           node == R_NilValue ? "NULL" : CHAR(node),
+           name == R_NilValue ? "NULL" : CHAR(name),
+           stack);
+  }
+
+  string to_string() const {
+    std::ostringstream stream;
+    stream << "[node:" <<
+      (node == R_NilValue ? "NULL" : CHAR(node)) <<
+      " name:" << (name == R_NilValue ? "NULL" : CHAR(name)) <<
+      " stack:" << (stack ? "TRUE" : "FALSE") <<
+      "]";
+    return stream.str();
+  }
 };
 
 const Spec NilSpec = Spec(R_NilValue, R_NilValue);
