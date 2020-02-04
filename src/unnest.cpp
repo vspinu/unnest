@@ -74,7 +74,7 @@ Spec list2spec(SEXP lspec) {
     }
   }
 
-  // always have name unless node is NULL
+  // always has name unless node is NULL
   if (spec.node != R_NilValue && spec.name == R_NilValue)
     spec.name = spec.node;
 
@@ -155,25 +155,25 @@ class Unnester {
 	return out;
   }
 
-  void add_child_node(NodeAccumulator& acc, const Spec& pspec,
-                      SEXP cx, uint_fast32_t cix) {
-    if (pspec.stack) {
-      P(">>> stack_child_nodes:\n");
-      stack_child_nodes(acc, pspec, cx, cix);
-      P("<<< stack_child_nodes:\n");
-    } else {
-      if (pspec.children.size() == 0) {
-        add_node(acc, NilSpec, cx, cix);
-      } else {
-        for (const Spec& cspec: pspec.children) {
-          add_node(acc, cspec, cx, cix);
-        }
-      }
-    }
-  }
+  /* inline void add_child_node(NodeAccumulator& acc, const Spec& pspec, */
+  /*                            SEXP cx, uint_fast32_t cix) { */
+  /*   if (pspec.stack) { */
+  /*     P(">>> stack_child_nodes:\n"); */
+  /*     stack_child_nodes(acc, pspec, cx, cix); */
+  /*     P("<<< stack_child_nodes:\n"); */
+  /*   } else { */
+  /*     if (pspec.children.size() == 0) { */
+  /*       add_node(acc, NilSpec, cx, cix); */
+  /*     } else { */
+  /*       for (const Spec& cspec: pspec.children) { */
+  /*         add_node(acc, cspec, cx, cix); */
+  /*       } */
+  /*     } */
+  /*   } */
+  /* } */
 
-  inline void add_node(NodeAccumulator& acc, const Spec& spec,
-                       SEXP x, uint_fast32_t ix) {
+  void add_node(NodeAccumulator& acc, const Spec& spec,
+                SEXP x, uint_fast32_t ix) {
     R_xlen_t N = XLENGTH(x);
     if (N > 0) {
       if (TYPEOF(x) == VECSXP) {
@@ -182,24 +182,43 @@ class Unnester {
         SEXP names = Rf_getAttrib(x, R_NamesSymbol);
         bool has_names = names != R_NilValue;
 
-        if (spec.node == R_NilValue) {
-          if (!has_names) {
-            populate_num_cache(N);
-          }
-          for (R_xlen_t i = 0; i < N; i++) {
-            const char* cname =
-              has_names ? CHAR(STRING_ELT(names, i)) : num_cache[i].c_str();
-            add_child_node(acc, spec, VECTOR_ELT(x, i), child_ix(ix, cname));
-          }
-        } else if (has_names) {
-          for (R_xlen_t i = 0; i < N; i++) {
-            SEXP nm = STRING_ELT(names, i);
-            if (spec.node == nm) {
-              const char* name = CHAR(spec.name);
-              add_child_node(acc, spec, VECTOR_ELT(x, i), child_ix(ix, name));
+        const vector<SpecMatch>& matches = spec.match(x);
+        P("matches: %ld\n", matches.size());
+        for (const SpecMatch& m: matches) {
+          uint_fast32_t cix = child_ix(ix, CHAR(m.name));
+          if (spec.stack) {
+            P(">>> stack_child_nodes:\n");
+            stack_child_nodes(acc, spec, m.obj, cix);
+            P("<<< stack_child_nodes:\n");
+          } else {
+            if (spec.children.empty()) {
+              add_node(acc, NilSpec, m.obj, cix);
+            } else {
+              for (const Spec& cspec: spec.children) {
+                add_node(acc, cspec, m.obj, cix);
+              }
             }
           }
         }
+
+        /* if (spec.node == R_NilValue) { */
+        /*   if (!has_names) { */
+        /*     populate_num_cache(N); */
+        /*   } */
+        /*   for (R_xlen_t i = 0; i < N; i++) { */
+        /*     const char* cname = */
+        /*       has_names ? CHAR(STRING_ELT(names, i)) : num_cache[i].c_str(); */
+        /*     add_child_node(acc, spec, VECTOR_ELT(x, i), child_ix(ix, cname)); */
+        /*   } */
+        /* } else if (has_names) { */
+        /*   for (R_xlen_t i = 0; i < N; i++) { */
+        /*     SEXP nm = STRING_ELT(names, i); */
+        /*     if (spec.node == nm) { */
+        /*       const char* name = CHAR(spec.name); */
+        /*       add_child_node(acc, spec, VECTOR_ELT(x, i), child_ix(ix, name)); */
+        /*     } */
+        /*   } */
+        /* } */
 
         P("<-- added node:%s(%ld) acc[%ld,%ld]\n",
           full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());

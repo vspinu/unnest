@@ -7,21 +7,52 @@
 #include <sstream>
 #include "common.h"
 
+struct SpecMatch {
+  SEXP name, obj;
+  SpecMatch(SEXP name, SEXP obj): name(name), obj(obj) {};
+};
+
 class Spec {
  public:
-  SEXP node;
-  SEXP name;
+  SEXP node = R_NilValue;
+  SEXP name = R_NilValue;
+  int ix = -1;
   vector<Spec> children;
   bool stack = false;
 
   Spec(): node(R_NilValue), name(R_NilValue) {};
   Spec(SEXP node, SEXP name): node(node), name(name) {};
 
-  void print() const {
-    printf("[node:%s, name:%s, stack:%d]\n",
-           node == R_NilValue ? "NULL" : CHAR(node),
-           name == R_NilValue ? "NULL" : CHAR(name),
-           stack);
+  vector<SpecMatch> match(SEXP obj) const {
+    int N = LENGTH(obj);
+    vector<SpecMatch> out;
+    SEXP obj_names = Rf_getAttrib(obj, R_NamesSymbol);
+    bool has_names = obj_names != R_NilValue;
+
+    if (ix >= 0) {
+      // 1) ix has total priority
+      if (ix < N) {
+        SEXP nm = (has_names ? R_NilValue : STRING_ELT(obj_names, ix));
+        out.emplace_back(nm, VECTOR_ELT(obj, ix));
+      }
+    } else if (node == R_NilValue) {
+      // 2) NULL node matches all
+      out.reserve(N);
+      for (size_t i = 0; i < N; i++) {
+        SEXP nm = (has_names ? STRING_ELT(obj_names, i) : R_BlankString);
+        out.emplace_back(nm, VECTOR_ELT(obj, i));
+      }
+    } else if (has_names) {
+      // 3) Exact node match
+      for (size_t i = 0; i < N; i++) {
+        if (STRING_ELT(obj_names, i) == node) {
+          out.emplace_back(name, VECTOR_ELT(obj, i));
+          break;
+        }
+      }
+    }
+
+    return out;
   }
 
   string to_string() const {

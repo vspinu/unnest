@@ -11,7 +11,7 @@
 using namespace std;
 
 
-/* #define DEBUG */
+#define DEBUG
 
 #ifdef DEBUG
 #define P(...) printf(__VA_ARGS__)
