@@ -138,8 +138,12 @@ class Unnester {
 	  if (pit == i2p.end())
 		Rf_error("[Bug] Iname not in the hashmap, please report");
 	  ix = pit->second.first;
-	  acc.push_front(pit->second.second);
+      if (*(pit->second.second) != '\0')
+        acc.push_front(pit->second.second);
 	} while (ix != 0);
+
+    if (acc.empty())
+      return "";
 
 	string out = acc.front();
 	acc.pop_front();
@@ -151,70 +155,71 @@ class Unnester {
 	return out;
   }
 
+  void add_child_node(NodeAccumulator& acc, const Spec& pspec,
+                      SEXP cx, uint_fast32_t cix) {
+    if (pspec.stack) {
+      P(">>> stack_child_nodes:\n");
+      stack_child_nodes(acc, pspec, cx, cix);
+      P("<<< stack_child_nodes:\n");
+    } else {
+      if (pspec.children.size() == 0) {
+        add_node(acc, NilSpec, cx, cix);
+      } else {
+        for (const Spec& cspec: pspec.children) {
+          add_node(acc, cspec, cx, cix);
+        }
+      }
+    }
+  }
+
   inline void add_node(NodeAccumulator& acc, const Spec& spec,
                        SEXP x, uint_fast32_t ix) {
     R_xlen_t N = XLENGTH(x);
     if (N > 0) {
       if (TYPEOF(x) == VECSXP) {
-        if (spec.stack) {
-          add_stacked_nodes(acc, spec, x, ix);
-          P("added stacked node:%s(%ld) acc[%ld,%ld]\n",
-            full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
-        } else {
-          add_vec_nodes(acc, spec, x, ix);
-          P("added vec node:%s(%ld) acc[%ld,%ld]\n",
-            full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
-        }
-      } else {
-        acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
-        acc.nrows *= N;
-        P("added sexp node:%s(%ld) acc[%ld,%ld]\n",
-          full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
-      }
-    }
-  }
+        P("--> add node:%s(%ld) %s\n", full_name(ix).c_str(), ix, spec.to_string().c_str());
 
-  void add_vec_nodes(NodeAccumulator& acc, const Spec& spec,
-                     SEXP x, uint_fast32_t ix) {
-    R_xlen_t N = XLENGTH(x);
-    SEXP names = Rf_getAttrib(x, R_NamesSymbol);
-    bool has_names = names != R_NilValue;
-    if (!has_names) {
-      populate_num_cache(N);
-    }
+        SEXP names = Rf_getAttrib(x, R_NamesSymbol);
+        bool has_names = names != R_NilValue;
 
-    if (&spec == &NilSpec || spec.children.size() == 0) {
-      for (R_xlen_t i = 0; i < N; i++) {
-        const char* cname =
-          has_names ? CHAR(STRING_ELT(names, i)) : num_cache[i].c_str();
-        add_node(acc,
-                 NilSpec,
-                 VECTOR_ELT(x, i),
-                 child_ix(ix, cname));
-      }
-    } else {
-      for (R_xlen_t i = 0; i < N; i++) {
-        SEXP nm = STRING_ELT(names, i);
-        for (const auto& pspec: spec.children) {
-          if (pspec.node == R_NilValue || pspec.node == nm) {
-            const char* cname;
-            if (pspec.name != R_NilValue) {
-              cname = CHAR(pspec.name);
-            } else {
-              cname = has_names ? CHAR(STRING_ELT(names, i)) : num_cache[i].c_str();
+        if (spec.node == R_NilValue) {
+          if (!has_names) {
+            populate_num_cache(N);
+          }
+          for (R_xlen_t i = 0; i < N; i++) {
+            const char* cname =
+              has_names ? CHAR(STRING_ELT(names, i)) : num_cache[i].c_str();
+            add_child_node(acc, spec, VECTOR_ELT(x, i), child_ix(ix, cname));
+          }
+        } else if (has_names) {
+          for (R_xlen_t i = 0; i < N; i++) {
+            SEXP nm = STRING_ELT(names, i);
+            if (spec.node == nm) {
+              const char* name = CHAR(spec.name);
+              add_child_node(acc, spec, VECTOR_ELT(x, i), child_ix(ix, name));
             }
-            add_node(acc,
-                     pspec,
-                     VECTOR_ELT(x, i),
-                     child_ix(ix, cname));
           }
         }
+
+        P("<-- added node:%s(%ld) acc[%ld,%ld]\n",
+          full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
+      } else {
+        if (spec.children.size() == 0) {
+          acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
+          acc.nrows *= N;
+          P("-- added sexp node:%s(%ld) acc[%ld,%ld]\n",
+            full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
+        }
       }
     }
   }
 
-  void add_stacked_nodes(NodeAccumulator& acc, const Spec& spec,
+  void stack_child_nodes(NodeAccumulator& acc, const Spec& pspec,
                          SEXP x, uint_fast32_t ix) {
+    if (TYPEOF(x) != VECSXP)
+      Rf_error("Cannot stack a non-list (node: %s spec:%s)",
+               full_name(ix).c_str(),
+               pspec.to_string().c_str());
     R_xlen_t N = XLENGTH(x);
     R_xlen_t beg = 0, end=0;
     unordered_map<uint_fast32_t, unique_ptr<RangeNode>> out_nodes;
