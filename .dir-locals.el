@@ -9,5 +9,5 @@
  (makefile-gmake-mode
   (indent-tabs-mode . t))
  (ess-mode
-  (ess-fancy-comments)
+  (ess-indent-with-fancy-comments)
   (ess-indent-offset . 2)))

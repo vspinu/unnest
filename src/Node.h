@@ -8,14 +8,25 @@
 #include "common.h"
 
 struct SpecMatch {
+  int ix = -1;
   SEXP name, obj;
-  SpecMatch(SEXP name, SEXP obj): name(name), obj(obj) {};
+  SpecMatch(int ix, SEXP name, SEXP obj): ix(ix), name(name), obj(obj) {};
+
+  string to_string() const {
+    std::ostringstream stream;
+    stream << "[ix:" << ix <<
+      " name:" << (name == R_NilValue ? "NULL" : CHAR(name)) <<
+      "]";
+    return stream.str();
+  }
+
 };
 
 class Spec {
  public:
   SEXP node = R_NilValue;
   SEXP name = R_NilValue;
+  SEXP exclude = R_NilValue;
   int ix = -1;
   vector<Spec> children;
   bool stack = false;
@@ -30,23 +41,30 @@ class Spec {
     bool has_names = obj_names != R_NilValue;
 
     if (ix >= 0) {
-      // 1) ix has total priority
+      // 1) ix has most priority
       if (ix < N) {
-        SEXP nm = (has_names ? R_NilValue : STRING_ELT(obj_names, ix));
-        out.emplace_back(nm, VECTOR_ELT(obj, ix));
+        SEXP nm = has_names ? STRING_ELT(obj_names, ix) : R_NilValue;
+        out.emplace_back(ix, nm, VECTOR_ELT(obj, ix));
       }
     } else if (node == R_NilValue) {
       // 2) NULL node matches all
       out.reserve(N);
-      for (size_t i = 0; i < N; i++) {
-        SEXP nm = (has_names ? STRING_ELT(obj_names, i) : R_BlankString);
-        out.emplace_back(nm, VECTOR_ELT(obj, i));
+      for (int i = 0; i < N; i++) {
+        SEXP nm = R_NilValue;
+        if (has_names) {
+          nm = STRING_ELT(obj_names, i);
+          if (is_char_in_strvec(nm, exclude)) {
+            continue;
+          }
+        }
+        P("i:%d\n", i);
+        out.emplace_back(i, nm, VECTOR_ELT(obj, i));
       }
     } else if (has_names) {
       // 3) Exact node match
       for (size_t i = 0; i < N; i++) {
         if (STRING_ELT(obj_names, i) == node) {
-          out.emplace_back(name, VECTOR_ELT(obj, i));
+          out.emplace_back(i, name, VECTOR_ELT(obj, i));
           break;
         }
       }
@@ -60,10 +78,12 @@ class Spec {
     stream << "[node:" <<
       (node == R_NilValue ? "NULL" : CHAR(node)) <<
       " name:" << (name == R_NilValue ? "NULL" : CHAR(name)) <<
+      " ix: " << ix <<
       " stack:" << (stack ? "TRUE" : "FALSE") <<
       "]";
     return stream.str();
   }
+
 };
 
 const Spec NilSpec = Spec(R_NilValue, R_NilValue);
@@ -104,7 +124,7 @@ class SexpNode: public Node {
     return TYPEOF(obj);
   }
   void copy_into(SEXP target, R_xlen_t start, R_xlen_t end) const override {
-    P("sexp copy of %ld: type:%s, start:%ld, end:%ld\n",
+    P("sexp copy of node %ld: type:%s, start:%ld, end:%ld\n",
       ix, Rf_type2char(TYPEOF(target)), start, end);
     fill_vector(obj, target, start, end);
   }

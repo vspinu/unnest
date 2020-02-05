@@ -7,11 +7,13 @@
 #include <utility>
 #include <vector>
 #include <string>
+#include <numeric>
+#include <algorithm>
 
 using namespace std;
 
 
-#define DEBUG
+/* #define DEBUG */
 
 #ifdef DEBUG
 #define P(...) printf(__VA_ARGS__)
@@ -24,6 +26,30 @@ SEXP rep_vector(SEXP x, R_xlen_t N);
 SEXP make_na_vector(SEXPTYPE type, R_xlen_t len);
 
 void fill_vector(SEXP source, SEXP target, R_xlen_t from, R_xlen_t to);
+
+
+inline bool is_char_in_strvec(SEXP ch, SEXP str) {
+  if (str == R_NilValue)
+    return false;
+  bool has = false;
+  R_len_t N = XLENGTH(str);
+  for (R_len_t i = 0; i < N; i++) {
+    if (ch == STRING_ELT(str, i)) {
+      has = true;
+      break;
+    }
+  }
+  return has;
+}
+
+template <typename T>
+vector<size_t> orderix(const vector<T>& v) {
+  vector<size_t> idx(v.size());
+  iota(idx.begin(), idx.end(), 0);
+  stable_sort(idx.begin(), idx.end(),
+              [&v](size_t i1, size_t i2) {return v[i1] < v[i2];});
+  return idx;
+}
 
 /* make_unique for c++11 from https://stackoverflow.com/a/17902439/453735 */
 

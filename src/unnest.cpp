@@ -19,14 +19,18 @@ struct hash_pair {
   }
 };
 
-typedef unordered_map<pair<uint_fast32_t, const char*>, uint_fast32_t, hash_pair> pair2ix_map;
-typedef unordered_map<uint_fast32_t, pair<uint_fast32_t, const char*>> ix2pair_map;
+typedef unordered_map<pair<uint_fast32_t, const char*>, uint_fast32_t, hash_pair> cpair2ix_map;
+typedef unordered_map<uint_fast32_t, pair<uint_fast32_t, const char*>> ix2cpair_map;
+
+typedef unordered_map<pair<uint_fast32_t, int>, uint_fast32_t, hash_pair> ipair2ix_map;
+typedef unordered_map<uint_fast32_t, pair<uint_fast32_t, int>> ix2ipair_map;
 
 struct NodeAccumulator {
   R_xlen_t nrows = 1;
   deque<unique_ptr<Node>> pnodes;
 };
 
+// TODO: make this into a constructor?
 Spec list2spec(SEXP lspec) {
   if (TYPEOF(lspec) != VECSXP)
     Rf_error("'spec' must be a list");
@@ -40,37 +44,49 @@ Spec list2spec(SEXP lspec) {
   R_xlen_t N = LENGTH(lspec);
   bool
     done_node = false, done_name = false,
-    done_children = false, done_stack = false;
+    done_children = false, done_stack = false,
+    done_exclude = false;
   SEXP children = R_NilValue;
   Spec spec;
-  spec.name = R_NilValue;
-  spec.node = R_NilValue;
 
   for (R_xlen_t i = 0; i < N; i++) {
     SEXP obj = VECTOR_ELT(lspec, i);
     if (obj != R_NilValue) {
       const char* nm = CHAR(STRING_ELT(names, i));
+
       if (!done_node && !strcmp(nm, "node")) {
-        if (TYPEOF(obj) != STRSXP || XLENGTH(obj) != 1)
-          Rf_error("spec 'node' field must be a string vector of length 1");
-        spec.node = STRING_ELT(obj, 0);
+        if (XLENGTH(obj) != 1)
+          Rf_error("spec's 'node' fields must be of length 1");
+        switch(TYPEOF(obj)) {
+         case STRSXP: spec.node = STRING_ELT(obj, 0); break;
+         case INTSXP: spec.ix = INTEGER(obj)[0] - 1; break;
+         case REALSXP: spec.ix = REAL(obj)[0] - 1; break;
+         default:
+          Rf_error("spec's 'node' field must be NULL, string or numeric vector");
+        }
         done_node = true;
       } else  if (!done_name && !strcmp(nm, "name")) {
         if (TYPEOF(obj) != STRSXP || XLENGTH(obj) != 1)
-          Rf_error("spec 'name' field must be a string vector of length 1");
+          Rf_error("spec's 'name' field must be a string vector of length 1");
         spec.name = STRING_ELT(obj, 0);
         done_name = true;
       } else if (!done_stack && !strcmp(nm, "stack")) {
         if (TYPEOF(obj) != LGLSXP || XLENGTH(obj) != 1)
-          Rf_error("spec 'stack' field must be a logical vector of length 1");
+          Rf_error("spec's 'stack' field must be a logical vector of length 1");
         spec.stack = LOGICAL(obj)[0];
         done_stack = true;
       } else if (!done_children && !strcmp(nm, "children")) {
         if (TYPEOF(obj) != VECSXP)
-          Rf_error("spec 'children' field must be a list");
+          Rf_error("spec's 'children' field must be a list");
         children = obj;
         done_children = true;
+      } else if (!done_exclude && !strcmp(nm, "exclude")) {
+        if (TYPEOF(obj) != STRSXP)
+          Rf_error("spec's 'exclude' field must be a character vector");
+        spec.exclude = obj;
+        done_exclude = true;
       }
+
     }
   }
 
@@ -93,36 +109,61 @@ class Unnester {
 
  private:
 
-  pair2ix_map p2i;
-  ix2pair_map i2p;
+  cpair2ix_map cp2i;
+  ix2cpair_map i2cp;
+
+  ipair2ix_map ip2i;
+  ix2ipair_map i2ip;
 
   vector<string> num_cache;
   string delimiter = ".";
   uint_fast32_t next_ix = 1;
 
-  void populate_num_cache(R_xlen_t N) {
-    if (num_cache.size() < N) {
-      num_cache.reserve(N);
-      for (R_xlen_t i = num_cache.size(); i < N; i++) {
-        num_cache.push_back(to_string(i+1));
-      }
-    }
-  }
+  /* const char* ix2char(int ix) { */
+  /*   if (ix < 0) return ""; */
+  /*   if (ix >= num_cache.size()) */
+  /*     num_cache.resize(ix + 1, ""); */
+  /*   string out = num_cache[ix]; */
+  /*   if (out == "") { */
+  /*     out = to_string(ix + 1); */
+  /*     num_cache[ix] = out; */
+  /*   } */
+  /*   return out.c_str(); */
+  /* } */
 
   uint_fast32_t child_ix(uint_fast32_t parent_ix, const char* cname) {
     //  pname: aka pair name, <parent ix, char* this name>
     auto pname = make_pair(parent_ix, cname);
     uint_fast32_t ix;
-
-    pair2ix_map::iterator pnameit = p2i.find(pname);
-    if (pnameit == p2i.end()) {
+    cpair2ix_map::iterator pnameit = cp2i.find(pname);
+    if (pnameit == cp2i.end()) {
       ix = next_ix++;
-      p2i.insert(make_pair(pname, ix));
-      i2p.insert(make_pair(ix, pname));
+      cp2i.insert(make_pair(pname, ix));
+      i2cp.insert(make_pair(ix, pname));
     } else {
       ix = pnameit->second;
     }
     return ix;
+  }
+
+  uint_fast32_t child_ix(uint_fast32_t parent_ix, int cix) {
+    auto pix = make_pair(parent_ix, cix);
+    uint_fast32_t ix;
+    ipair2ix_map::iterator pixit = ip2i.find(pix);
+    if (pixit == ip2i.end()) {
+      ix = next_ix++;
+      ip2i.insert(make_pair(pix, ix));
+      i2ip.insert(make_pair(ix, pix));
+    } else {
+      ix = pixit->second;
+    }
+    return ix;
+  }
+
+  uint_fast32_t child_ix(uint_fast32_t parent_ix, const SpecMatch& match) {
+    return (match.name == R_NilValue) ?
+      child_ix(parent_ix, match.ix):
+      child_ix(parent_ix, CHAR(match.name));
   }
 
   string full_name(uint_fast32_t ix) {
@@ -130,17 +171,26 @@ class Unnester {
 	if (ix == 0)
 	  return "";
 
-	forward_list<const char*> acc;
-	ix2pair_map::iterator pit;
+	ix2cpair_map::iterator pcit;
+    ix2ipair_map::iterator piit;
+
+    forward_list<string> acc;
 
 	do {
-	  pit = i2p.find(ix);
-	  if (pit == i2p.end())
-		Rf_error("[Bug] Iname not in the hashmap, please report");
-	  ix = pit->second.first;
-      if (*(pit->second.second) != '\0')
-        acc.push_front(pit->second.second);
-	} while (ix != 0);
+      pcit = i2cp.find(ix);
+	  if (pcit == i2cp.end()) {
+        piit = i2ip.find(ix);
+        if (piit == i2ip.end())
+          Rf_error("[Bug] Iname not in index hashmaps, please report");
+        ix = piit->second.first;
+        acc.push_front(to_string(piit->second.second + 1));
+      } else {
+        ix = pcit->second.first;
+        if (*(pcit->second.second) != '\0') {
+          acc.emplace_front(pcit->second.second);
+        }
+      }
+    } while (ix != 0);
 
     if (acc.empty())
       return "";
@@ -152,25 +202,9 @@ class Unnester {
 	  out.append(delimiter).append(acc.front());
 	  acc.pop_front();
 	}
+
 	return out;
   }
-
-  /* inline void add_child_node(NodeAccumulator& acc, const Spec& pspec, */
-  /*                            SEXP cx, uint_fast32_t cix) { */
-  /*   if (pspec.stack) { */
-  /*     P(">>> stack_child_nodes:\n"); */
-  /*     stack_child_nodes(acc, pspec, cx, cix); */
-  /*     P("<<< stack_child_nodes:\n"); */
-  /*   } else { */
-  /*     if (pspec.children.size() == 0) { */
-  /*       add_node(acc, NilSpec, cx, cix); */
-  /*     } else { */
-  /*       for (const Spec& cspec: pspec.children) { */
-  /*         add_node(acc, cspec, cx, cix); */
-  /*       } */
-  /*     } */
-  /*   } */
-  /* } */
 
   void add_node(NodeAccumulator& acc, const Spec& spec,
                 SEXP x, uint_fast32_t ix) {
@@ -183,14 +217,13 @@ class Unnester {
         bool has_names = names != R_NilValue;
 
         const vector<SpecMatch>& matches = spec.match(x);
-        P("matches: %ld\n", matches.size());
-        for (const SpecMatch& m: matches) {
-          uint_fast32_t cix = child_ix(ix, CHAR(m.name));
-          if (spec.stack) {
-            P(">>> stack_child_nodes:\n");
-            stack_child_nodes(acc, spec, m.obj, cix);
-            P("<<< stack_child_nodes:\n");
-          } else {
+        P("  (matches: %ld)\n", matches.size());
+        if (spec.stack) {
+          stack_nodes(acc, spec, matches, ix);
+        } else {
+          for (const SpecMatch& m: matches) {
+            uint_fast32_t cix = child_ix(ix, m);
+            P("  (cix: %ld match: %s)\n", cix, m.to_string().c_str());
             if (spec.children.empty()) {
               add_node(acc, NilSpec, m.obj, cix);
             } else {
@@ -200,26 +233,6 @@ class Unnester {
             }
           }
         }
-
-        /* if (spec.node == R_NilValue) { */
-        /*   if (!has_names) { */
-        /*     populate_num_cache(N); */
-        /*   } */
-        /*   for (R_xlen_t i = 0; i < N; i++) { */
-        /*     const char* cname = */
-        /*       has_names ? CHAR(STRING_ELT(names, i)) : num_cache[i].c_str(); */
-        /*     add_child_node(acc, spec, VECTOR_ELT(x, i), child_ix(ix, cname)); */
-        /*   } */
-        /* } else if (has_names) { */
-        /*   for (R_xlen_t i = 0; i < N; i++) { */
-        /*     SEXP nm = STRING_ELT(names, i); */
-        /*     if (spec.node == nm) { */
-        /*       const char* name = CHAR(spec.name); */
-        /*       add_child_node(acc, spec, VECTOR_ELT(x, i), child_ix(ix, name)); */
-        /*     } */
-        /*   } */
-        /* } */
-
         P("<-- added node:%s(%ld) acc[%ld,%ld]\n",
           full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
       } else {
@@ -233,33 +246,28 @@ class Unnester {
     }
   }
 
-  void stack_child_nodes(NodeAccumulator& acc, const Spec& pspec,
-                         SEXP x, uint_fast32_t ix) {
-    if (TYPEOF(x) != VECSXP)
-      Rf_error("Cannot stack a non-list (node: %s spec:%s)",
-               full_name(ix).c_str(),
-               pspec.to_string().c_str());
-    R_xlen_t N = XLENGTH(x);
+  void stack_nodes(NodeAccumulator& acc,
+                   const Spec& spec,
+                   const vector<SpecMatch>& matches,
+                   uint_fast32_t ix) {
+    P(">>> stack_nodes ---\n");
+    size_t N = matches.size();
     R_xlen_t beg = 0, end=0;
     unordered_map<uint_fast32_t, unique_ptr<RangeNode>> out_nodes;
 
-    SEXP names = Rf_getAttrib(x, R_NamesSymbol);
-    bool has_names = names != R_NilValue;
-
-    for (R_xlen_t i = 0; i < N; i++) {
+    for (const SpecMatch& m: matches) {
       NodeAccumulator iacc;
-      if (pspec.children.size() == 0) {
-        add_node(iacc, NilSpec, VECTOR_ELT(x, i), ix);
+
+      // TODO: keep index/names in a key column
+      /* uint_fast32_t cix = (m.name == R_NilValue) ? ix : child_ix(ix, CHAR(m.name)); */
+      if (spec.children.empty()) {
+        add_node(iacc, NilSpec, m.obj, ix);
       } else {
-        for (const Spec& cspec: pspec.children) {
-          P("--- here:\n");
-          add_node(iacc, cspec, VECTOR_ELT(x, i), ix);
-          /* if (cspec.node == R_NilValue || */
-          /*     (has_names && cspec.node == STRING_ELT(names, i))) { */
-          /*   add_node(iacc, pspec, VECTOR_ELT(x, i), ix); */
-          /* } */
+        for (const Spec& cspec: spec.children) {
+          add_node(iacc, cspec, m.obj, ix);
         }
       }
+
       end += iacc.nrows;
 
       // move to out_nodes
@@ -292,6 +300,8 @@ class Unnester {
     }
 
     acc.nrows *= end;
+    P("<<< stack_nodes ---\n");
+
   }
 
 
@@ -307,22 +317,35 @@ class Unnester {
     size_t nrows = (ncols > 0 ? acc.nrows : 0);
 
     P("FINAL: nrow:%ld ncol:%ld\n", nrows, ncols);
-    SEXP out = PROTECT(Rf_allocVector(VECSXP, ncols));
-    SEXP names = PROTECT(Rf_allocVector(STRSXP, ncols));
+    // temporary output holder to avoid protecting each element
+    SEXP tout = PROTECT(Rf_allocVector(VECSXP, ncols));
+    vector<string> str_names;
+    str_names.reserve(ncols);
 
-    R_xlen_t i = ncols - 1;
+    R_xlen_t i = 0;
 
 	for (unique_ptr<Node>& p: acc.pnodes) {
       P("alloc type: %s\n", Rf_type2char(p->type()));
       if (p->type() == VECSXP)
         Rf_error("Cannot handle irregular types yet");
       SEXP obj = make_na_vector(p->type(), nrows);
-	  SET_VECTOR_ELT(out, i, obj);
+	  SET_VECTOR_ELT(tout, i, obj);
       p->copy_into(obj, 0, nrows);
-      string name = full_name(p->ix);
-	  SET_STRING_ELT(names, i, Rf_mkCharLenCE(name.c_str(), name.size(), CE_UTF8));
-	  i--;
+      str_names.push_back(full_name(p->ix));
+      P("ADDED:%s(%ld)\n", full_name(p->ix).c_str(), p->ix);
+	  i++;
 	}
+
+    SEXP names = PROTECT(Rf_allocVector(STRSXP, ncols));
+    SEXP out = PROTECT(Rf_allocVector(VECSXP, ncols));
+
+    vector<size_t> ixes = orderix(str_names);
+
+    for (size_t i: ixes) {
+      const string& nm = str_names[ixes[i]];
+	  SET_STRING_ELT(names, i, Rf_mkCharLenCE(nm.c_str(), nm.size(), CE_UTF8));
+      SET_VECTOR_ELT(out, i, VECTOR_ELT(tout, ixes[i]));
+    }
 
 	// build data.frame
 	SEXP row_names = PROTECT(Rf_allocVector(INTSXP, 2));
@@ -331,7 +354,7 @@ class Unnester {
 	Rf_setAttrib(out, R_ClassSymbol, ScalarString(mkChar("data.frame")));
 	Rf_setAttrib(out, R_RowNamesSymbol, row_names);
 	Rf_setAttrib(out, R_NamesSymbol, names);
-	UNPROTECT(3);
+	UNPROTECT(4);
 
 	return out;
   }

@@ -21,7 +21,7 @@ print.unnest.spec <- function(x, ...) {
 }
 
 #' @export
-s <- function(node = NULL, ..., name = NULL, stack = FALSE) {
+s <- function(node = NULL, ..., name = NULL, exclude = NULL, stack = FALSE) {
   children <- list(...)
   if (is.unnest.spec(node)) {
     children <- c(list(node), children)
@@ -32,32 +32,35 @@ s <- function(node = NULL, ..., name = NULL, stack = FALSE) {
                  paste(names(children)[nzchar(names(children))], collapse = ",")))
   if (!all(isuspec <- sapply(children, is.unnest.spec)))
     stop("all spec children must be unnest.specs")
-  if (!is.null(node) && !is.character(node))
-    stop("Spec node must be NULL or a character string")
-  if (length(node) == 1)
+  if (!(is.null(node) || is.character(node) || is.numeric(node)))
+    stop("Spec node must be NULL, numeric, or a character string")
+  if (is.character(node) && length(node) == 1)
     node <- strsplit(node, ":", fixed = TRUE)[[1]]
-  el <- list(node = node,
-             name = name,
-             stack = stack,
-             children = children)
+  el <- c(list(node = node),
+          if (!is.null(name)) list(name = name),
+          if (!is.null(exclude)) list(exclude = exclude),
+          stack = stack,
+          if (length(children) > 0) list(children = children))
   if (length(node) > 1) {
-    el[["node"]] <- node[[length(node)]]
-    new_name <- el[["name"]]
-    for (node in rev(node[-length(node)])) {
+    el_name <- el[["name"]]
+    first <- TRUE
+    for (node in rev(node)) {
       if (identical(node, ""))
         node <- NULL
       else if (grepl("^\\[[0-9]+\\]$", node))
         node <- as.integer(substr(node, 2, nchar(node) - 1))
-      el <- unnest.spec(list(node = node,
-                             ## special case: remove all nested names TOTHINK: better marker?
-                             name = if (!is.null(new_name)) "",
-                             children = list(unnest.spec(el))))
-      if (is.null(el[["name"]]))
-        el[["name"]] <- NULL
+      el1 <- unnest.spec(list(node = node,
+                              ## special case: remove all nested names TOTHINK: better marker?
+                              name = if (first) el_name
+                                     else if (!is.null(el_name) && !is.null(node)) "",
+                              children = if(first) el[["children"]]
+                                         else list(unnest.spec(el1))))
+      first <- FALSE
+      if (is.null(el1[["name"]]))
+        el1[["name"]] <- NULL
     }
+    el <- el1
   }
-  if (is.null(el[["name"]]))
-    el[["name"]] <- NULL
   unnest.spec(el)
 }
 
