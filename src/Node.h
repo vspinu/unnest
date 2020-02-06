@@ -2,104 +2,7 @@
 #ifndef UNNEST_NODE_H
 #define UNNEST_NODE_H
 
-#include <tuple>
-#include <cstring>
-#include <sstream>
 #include "common.h"
-
-struct SpecMatch {
-  int ix = -1;
-  SEXP name, obj;
-  SpecMatch(int ix, SEXP name, SEXP obj): ix(ix), name(name), obj(obj) {};
-
-  string to_string() const {
-    std::ostringstream stream;
-    stream << "[ix:" << ix <<
-      " name:" << (name == R_NilValue ? "NULL" : CHAR(name)) <<
-      "]";
-    return stream.str();
-  }
-
-};
-
-class Spec {
- public:
-  SEXP node = R_NilValue;
-  SEXP name = R_NilValue;
-  SEXP exclude = R_NilValue;
-  int ix = -1;
-  vector<Spec> children;
-  bool stack = false;
-
-  Spec(): node(R_NilValue), name(R_NilValue) {};
-  Spec(SEXP node, SEXP name): node(node), name(name) {};
-
-  vector<SpecMatch> match(SEXP obj) const {
-    int N = LENGTH(obj);
-    vector<SpecMatch> out;
-    SEXP obj_names = Rf_getAttrib(obj, R_NamesSymbol);
-    bool has_names = obj_names != R_NilValue;
-
-    if (ix >= 0) {
-      // 1) ix has most priority
-      if (ix < N) {
-        SEXP nm = has_names ? STRING_ELT(obj_names, ix) : R_NilValue;
-        out.emplace_back(ix, nm, VECTOR_ELT(obj, ix));
-      }
-    } else if (node == R_NilValue) {
-      // 2) NULL node matches all
-      out.reserve(N);
-      for (int i = 0; i < N; i++) {
-        SEXP nm = R_NilValue;
-        if (has_names) {
-          nm = STRING_ELT(obj_names, i);
-          if (is_char_in_strvec(nm, exclude)) {
-            continue;
-          }
-        }
-        P("i:%d\n", i);
-        out.emplace_back(i, nm, VECTOR_ELT(obj, i));
-      }
-    } else if (has_names) {
-      // 3) Exact node match
-      for (size_t i = 0; i < N; i++) {
-        if (STRING_ELT(obj_names, i) == node) {
-          out.emplace_back(i, name, VECTOR_ELT(obj, i));
-          break;
-        }
-      }
-    }
-
-    return out;
-  }
-
-  string to_string() const {
-    std::ostringstream stream;
-    stream << "[node:" <<
-      (node == R_NilValue ? "NULL" : CHAR(node)) <<
-      " name:" << (name == R_NilValue ? "NULL" : CHAR(name)) <<
-      " ix: " << ix <<
-      " stack:" << (stack ? "TRUE" : "FALSE") <<
-      "]";
-    return stream.str();
-  }
-
-};
-
-const Spec NilSpec = Spec(R_NilValue, R_NilValue);
-
-inline bool isSpec(SEXP s)
-{
-    SEXP cls;
-    if (OBJECT(s)) {
-      cls = getAttrib(s, R_ClassSymbol);
-      for (int i = 0; i < LENGTH(cls); i++)
-	    if (!strcmp(CHAR(STRING_ELT(cls, i)), "unnest.spec"))
-          return true;
-    }
-    return false;
-}
-
 
 class Node {
  public:
@@ -126,7 +29,12 @@ class SexpNode: public Node {
   void copy_into(SEXP target, R_xlen_t start, R_xlen_t end) const override {
     P("sexp copy of node %ld: type:%s, start:%ld, end:%ld\n",
       ix, Rf_type2char(TYPEOF(target)), start, end);
-    fill_vector(obj, target, start, end);
+    if (TYPEOF(target) == TYPEOF(obj)) {
+      fill_vector(obj, target, start, end);
+    } else {
+      SEXP obj1 = Rf_coerceVector(obj, TYPEOF(target));
+      fill_vector(obj1, target, start, end);
+    }
   }
 };
 
@@ -145,9 +53,20 @@ class RangeNode: public Node {
   void push(R_xlen_t start, R_xlen_t end, unique_ptr<Node> pnode) {
     if (pnodes.size() == 0) {
       _type = pnode->type();
-    } else {
-      if (_type != pnode->type()) {
-        _type = VECSXP;
+    } else if (_type != STRSXP) {
+      SEXPTYPE new_type = pnode->type();
+      if (_type != new_type) {
+        if (new_type == STRSXP)
+          _type = STRSXP;
+        else if (new_type == REALSXP)
+          _type = REALSXP;
+        else if (new_type == LGLSXP || new_type == INTSXP) {
+          if (_type == LGLSXP)
+            _type = INTSXP;
+        } else {
+          // fallback on character
+          _type = STRSXP;
+        }
       }
     }
     pnodes.emplace_back(start, end, move(pnode));
@@ -183,4 +102,4 @@ class RangeNode: public Node {
   }
 };
 
-#endif // UNNEST_H
+#endif // UNNEST_NODE_H

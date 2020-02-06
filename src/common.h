@@ -2,16 +2,18 @@
 #ifndef UNNEST_COMMON_H
 #define UNNEST_COMMON_H
 
-#include "Rinternals.h"
+#include <algorithm>
+#include <cstring>
 #include <memory>
+#include <numeric>
+#include <sstream>
+#include <string>
 #include <utility>
 #include <vector>
-#include <string>
-#include <numeric>
-#include <algorithm>
+#include <tuple>
+#include "Rinternals.h"
 
 using namespace std;
-
 
 /* #define DEBUG */
 
@@ -22,11 +24,8 @@ using namespace std;
 #endif
 
 SEXP rep_vector(SEXP x, R_xlen_t N);
-
 SEXP make_na_vector(SEXPTYPE type, R_xlen_t len);
-
 void fill_vector(SEXP source, SEXP target, R_xlen_t from, R_xlen_t to);
-
 
 inline bool is_char_in_strvec(SEXP ch, SEXP str) {
   if (str == R_NilValue)

@@ -21,7 +21,7 @@ print.unnest.spec <- function(x, ...) {
 }
 
 #' @export
-s <- function(node = NULL, ..., name = NULL, exclude = NULL, stack = FALSE) {
+s <- function(node = NULL, ..., as = NULL, exclude = NULL, stack = FALSE) {
   children <- list(...)
   if (is.unnest.spec(node)) {
     children <- c(list(node), children)
@@ -37,12 +37,12 @@ s <- function(node = NULL, ..., name = NULL, exclude = NULL, stack = FALSE) {
   if (is.character(node) && length(node) == 1)
     node <- strsplit(node, ":", fixed = TRUE)[[1]]
   el <- c(list(node = node),
-          if (!is.null(name)) list(name = name),
+          if (!is.null(as)) list(as = as),
           if (!is.null(exclude)) list(exclude = exclude),
           stack = stack,
           if (length(children) > 0) list(children = children))
   if (length(node) > 1) {
-    el_name <- el[["name"]]
+    el_as <- el[["as"]]
     first <- TRUE
     for (node in rev(node)) {
       if (identical(node, ""))
@@ -51,13 +51,13 @@ s <- function(node = NULL, ..., name = NULL, exclude = NULL, stack = FALSE) {
         node <- as.integer(substr(node, 2, nchar(node) - 1))
       el1 <- unnest.spec(list(node = node,
                               ## special case: remove all nested names TOTHINK: better marker?
-                              name = if (first) el_name
-                                     else if (!is.null(el_name) && !is.null(node)) "",
+                              as = if (first) el_as
+                                   else if (!is.null(el_as) && !is.null(node)) "",
                               children = if(first) el[["children"]]
                                          else list(unnest.spec(el1))))
       first <- FALSE
-      if (is.null(el1[["name"]]))
-        el1[["name"]] <- NULL
+      if (is.null(el1[["as"]]))
+        el1[["as"]] <- NULL
     }
     el <- el1
   }

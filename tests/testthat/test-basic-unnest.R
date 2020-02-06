@@ -121,19 +121,30 @@ test_that("Double stacking works", {
 
 
 test_that("Renaming works", {
-  expect_equal(names(unnest(x, s("a", name = "A", s("b", s("e", name = "E", s("g")))))),
+  expect_equal(names(unnest(x, s("a", as = "A", s("b", s("e", as = "E", s("g")))))),
                "A.b.E.g")
   out <- unnest(x, s("a",
                      s("b",
-                       s("e", name = "E", s("f", name = "F")),
-                       s("c", name = "C", s(stack = T)))))
+                       s("e", as = "E", s("f", as = "F")),
+                       s("c", as = "C", s(stack = T)))))
   expect_equal(names(out),  c("a.b.C.a", "a.b.C.b", "a.b.C.c", "a.b.E.F"))
-  expect_equal(unnest(x, s("a", s("b", name = "", s("e", name = "E", s("g"))))),
+  expect_equal(unnest(x, s("a", s("b", as = "", s("e", as = "E", s("g"))))),
                structure(list(a.E.g = 4:6), class = "data.frame", row.names = c(NA, 3L)))
 })
 
+test_that("Dropping names works", {
+  expect_equal(unnestl(x, s("a:b", s("c:[2]:a", as = "x"))),
+               list(a.b.x = 2))
+
+  expect_equal(unnestl(x, s("a:b:c:[2]:a", as = "")),
+               structure(list(2), .Names = ""))
+
+  expect_equal(unnestl(x, s("a:b:c:[2]", as = "")),
+               list(a = 2, c = 2))
+})
+
 test_that("Short form node spec works", {
-  expect_equal(unnestl(x, s("a:b:d", name = "aaa")),
+  expect_equal(unnestl(x, s("a:b:d", as = "aaa")),
                list(aaa = 2:1))
   expect_equal(unnestl(x, s("a::d")),
                list(a.b.d = 2:1))
@@ -171,4 +182,12 @@ test_that("Integer nodes work", {
                list(a.b.c.3.a = c(3, 3, 3),
                     a.b.c.3.b = c(3, 3, 3),
                     a.b.e.g = 4:6))
+})
+
+test_that("Multi-chai works", {
+  u <- unnestl(x, s("a", s("b:d"), s("b:c:[3]:a", as = "x")))
+  expect_equal(u, l(a.b.d = 2:1, a.x = c(3, 3)))
+  expect_equal(u, unnestl(x, s(s("b:d"), s("b:c:[3]:a", as = "x"))))
+  expect_equal(unnestl(x, s("a:b", s("d"), s("c:[3]:a", as = "x"))),
+               l(a.b.d = 2:1, a.b.x = c(3, 3)))
 })
