@@ -119,6 +119,22 @@ test_that("Double stacking works", {
 
 })
 
+test_that("Stacking index is created", {
+
+  xx <- l(x, x)
+  xx[[1]][["a"]][["id"]] <- 1L
+  xx[[2]][["a"]][["id"]] <- 2L
+
+  expect_equal(unnestl(xx, s(stack = T, as = "z.id",
+                             s("a", s("id"),
+                               s("b:c", as = "", s(stack = T, as = "c.id"))))),
+               list(a.a = c(1, 2, 3, 1, 2, 3), a.b = c(1, NA, 3, 1, NA, 3),
+                    a.c = c(NA, 2, NA, NA, 2, NA),
+                    a.c.id = c(1L, 2L, 3L, 1L, 2L, 3L),
+                    a.id = c(1L, 1L, 1L, 2L, 2L, 2L),
+                    z.id = c(1L, 1L, 1L, 2L, 2L, 2L)))
+})
+
 
 test_that("Renaming works", {
   expect_equal(names(unnest(x, s("a", as = "A", s("b", s("e", as = "E", s("g")))))),
@@ -184,7 +200,7 @@ test_that("Integer nodes work", {
                     a.b.e.g = 4:6))
 })
 
-test_that("Multi-chai works", {
+test_that("Multi-chain works", {
   u <- unnestl(x, s("a", s("b:d"), s("b:c:[3]:a", as = "x")))
   expect_equal(u, l(a.b.d = 2:1, a.x = c(3, 3)))
   expect_equal(u, unnestl(x, s(s("b:d"), s("b:c:[3]:a", as = "x"))))

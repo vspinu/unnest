@@ -167,14 +167,19 @@ class Unnester {
                    uint_fast32_t ix) {
     P(">>> stack_nodes ---\n");
     size_t N = matches.size();
+
     R_xlen_t beg = 0, end=0;
     unordered_map<uint_fast32_t, unique_ptr<RangeNode>> out_nodes;
 
+    bool do_ix = (spec.name != R_NilValue && spec.name != R_BlankString);
+    unique_ptr<IxNode> pix;
+    if (do_ix)
+      pix = make_unique<IxNode>(child_ix(ix, CHAR(spec.name)));
+
+    int i = 1;
     for (const SpecMatch& m: matches) {
       NodeAccumulator iacc;
 
-      // TODO: keep index/names in a key column
-      /* uint_fast32_t cix = (m.name == R_NilValue) ? ix : child_ix(ix, CHAR(m.name)); */
       if (spec.children.empty()) {
         add_node(iacc, NilSpec, m.obj, ix);
       } else {
@@ -184,6 +189,10 @@ class Unnester {
       }
 
       end += iacc.nrows;
+
+      // add index
+      if (do_ix)
+        pix->push(beg, end, i++);
 
       // move to out_nodes
       while (!iacc.pnodes.empty()) {
@@ -205,6 +214,11 @@ class Unnester {
         iacc.pnodes.pop_front();
       }
       beg = end;
+    }
+
+    if (do_ix) {
+      pix->set_size(end);
+      acc.pnodes.push_front(move(pix));
     }
 
     for (auto& on: out_nodes) {

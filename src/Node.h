@@ -38,6 +38,55 @@ class SexpNode: public Node {
   }
 };
 
+class IxNode: public Node {
+
+  R_xlen_t _size = 0;
+  SEXPTYPE _type = NILSXP;
+  vector<tuple<R_xlen_t, R_xlen_t, int>> _ixes;
+
+ public:
+
+  IxNode(uint_fast32_t ix): Node(ix) {};
+
+  void push(R_xlen_t start, R_xlen_t end, int ix) {
+    _ixes.emplace_back(start, end, ix);
+  }
+
+  R_xlen_t size() const override {
+    return _size;
+  }
+
+  void set_size(R_xlen_t size) {
+    _size = size;
+  }
+
+  SEXPTYPE type() const override {
+    return INTSXP;
+  }
+
+  void copy_into(SEXP target, R_xlen_t beg, R_xlen_t end) const override {
+    size_t N = _ixes.size();
+    if (TYPEOF(target) != INTSXP)
+      Rf_error("Cannot copy an IxNode into a non INTSXP target (%s)",
+               Rf_type2char(TYPEOF(target)));
+    int* IX = INTEGER(target);
+    R_xlen_t IN = XLENGTH(target);
+    P("ix copy of %ld: beg:%ld, end:%ld N-ixes:%ld\n", ix, beg, end, N);
+	for (R_xlen_t beg1 = beg; beg1 < end; beg1 += _size) {
+      for (size_t n = 0; n < N; n++) {
+        const auto& t = _ixes[n];
+        R_xlen_t
+          beg2 = beg1 + get<0>(t),
+          end2 = beg1 + get<1>(t);
+        P("  n:%ld beg2:%ld end2:%ld\n", n, beg2, end2);
+        for (R_xlen_t i = beg2; i < end2; i++) {
+          IX[i] = get<2>(t);
+        }
+      }
+    }
+  }
+};
+
 class RangeNode: public Node {
 
   R_xlen_t _size = 0;
