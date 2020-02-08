@@ -1,14 +1,17 @@
 Package: unnest
-Title: What the Package Does (One Line, Title Case)
+Title: Quicly unnest hierarchical data structures
 Version: 0.0.0.9000
 Authors@R:
-    person(given = "First",
-           family = "Last",
+    person(given = "Vitalie",
+           family = "Spinu",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: What license it uses
+           email = "spinuvit@gmail.com")
+Description: Fast conversion of hierarchical data structures (e.g. jsons, xml
+             etc) into data.frames. Unnesting is performed according to a spec
+             which allows for both flattening and stacking of the nested
+             levels. The entire algorithm performs a single copy of the original
+             nested structures into the final output.
+License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.0.1
