@@ -25,6 +25,7 @@ print.unnest.spec <- function(x, ...) {
 #' @export
 s <- function(node = NULL, ..., as = NULL, exclude = NULL, stack = FALSE, sep = "/") {
   children <- list(...)
+  children <- children[!sapply(children, is.null)]
   if (is.unnest.spec(node)) {
     children <- c(list(node), children)
     node <- NULL

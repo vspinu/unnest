@@ -15,10 +15,8 @@ test_that("Renaming works", {
 test_that("Dropping names works", {
   expect_equal(unnestl(x, s("a/b", s("c/[2]/a", as = "x"))),
                list(a.b.x = 2))
-
   expect_equal(unnestl(x, s("a/b/c/[2]/a", as = "")),
                structure(list(2), .Names = ""))
-
   expect_equal(unnestl(x, s("a/b/c/[2]", as = "")),
                list(a = 2, c = 2))
 })

@@ -123,7 +123,11 @@ class Unnester {
 
   void add_node(NodeAccumulator& acc, const Spec& spec,
                 SEXP x, uint_fast32_t ix) {
+
+    if (x == R_NilValue) return;
+
     R_xlen_t N = XLENGTH(x);
+
     if (N > 0) {
       if (TYPEOF(x) == VECSXP) {
         P("--> add node:%s(%ld) %s\n", full_name(ix).c_str(), ix, spec.to_string().c_str());
@@ -150,7 +154,7 @@ class Unnester {
         }
         P("<-- added node:%s(%ld) acc[%ld,%ld]\n",
           full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
-      } else {
+      } else if (x != R_NilValue){
         if (spec.children.size() == 0) {
           acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
           acc.nrows *= N;
