@@ -23,7 +23,9 @@ print.unnest.spec <- function(x, ...) {
 }
 
 #' @export
-s <- function(node = NULL, ..., as = NULL, exclude = NULL, stack = FALSE, sep = "/") {
+s <- function(node = NULL, ..., as = NULL,
+              exclude = NULL, stack = FALSE,
+              dedupe = NULL, sep = "/") {
   children <- list(...)
   children <- children[!sapply(children, is.null)]
   if (is.unnest.spec(node)) {
@@ -43,6 +45,7 @@ s <- function(node = NULL, ..., as = NULL, exclude = NULL, stack = FALSE, sep = 
           if (!is.null(as)) list(as = as),
           if (!is.null(exclude)) list(exclude = exclude),
           stack = stack,
+          if (!is.null(dedupe)) list(dedupe = dedupe),
           if (length(children) > 0) list(children = children))
   if (length(node) > 1) {
     el_as <- el[["as"]]

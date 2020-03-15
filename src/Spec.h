@@ -17,6 +17,8 @@ struct SpecMatch {
 };
 
 struct Spec {
+  enum Dedupe {INHERIT, TRUE, FALSE};
+  Dedupe dedupe = INHERIT;
   SEXP node = R_NilValue;
   SEXP name = R_NilValue;
   SEXP exclude = R_NilValue;

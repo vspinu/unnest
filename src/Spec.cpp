@@ -16,7 +16,7 @@ Spec list2spec(SEXP lspec) {
   bool
     done_node = false, done_as = false,
     done_children = false, done_stack = false,
-    done_exclude = false;
+    done_exclude = false, done_dedupe = false;
   SEXP children = R_NilValue;
 
   Spec spec;
@@ -57,8 +57,18 @@ Spec list2spec(SEXP lspec) {
           Rf_error("spec's 'exclude' field must be a character vector");
         spec.exclude = obj;
         done_exclude = true;
+      } else if (!done_dedupe && !strcmp(nm, "dedupe")) {
+        if (obj == R_NilValue) {
+          spec.dedupe = Spec::Dedupe::INHERIT;
+        } else {
+          if (TYPEOF(obj) != LGLSXP || XLENGTH(obj) != 1)
+            Rf_error("spec's 'dedupe' field must be a logical vector of length 1");
+          spec.dedupe = (LOGICAL(obj)[0]) ?
+            Spec::Dedupe::TRUE :
+            Spec::Dedupe::FALSE;
+        }
+        done_dedupe = true;
       }
-
     }
   }
 

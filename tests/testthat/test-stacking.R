@@ -26,8 +26,6 @@ test_that("Stacking of unnamed levels works", {
 
 })
 
-
-
 test_that("Stacking of named level works", {
   x <- l("1" = l(a = 1, b = l(c = 1:2)),
          "2" = l(a = 2, b = l(d = 2L)),
@@ -39,7 +37,6 @@ test_that("Stacking of named level works", {
                     b.c = c(1L, 2L, NA, 3L),
                     b.d = c(NA, NA, 2L, NA)))
 })
-
 
 test_that("Double stacking works", {
 

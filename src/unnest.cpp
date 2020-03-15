@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include "common.h"
 #include "Node.h"
+#include "VarAccumulator.h"
 #include "Spec.h"
 
 #undef nrows
@@ -121,54 +122,65 @@ class Unnester {
 	return out;
   }
 
-  void add_node(NodeAccumulator& acc, const Spec& spec,
-                SEXP x, uint_fast32_t ix) {
+  inline void add_node(NodeAccumulator& acc, VarAccumulator& vacc,
+                       const Spec& spec, uint_fast32_t ix, SEXP x) {
+    if (x == R_NilValue || XLENGTH(x) == 0) return; // XLENGTH doesn't work on NULL
+    if (vacc.has_var(ix)) return;
+    if (spec.dedupe == Spec::Dedupe::INHERIT) {
+      add_node_impl(acc, vacc, spec, ix, x);
+    } else {
+      VarAccumulator nvacc(spec.dedupe == Spec::Dedupe::TRUE);
+      add_node_impl(acc, nvacc, spec, ix, x);
+    }
+  }
 
-    if (x == R_NilValue) return;
+  void add_node_impl(NodeAccumulator& acc, VarAccumulator& vacc,
+                     const Spec& spec, uint_fast32_t ix, SEXP x) {
+    if (TYPEOF(x) == VECSXP) {
+      P("--> add node:%s(%ld) %s\n", full_name(ix).c_str(), ix, spec.to_string().c_str());
+      SEXP names = Rf_getAttrib(x, R_NamesSymbol);
+      bool has_names = names != R_NilValue;
 
-    R_xlen_t N = XLENGTH(x);
+      const vector<SpecMatch>& matches = spec.match(x);
+      P("  (matches: %ld)\n", matches.size());
+      if (spec.stack) {
+        stack_nodes(acc, vacc, spec, ix, matches);
+      } else {
+        spread_nodes(acc, vacc, spec, ix, matches);
+      }
 
-    if (N > 0) {
-      if (TYPEOF(x) == VECSXP) {
-        P("--> add node:%s(%ld) %s\n", full_name(ix).c_str(), ix, spec.to_string().c_str());
-
-        SEXP names = Rf_getAttrib(x, R_NamesSymbol);
-        bool has_names = names != R_NilValue;
-
-        const vector<SpecMatch>& matches = spec.match(x);
-        P("  (matches: %ld)\n", matches.size());
-        if (spec.stack) {
-          stack_nodes(acc, spec, matches, ix);
-        } else {
-          for (const SpecMatch& m: matches) {
-            uint_fast32_t cix = child_ix(ix, m);
-            P("  (cix: %ld match: %s)\n", cix, m.to_string().c_str());
-            if (spec.children.empty()) {
-              add_node(acc, NilSpec, m.obj, cix);
-            } else {
-              for (const Spec& cspec: spec.children) {
-                add_node(acc, cspec, m.obj, cix);
-              }
-            }
-          }
-        }
-        P("<-- added node:%s(%ld) acc[%ld,%ld]\n",
+      P("<-- added node:%s(%ld) acc[%ld,%ld]\n",
+        full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
+    } else {
+      if (spec.children.size() == 0) {
+        acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
+        acc.nrows *= XLENGTH(x);
+        P("-- added sexp node:%s(%ld) acc[%ld,%ld]\n",
           full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
-      } else if (x != R_NilValue){
-        if (spec.children.size() == 0) {
-          acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
-          acc.nrows *= N;
-          P("-- added sexp node:%s(%ld) acc[%ld,%ld]\n",
-            full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
+      }
+    }
+  }
+
+  void spread_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
+                    const Spec& spec, uint_fast32_t ix,
+                    const vector<SpecMatch>& matches) {
+    for (const SpecMatch& m: matches) {
+      uint_fast32_t cix = child_ix(ix, m);
+      P("  (cix: %ld match: %s)\n", cix, m.to_string().c_str());
+      if (spec.children.empty()) {
+        add_node(acc, vacc, NilSpec, cix, m.obj);
+        vacc.add_var(cix);
+      } else {
+        for (const Spec& cspec: spec.children) {
+          add_node(acc, vacc, cspec, cix, m.obj);
         }
       }
     }
   }
 
-  void stack_nodes(NodeAccumulator& acc,
-                   const Spec& spec,
-                   const vector<SpecMatch>& matches,
-                   uint_fast32_t ix) {
+  void stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
+                   const Spec& spec, uint_fast32_t ix,
+                   const vector<SpecMatch>& matches) {
     P(">>> stack_nodes ---\n");
     size_t N = matches.size();
 
@@ -183,12 +195,13 @@ class Unnester {
     int i = 1;
     for (const SpecMatch& m: matches) {
       NodeAccumulator iacc;
+      VarAccumulator ivacc(vacc.accumulate);
 
       if (spec.children.empty()) {
-        add_node(iacc, NilSpec, m.obj, ix);
+        add_node(iacc, ivacc, NilSpec, ix, m.obj);
       } else {
         for (const Spec& cspec: spec.children) {
-          add_node(iacc, cspec, m.obj, ix);
+          add_node(iacc, ivacc, cspec, ix, m.obj);
         }
       }
 
@@ -244,7 +257,8 @@ class Unnester {
     const Spec spec = (lspec == R_NilValue) ? NilSpec : list2spec(lspec);
 
 	NodeAccumulator acc;
-	add_node(acc, spec, x, 0);
+    VarAccumulator vacc(false);
+	add_node(acc, vacc, spec, 0, x);
 
     size_t ncols = acc.pnodes.size();
     size_t nrows = (ncols > 0 ? acc.nrows : 0);
