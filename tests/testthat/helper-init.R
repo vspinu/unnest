@@ -1,6 +1,12 @@
 
 l <- base::list
-unnestl <- function(x, s) as.list(unnest(x, s))
+
+unnestl <- function(x, s) {
+  out <- unnest(x, s)
+  if (is.data.frame(out)) as.list(out)
+  else lapply(out, as.list)
+}
+
 x <- l(a = l(
          b = l(
            d = 2:1,

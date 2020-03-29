@@ -13,7 +13,7 @@ unnest.spec <- function(x) {
 
 #' @export
 str.unnest.spec <- function(object, nest.lev = 0, no.list = FALSE, ...) {
-  cat("<unnest.spec>\n")
+  cat(sprintf("<%s>\n", paste(class(object), collapse = ",")))
   utils:::str.default(object, nest.lev = nest.lev, no.list = T, ...)
 }
 
@@ -24,9 +24,10 @@ print.unnest.spec <- function(x, ...) {
 
 #' @export
 s <- function(node = NULL, ..., as = NULL,
-              exclude = NULL, stack = FALSE,
-              dedupe = NULL, sep = "/") {
-  children <- list(...)
+              children = NULL, groups = NULL,
+              exclude = NULL, dedupe = NULL,
+              stack = FALSE, sep = "/") {
+  children <- c(children, list(...))
   children <- children[!sapply(children, is.null)]
   if (is.unnest.spec(node)) {
     children <- c(list(node), children)
@@ -39,6 +40,9 @@ s <- function(node = NULL, ..., as = NULL,
     stop("all spec children must be unnest.specs")
   if (!(is.null(node) || is.character(node) || is.numeric(node)))
     stop("Spec node must be NULL, numeric, or a character string")
+  if (!is.null(groups))
+    if (!is.list(groups) || is.null(names(groups)))
+      stop("Groups argument must be a list of named specs")
   if (is.character(node) && length(node) == 1)
     node <- strsplit(paste0(node, sep), sep, fixed = TRUE)[[1]]
   el <- c(list(node = node),
@@ -46,7 +50,8 @@ s <- function(node = NULL, ..., as = NULL,
           if (!is.null(exclude)) list(exclude = exclude),
           stack = stack,
           if (!is.null(dedupe)) list(dedupe = dedupe),
-          if (length(children) > 0) list(children = children))
+          if (length(children) > 0) list(children = children),
+          if (!is.null(groups)) list(groups = groups))
   if (length(node) > 1) {
     el_as <- el[["as"]]
     first <- TRUE
@@ -62,7 +67,8 @@ s <- function(node = NULL, ..., as = NULL,
                               stack = if (first && stack) stack,
                               exclude = if(first) exclude,
                               children = if(first) el[["children"]]
-                                         else list(unnest.spec(el1))))
+                                         else list(unnest.spec(el1)),
+                              groups = if (first) el[["groups"]]))
       first <- FALSE
     }
     el <- el1
@@ -75,5 +81,8 @@ spec <- s
 
 #' @export
 unnest <- function(x, spec = NULL) {
+  if (!is.null(spec) && !inherits(spec, "unnest.spec")) {
+    stop("`spec` argument must be either `unnest.spec` or `unnest.pspec`", call. = FALSE)
+  }
   .Call(C_unnest, x,  spec)
 }

@@ -11,7 +11,7 @@ struct SpecMatch {
 
   string to_string() const {
     std::ostringstream stream;
-    stream << "[ix:" << ix << " name:" << (name == R_NilValue ? "NULL" : CHAR(name)) << "]";
+    stream << "spec[ix:" << ix << " name:" << (name == R_NilValue ? "NULL" : CHAR(name)) << "]";
     return stream.str();
   }
 };
@@ -24,6 +24,7 @@ struct Spec {
   SEXP exclude = R_NilValue;
   int ix = -1;
   vector<Spec> children;
+  vector<tuple<SEXP, vector<Spec>>> groups;
   bool stack = false;
 
   Spec(): node(R_NilValue), name(R_NilValue) {};
@@ -88,7 +89,10 @@ struct Spec {
 Spec list2spec(SEXP lspec);
 bool isSpec(SEXP s);
 
+tuple<SEXP, vector<Spec>> spec_group(SEXP name, SEXP obj);
+
 const Spec NilSpec = Spec(R_NilValue, R_NilValue);
+const Spec LeafSpec = Spec(R_NilValue, R_NilValue);
 
 
 #endif // UNNEST_SPEC_H

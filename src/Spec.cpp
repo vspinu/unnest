@@ -15,9 +15,10 @@ Spec list2spec(SEXP lspec) {
   R_xlen_t N = LENGTH(lspec);
   bool
     done_node = false, done_as = false,
-    done_children = false, done_stack = false,
-    done_exclude = false, done_dedupe = false;
-  SEXP children = R_NilValue;
+    done_children = false, done_groups = false,
+    done_stack = false, done_exclude = false,
+    done_dedupe = false;
+  SEXP children = R_NilValue, groups = R_NilValue;
 
   Spec spec;
 
@@ -52,6 +53,11 @@ Spec list2spec(SEXP lspec) {
           Rf_error("spec's 'children' field must be a list");
         children = obj;
         done_children = true;
+      } else if (!done_groups && !strcmp(nm, "groups")) {
+        if (TYPEOF(obj) != VECSXP)
+          Rf_error("spec's 'groups' field must be a list");
+        groups = obj;
+        done_groups = true;
       } else if (!done_exclude && !strcmp(nm, "exclude")) {
         if (TYPEOF(obj) != STRSXP)
           Rf_error("spec's 'exclude' field must be a character vector");
@@ -84,6 +90,18 @@ Spec list2spec(SEXP lspec) {
       spec.children.emplace_back(list2spec(ch));
     }
   }
+  if (groups != R_NilValue) {
+    R_xlen_t NG = XLENGTH(groups);
+    SEXP gnames = Rf_getAttrib(groups, R_NamesSymbol);
+    if (gnames == R_NilValue)
+      Rf_error("groups must be a named list");
+    spec.groups.reserve(NG);
+    for (R_xlen_t g = 0; g < NG; g++) {
+      const tuple<SEXP, vector<Spec>> gr =
+        spec_group(STRING_ELT(gnames, g), VECTOR_ELT(groups, g));
+      spec.groups.push_back(gr);
+    }
+  }
   return spec;
 }
 
@@ -97,3 +115,21 @@ bool isSpec(SEXP s) {
    }
    return false;
  }
+
+tuple<SEXP, vector<Spec>> spec_group(SEXP name, SEXP obj) {
+  vector<Spec> specs;
+  if (TYPEOF(obj) != VECSXP)
+    Rf_error("Spec group must be an `unnest.spec` or a list of `unnest.spec`s");
+  if (isSpec(obj)) {
+    specs.push_back(list2spec(obj));
+  } else {
+    size_t N = XLENGTH(obj);
+    for (size_t i = 0; i < N; i++) {
+      SEXP s = VECTOR_ELT(obj, i);
+      if (!isSpec(s))
+        Rf_error("Each element of a group must be a spec. Not true for '%s'", CHAR(name));
+      specs.push_back(list2spec(s));
+    }
+  }
+  return tuple<SEXP, vector<Spec>>(name, specs);
+}
