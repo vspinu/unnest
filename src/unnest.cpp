@@ -95,8 +95,9 @@ void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
   vector<unique_ptr<IxNode>> pixs;
   if (do_ix) {
     uint_fast32_t cix = child_ix(ix, CHAR(spec.name));
-    for (auto& pix: pixs)
-      pix = make_unique<IxNode>(cix);
+    for (size_t i = 0; i < Ngr; i++) {
+      pixs.push_back(make_unique<IxNode>(cix));
+    }
   }
 
   vector<R_xlen_t> beg(Ngr, 0), end(Ngr, 0);

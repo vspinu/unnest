@@ -42,6 +42,7 @@ void add_node(UT& U, AT& acc, VarAccumulator& vacc,
               const Spec& spec, uint_fast32_t ix, SEXP x) {
   if (x == R_NilValue || XLENGTH(x) == 0) return; // XLENGTH doesn't work on NULL
   if (&spec == &NilSpec && vacc.has_var(ix)) return;
+  P("nill,leaf spec: [%d,%d]\n", &spec == &NilSpec, &spec == &LeafSpec);
   if (spec.dedupe == Spec::Dedupe::INHERIT) {
     U.add_node_impl(acc, vacc, spec, ix, x);
   } else {
@@ -151,7 +152,7 @@ struct Unnester {
       P("<-- added node:%s(%ld) acc[%ld,%ld]\n",
         full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
     } else {
-      if (spec.children.size() == 0) {
+      if (&spec == &LeafSpec || &spec == &NilSpec) {
         acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
         acc.nrows *= XLENGTH(x);
         P("-- added sexp node:%s(%ld) acc[%ld,%ld]\n",

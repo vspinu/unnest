@@ -55,25 +55,31 @@ test_that("Deduping with stacking of named level works", {
                     b.d = c(NA, NA, 2L, NA)))
 
   expect_equal(unnestl(y[1], s(dedupe = T, s("a"), s("b", s("d"), s("c"), s("c")))),
-               list(`1.a` = c(1, 1), `1.b.c` = 1:2))
-  expect_equal(unnestl(y[1], s(dedupe = F, s("a"), s("b", s("d"), s("c"), s("c")))),
                list(`1.a` = c(1, 1, 1, 1),
                     `1.b.c` = c(1L, 2L, 1L, 2L),
                     `1.b.c` = c(1L, 2L, 1L, 2L)))
+  expect_equal(unnestl(y[1], s(dedupe = F, s("a"), s("b", s("d"), s("c"), s("c")))),
+               unnestl(y[1], s(dedupe = T, s("a"), s("b", s("d"), s("c"), s("c")))))
+
+  expect_equal(
+    unnestl(y, s(dedupe = T, s("a"), s("b", s("d")), s("b"))),
+    {
+      tt <- unnestl(y, s(dedupe = F, s("a"), s("b", s("d")), s("b")))
+      tt[["2.b.d"]] <- NULL
+      tt
+    })
+
 
   ## FIXME: rethink the following cases. We are eating duplicated names during
   ## stacking.
 
-  expect_equal(unnestl(y, s(stack = T, dedupe = T, s("a"), s("b", s("d"), s("c"), s("c")))),
-               list(a = c(1, 1, 2, 3),
-                    b.c = c(1L, 2L, NA, 3L),
-                    b.d = c(NA, NA, 2L, NA)))
   expect_equal(unnestl(y, s(stack = T, dedupe = F, s("a"), s("b", s("d"), s("c"), s("c")))),
                list(a = c(1, 1, 1, 1, 2, 3),
                     b.c = c(1L, 2L, 1L, 2L, NA, 3L),
                     b.d = c(NA, NA, NA, NA, 2L, NA)))
-  expect_equal(unnestl(y, s(stack = T, s("a"), s("b", s("d"), s("c"), s("c")))),
-               unnestl(y, s(stack = T, dedupe = F, s("a"), s("b", s("d"), s("c"), s("c")))))
+
+  expect_equal(unnestl(y, s(stack = T, s("a"), s("b", s("d"), s("c")))),
+               unnestl(y, s(stack = T, dedupe = F, s("a"), s("b", s("d"), s("c")))))
 
   expect_equal(unnestl(y, s(stack = T, s("a"), s("b"), s("b", s("d")))),
                list(a = c(1, 1, 2, 3),
