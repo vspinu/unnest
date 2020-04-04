@@ -98,6 +98,12 @@ struct Unnester {
       child_ix(parent_ix, CHAR(match.name));
   }
 
+  uint_fast32_t child_ix(uint_fast32_t parent_ix, SEXP cname) {
+    return (cname == R_NilValue) ?
+      child_ix(parent_ix, CHAR(R_BlankString)):
+      child_ix(parent_ix, CHAR(cname));
+  }
+
   string full_name(uint_fast32_t ix) {
 
 	if (ix == 0)

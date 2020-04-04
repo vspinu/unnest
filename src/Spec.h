@@ -6,8 +6,11 @@
 
 struct SpecMatch {
   int ix = -1;
-  SEXP name, obj;
-  SpecMatch(int ix, SEXP name, SEXP obj): ix(ix), name(name), obj(obj) {};
+  SEXP name, orig_name, obj;
+  SpecMatch(int ix, SEXP name, SEXP obj):
+    ix(ix), name(name), obj(obj) {};
+  SpecMatch(int ix, SEXP name, SEXP orig_name, SEXP obj):
+    ix(ix), name(name), orig_name(orig_name), obj(obj) {};
 
   string to_string() const {
     std::ostringstream stream;

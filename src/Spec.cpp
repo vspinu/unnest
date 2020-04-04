@@ -4,19 +4,16 @@
 
 vector<SpecMatch> Spec::match(SEXP obj) const {
   int N = LENGTH(obj);
-  vector<SpecMatch> out;
   SEXP obj_names = Rf_getAttrib(obj, R_NamesSymbol);
   bool has_names = obj_names != R_NilValue;
+
+  vector<SpecMatch> out;
 
   if (ix >= 0) {
     // 1) ix has the highest priority
     if (ix < N) {
-      SEXP nm = R_NilValue;
-      if (name != R_NilValue)
-        nm = name;
-      else if (has_names)
-        nm = STRING_ELT(obj_names, ix);
-      out.emplace_back(ix, nm, VECTOR_ELT(obj, ix));
+      SEXP nm = has_names ? STRING_ELT(obj_names, ix) : R_NilValue;
+      out.emplace_back(ix, name, nm, VECTOR_ELT(obj, ix));
     }
   } else if (node == R_NilValue) {
     // 2) NULL node matches all
@@ -38,13 +35,13 @@ vector<SpecMatch> Spec::match(SEXP obj) const {
           }
         }
       }
-      out.emplace_back(i, nm, VECTOR_ELT(obj, i));
+      out.emplace_back(i, nm, nm, VECTOR_ELT(obj, i));
     }
   } else if (has_names) {
     // 3) Exact node match
     for (size_t i = 0; i < N; i++) {
       if (STRING_ELT(obj_names, i) == node) {
-        out.emplace_back(i, name, VECTOR_ELT(obj, i));
+        out.emplace_back(i, name, node, VECTOR_ELT(obj, i));
         break;
       }
     }
@@ -95,9 +92,14 @@ Spec list2spec(SEXP lspec) {
         spec.name = STRING_ELT(obj, 0);
         done_as = true;
       } else if (!done_stack && !strcmp(nm, "stack")) {
-        if (TYPEOF(obj) != LGLSXP || XLENGTH(obj) != 1)
-          Rf_error("spec's 'stack' field must be a logical vector of length 1");
-        spec.stack = LOGICAL(obj)[0];
+        if (!(TYPEOF(obj) == LGLSXP || TYPEOF(obj) == STRSXP) || XLENGTH(obj) != 1)
+          Rf_error("spec's 'stack' field must be a logical or a character vector of length 1");
+        if (TYPEOF(obj) == LGLSXP) {
+          spec.stack = LOGICAL(obj)[0];
+        } else {
+          spec.stack = true;
+          spec.ix_name = STRING_ELT(obj, 0);
+        }
         done_stack = true;
       } else if (!done_children && !strcmp(nm, "children")) {
         if (TYPEOF(obj) != VECSXP)

@@ -42,14 +42,18 @@ class IxNode: public Node {
 
   R_xlen_t _size = 0;
   SEXPTYPE _type = NILSXP;
-  vector<tuple<R_xlen_t, R_xlen_t, int>> _ixes;
+  vector<tuple<R_xlen_t, R_xlen_t, int>> _int_ixs;
+  vector<tuple<R_xlen_t, R_xlen_t, SEXP>> _chr_ixs;
 
  public:
 
   IxNode(uint_fast32_t ix): Node(ix) {};
 
-  void push(R_xlen_t start, R_xlen_t end, int ix) {
-    _ixes.emplace_back(start, end, ix);
+  void push(R_xlen_t start, R_xlen_t end, int ix, SEXP name) {
+    if (name != R_NilValue)
+      _chr_ixs.emplace_back(start, end, name);
+    else
+      _int_ixs.emplace_back(start, end, ix);
   }
 
   R_xlen_t size() const override {
@@ -61,29 +65,59 @@ class IxNode: public Node {
   }
 
   SEXPTYPE type() const override {
-    return INTSXP;
+    return (_chr_ixs.size() == 0) ? INTSXP : STRSXP;
   }
 
-  void copy_into(SEXP target, R_xlen_t beg, R_xlen_t end) const override {
-    size_t N = _ixes.size();
-    if (TYPEOF(target) != INTSXP)
-      Rf_error("Cannot copy an IxNode into a non INTSXP target (%s)",
-               Rf_type2char(TYPEOF(target)));
+  void copy_into_INTSXP(SEXP target, R_xlen_t beg, R_xlen_t end) const {
+    size_t N = _int_ixs.size();
     int* IX = INTEGER(target);
-    R_xlen_t IN = XLENGTH(target);
     P("ix copy of %ld: beg:%ld, end:%ld N-ixes:%ld\n", ix, beg, end, N);
 	for (R_xlen_t beg1 = beg; beg1 < end; beg1 += _size) {
-      for (size_t n = 0; n < N; n++) {
-        const auto& t = _ixes[n];
+      for (const auto& t: _int_ixs) {
         R_xlen_t
           beg2 = beg1 + get<0>(t),
           end2 = beg1 + get<1>(t);
-        P("  n:%ld beg2:%ld end2:%ld\n", n, beg2, end2);
+        P("  <int>beg2:%ld end2:%ld\n", beg2, end2);
         for (R_xlen_t i = beg2; i < end2; i++) {
           IX[i] = get<2>(t);
         }
       }
     }
+  }
+
+  void copy_into_STRSXP(SEXP target, R_xlen_t beg, R_xlen_t end) const {
+    P("ix copy of %ld: beg:%ld, end:%ld N-ixes:%ld\n", ix, beg, end, N);
+	for (R_xlen_t beg1 = beg; beg1 < end; beg1 += _size) {
+      for (const auto& t: _chr_ixs) {
+        R_xlen_t
+          beg2 = beg1 + get<0>(t),
+          end2 = beg1 + get<1>(t);
+        P("  <str>beg2:%ld end2:%ld\n", beg2, end2);
+        for (R_xlen_t i = beg2; i < end2; i++) {
+          SET_STRING_ELT(target, i, get<2>(t));
+        }
+      }
+      // convert integers to chars for the rare mixed int/str case
+      for (const auto& t: _int_ixs) {
+        R_xlen_t
+          beg2 = beg1 + get<0>(t),
+          end2 = beg1 + get<1>(t);
+        P("  <int:str>beg2:%ld end2:%ld\n", beg2, end2);
+        for (R_xlen_t i = beg2; i < end2; i++) {
+          SET_STRING_ELT(target, i, Rf_mkChar(to_string(get<2>(t)).c_str()));
+        }
+      }
+    }
+  }
+
+  void copy_into(SEXP target, R_xlen_t beg, R_xlen_t end) const override {
+    size_t N = _int_ixs.size();
+    if (TYPEOF(target) == INTSXP)
+      copy_into_INTSXP(target, beg, end);
+    else if (TYPEOF(target) == STRSXP)
+      copy_into_STRSXP(target, beg, end);
+    else Rf_error("Cannot copy an IxNode into a non INTSXP or non STRSXP target (%s)",
+                  Rf_type2char(TYPEOF(target)));
   }
 };
 

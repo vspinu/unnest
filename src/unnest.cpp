@@ -9,24 +9,24 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
   R_xlen_t beg = 0, end=0;
   unordered_map<uint_fast32_t, unique_ptr<RangeNode>> out_nodes;
 
-  bool do_ix = (spec.name != R_NilValue && spec.name != R_BlankString);
+  bool do_ix = spec.ix_name != R_NilValue;
   unique_ptr<IxNode> pix;
   if (do_ix)
-    pix = make_unique<IxNode>(child_ix(ix, CHAR(spec.name)));
+    pix = make_unique<IxNode>(child_ix(ix, CHAR(spec.ix_name)));
+
+  uint_fast32_t cix = child_ix(ix, spec.name);
 
   int i = 1;
   for (const SpecMatch& m: matches) {
     NodeAccumulator iacc;
     VarAccumulator ivacc(vacc.accumulate);
 
-
-    dispatch_match_to_child(iacc, ivacc, spec, ix, m);
-
+    dispatch_match_to_child(iacc, ivacc, spec, cix, m);
     end += iacc.nrows;
 
     // add index
     if (do_ix)
-      pix->push(beg, end, i++);
+      pix->push(beg, end, m.ix + 1, m.orig_name);
 
     // move to out_nodes
     while (!iacc.pnodes.empty()) {
@@ -79,14 +79,14 @@ void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
   if (accs.size() != Ngr)
     Rf_error("Internal: Invalid grouped stack. Accumulator size (%ld) and spec size (%l) mismatch.",
              accs.size(), Ngr);
-  bool do_ix = (spec.name != R_NilValue && spec.name != R_BlankString);
+  bool do_ix = spec.ix_name != R_NilValue;
 
   if (spec.children.size() > 0)
     Rf_error("Supplying both children and groups is not yet supported");
 
   vector<unique_ptr<IxNode>> pixs;
   if (do_ix) {
-    uint_fast32_t cix = child_ix(ix, CHAR(spec.name));
+    uint_fast32_t cix = child_ix(ix, CHAR(spec.ix_name));
     for (size_t i = 0; i < Ngr; i++) {
       pixs.push_back(make_unique<IxNode>(cix));
     }
@@ -95,7 +95,8 @@ void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
   vector<R_xlen_t> beg(Ngr, 0), end(Ngr, 0);
   vector<unordered_map<uint_fast32_t, unique_ptr<RangeNode>>> out_nodess(Ngr);
 
-  int i = 1;
+  uint_fast32_t cix = child_ix(ix, spec.name);
+
   for (const SpecMatch& m: matches) {
     vector<NodeAccumulator> iaccs(Ngr);
     VarAccumulator ivacc(vacc.accumulate);
@@ -103,15 +104,13 @@ void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
     for (size_t gi = 0; gi < Ngr; gi++) {
       const vector<Spec>& gspecs = get<1>(spec.groups[gi]);
       for (const Spec& s: gspecs) {
-        add_node(*this, iaccs[gi], ivacc, s, ix, m.obj);
+        add_node(*this, iaccs[gi], ivacc, s, cix, m.obj);
       }
       end[gi] += iaccs[gi].nrows;
       // add index
       if (do_ix)
-        pixs[gi]->push(beg[gi], end[gi], i);
+        pixs[gi]->push(beg[gi], end[gi], m.ix + 1, m.orig_name);
     }
-
-    i++;
 
     // move to out_nodes
     for (size_t gi = 0; gi < Ngr; gi++) {
