@@ -25,8 +25,9 @@ print.unnest.spec <- function(x, ...) {
 #' @export
 s <- function(node = NULL, ..., as = NULL,
               children = NULL, groups = NULL,
-              exclude = NULL, dedupe = NULL,
-              stack = FALSE, sep = "/") {
+              include = NULL, exclude = NULL,
+              dedupe = NULL, stack = FALSE,
+              node_sep = "/") {
   children <- c(children, list(...))
   children <- children[!sapply(children, is.null)]
   if (is.unnest.spec(node)) {
@@ -44,9 +45,10 @@ s <- function(node = NULL, ..., as = NULL,
     if (!is.list(groups) || is.null(names(groups)))
       stop("Groups argument must be a list of named specs")
   if (is.character(node) && length(node) == 1)
-    node <- strsplit(paste0(node, sep), sep, fixed = TRUE)[[1]]
+    node <- strsplit(paste0(node, node_sep), node_sep, fixed = TRUE)[[1]]
   el <- c(list(node = node),
           if (!is.null(as)) list(as = as),
+          if (!is.null(include)) list(include = include),
           if (!is.null(exclude)) list(exclude = exclude),
           stack = stack,
           if (!is.null(dedupe)) list(dedupe = dedupe),
@@ -65,6 +67,7 @@ s <- function(node = NULL, ..., as = NULL,
                               as = if (first) el_as
                                    else if (!is.null(el_as) && !is.null(node)) "",
                               stack = if (first && stack) stack,
+                              include = if(first) include,
                               exclude = if(first) exclude,
                               children = if(first) el[["children"]]
                                          else list(unnest.spec(el1)),

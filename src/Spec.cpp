@@ -2,6 +2,57 @@
 #include "common.h"
 #include "Spec.h"
 
+vector<SpecMatch> Spec::match(SEXP obj) const {
+  int N = LENGTH(obj);
+  vector<SpecMatch> out;
+  SEXP obj_names = Rf_getAttrib(obj, R_NamesSymbol);
+  bool has_names = obj_names != R_NilValue;
+
+  if (ix >= 0) {
+    // 1) ix has the highest priority
+    if (ix < N) {
+      SEXP nm = R_NilValue;
+      if (name != R_NilValue)
+        nm = name;
+      else if (has_names)
+        nm = STRING_ELT(obj_names, ix);
+      out.emplace_back(ix, nm, VECTOR_ELT(obj, ix));
+    }
+  } else if (node == R_NilValue) {
+    // 2) NULL node matches all
+    if (include == R_NilValue) {
+      out.reserve(N);
+    } else {
+      if (!has_names)
+        return (out);
+    }
+    for (int i = 0; i < N; i++) {
+      SEXP nm = R_NilValue;
+      if (has_names) {
+        nm = STRING_ELT(obj_names, i);
+        if (is_char_in_strvec(nm, exclude)) {
+          continue;
+        } else if (include != R_NilValue) {
+          if (!is_char_in_strvec(nm, include)) {
+            continue;
+          }
+        }
+      }
+      out.emplace_back(i, nm, VECTOR_ELT(obj, i));
+    }
+  } else if (has_names) {
+    // 3) Exact node match
+    for (size_t i = 0; i < N; i++) {
+      if (STRING_ELT(obj_names, i) == node) {
+        out.emplace_back(i, name, VECTOR_ELT(obj, i));
+        break;
+      }
+    }
+  }
+
+  return out;
+}
+
 Spec list2spec(SEXP lspec) {
   if (TYPEOF(lspec) != VECSXP)
     Rf_error("'spec' must be a list");
@@ -16,8 +67,8 @@ Spec list2spec(SEXP lspec) {
   bool
     done_node = false, done_as = false,
     done_children = false, done_groups = false,
-    done_stack = false, done_exclude = false,
-    done_dedupe = false;
+    done_stack = false, done_include = false,
+    done_exclude = false, done_dedupe = false;
   SEXP children = R_NilValue, groups = R_NilValue;
 
   Spec spec;
@@ -63,6 +114,11 @@ Spec list2spec(SEXP lspec) {
           Rf_error("spec's 'exclude' field must be a character vector");
         spec.exclude = obj;
         done_exclude = true;
+      } else if (!done_include && !strcmp(nm, "include")) {
+        if (TYPEOF(obj) != STRSXP)
+          Rf_error("spec's 'include' field must be a character vector");
+        spec.include = obj;
+        done_include = true;
       } else if (!done_dedupe && !strcmp(nm, "dedupe")) {
         if (obj == R_NilValue) {
           spec.dedupe = Spec::Dedupe::INHERIT;

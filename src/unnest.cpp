@@ -22,14 +22,6 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
 
     dispatch_match_to_child(iacc, ivacc, spec, ix, m);
 
-    /* if (spec.children.empty()) { */
-    /*   add_node(*this, iacc, ivacc, NilSpec, ix, m.obj); */
-    /* } else { */
-    /*   for (const Spec& cspec: spec.children) { */
-    /*     add_node(*this, iacc, ivacc, cspec, ix, m.obj); */
-    /*   } */
-    /* } */
-
     end += iacc.nrows;
 
     // add index

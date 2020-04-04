@@ -21,57 +21,18 @@ struct Spec {
   Dedupe dedupe = INHERIT;
   SEXP node = R_NilValue;
   SEXP name = R_NilValue;
+  SEXP include = R_NilValue;
   SEXP exclude = R_NilValue;
   int ix = -1;
   vector<Spec> children;
   vector<tuple<SEXP, vector<Spec>>> groups;
   bool stack = false;
+  SEXP ix_name = R_NilValue;
 
   Spec(): node(R_NilValue), name(R_NilValue) {};
-
   Spec(SEXP node, SEXP name): node(node), name(name) {};
 
-  vector<SpecMatch> match(SEXP obj) const {
-    int N = LENGTH(obj);
-    vector<SpecMatch> out;
-    SEXP obj_names = Rf_getAttrib(obj, R_NamesSymbol);
-    bool has_names = obj_names != R_NilValue;
-
-    if (ix >= 0) {
-      // 1) ix has the highest priority
-      if (ix < N) {
-        SEXP nm = R_NilValue;
-        if (name != R_NilValue)
-          nm = name;
-        else if (has_names)
-          nm = STRING_ELT(obj_names, ix);
-        out.emplace_back(ix, nm, VECTOR_ELT(obj, ix));
-      }
-    } else if (node == R_NilValue) {
-      // 2) NULL node matches all
-      out.reserve(N);
-      for (int i = 0; i < N; i++) {
-        SEXP nm = R_NilValue;
-        if (has_names) {
-          nm = STRING_ELT(obj_names, i);
-          if (is_char_in_strvec(nm, exclude)) {
-            continue;
-          }
-        }
-        out.emplace_back(i, nm, VECTOR_ELT(obj, i));
-      }
-    } else if (has_names) {
-      // 3) Exact node match
-      for (size_t i = 0; i < N; i++) {
-        if (STRING_ELT(obj_names, i) == node) {
-          out.emplace_back(i, name, VECTOR_ELT(obj, i));
-          break;
-        }
-      }
-    }
-
-    return out;
-  }
+  vector<SpecMatch> match(SEXP obj) const;
 
   string to_string() const {
     std::ostringstream stream;
@@ -88,7 +49,6 @@ struct Spec {
 
 Spec list2spec(SEXP lspec);
 bool isSpec(SEXP s);
-
 tuple<SEXP, vector<Spec>> spec_group(SEXP name, SEXP obj);
 
 const Spec NilSpec = Spec(R_NilValue, R_NilValue);
