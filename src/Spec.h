@@ -14,7 +14,7 @@ struct SpecMatch {
 
   string to_string() const {
     std::ostringstream stream;
-    stream << "spec[ix:" << ix << " name:" << (name == R_NilValue ? "NULL" : CHAR(name)) << "]";
+    stream << "match[ix:" << ix << " name:" << (name == R_NilValue ? "NULL" : CHAR(name)) << "]";
     return stream.str();
   }
 };

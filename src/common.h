@@ -23,9 +23,15 @@ using namespace std;
 #define P(...)
 #endif
 
+#define PP(...) printf(__VA_ARGS__)
+
+
+// utils.cpp
 SEXP rep_vector(SEXP x, R_xlen_t N);
 SEXP make_na_vector(SEXPTYPE type, R_xlen_t len);
+SEXP extract_scalar(SEXP x, R_xlen_t ix);
 void fill_vector(SEXP source, SEXP target, R_xlen_t from, R_xlen_t to);
+void fill_vector_1(SEXP source, R_xlen_t source_ix, SEXP target, R_xlen_t from, R_xlen_t to);
 
 inline bool is_char_in_strvec(SEXP ch, SEXP str) {
   if (str == R_NilValue)
@@ -42,11 +48,12 @@ inline bool is_char_in_strvec(SEXP ch, SEXP str) {
 }
 
 template <typename T>
-vector<size_t> orderix(const vector<T>& v) {
+vector<size_t> orderix(const vector<T>& v, bool sort = true) {
   vector<size_t> idx(v.size());
   iota(idx.begin(), idx.end(), 0);
-  stable_sort(idx.begin(), idx.end(),
-              [&v](size_t i1, size_t i2) {return v[i1] < v[i2];});
+  if (sort)
+    stable_sort(idx.begin(), idx.end(),
+                [&v](size_t i1, size_t i2) {return v[i1] < v[i2];});
   return idx;
 }
 

@@ -42,7 +42,7 @@ void add_node(UT& U, AT& acc, VarAccumulator& vacc,
               const Spec& spec, uint_fast32_t ix, SEXP x) {
   if (x == R_NilValue || XLENGTH(x) == 0) return; // XLENGTH doesn't work on NULL
   if (&spec == &NilSpec && vacc.has_var(ix)) return;
-  P("nill,leaf spec: [%d,%d]\n", &spec == &NilSpec, &spec == &LeafSpec);
+  P("  nil[%d]/leaf[%d] spec\n", &spec == &NilSpec, &spec == &LeafSpec);
   if (spec.dedupe == Spec::Dedupe::INHERIT) {
     U.add_node_impl(acc, vacc, spec, ix, x);
   } else {
@@ -144,6 +144,18 @@ struct Unnester {
 	return out;
   }
 
+  void add_plain_node(NodeAccumulator& acc, const Spec& spec, uint_fast32_t ix, SEXP x) {
+    R_xlen_t N = XLENGTH(x);
+    if (N == 1) {
+      acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
+    } else {
+      acc.pnodes.push_front(make_unique<ElNode>(ix, 0, x));
+      for (R_xlen_t i = 1; i < N; i++) {
+        acc.pnodes.push_front(make_unique<ElNode>(child_ix(ix, i), i, x));
+      }
+    }
+  }
+
   void add_node_impl(NodeAccumulator& acc, VarAccumulator& vacc,
                      const Spec& spec, uint_fast32_t ix, SEXP x) {
     if (TYPEOF(x) == VECSXP) {
@@ -158,14 +170,24 @@ struct Unnester {
       P("<-- added node:%s(%ld) acc[%ld,%ld]\n",
         full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
     } else {
-      if (&spec == &LeafSpec || &spec == &NilSpec) {
-        acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
-        acc.nrows *= XLENGTH(x);
-        P("-- added sexp node:%s(%ld) acc[%ld,%ld]\n",
-          full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
+      P("--> add plain node:%s(%ld) %s\n", full_name(ix).c_str(), ix, spec.to_string().c_str());;
+      // fixme: forgot, why not children.size() == 0 here?
+      /* if (&spec == &LeafSpec || &spec == &NilSpec) { */
+      if (spec.children.size() == 0) {
+        if (spec.stack) {
+          acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
+          acc.nrows *= XLENGTH(x);
+          P("-- added stacked plain node:%s(%ld) acc[%ld,%ld]\n",
+            full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());;
+        } else {
+          add_plain_node(acc, spec, ix, x);
+          P("-- added spreaded plain node:%s(%ld) acc[%ld,%ld]\n",
+            full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
+        }
       }
     }
   }
+
 
   void add_node_impl(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
                      const Spec& spec, uint_fast32_t ix, SEXP x) {
@@ -194,7 +216,7 @@ struct Unnester {
   inline void dispatch_match_to_child(NodeAccumulator& acc, VarAccumulator& vacc,
                                       const Spec& spec, uint_fast32_t cix,
                                       const SpecMatch& m) {
-    P("  (cix: %ld match: %s)\n", cix, m.to_string().c_str());
+    P("  dispatching (cix:%ld match:%s)\n", cix, m.to_string().c_str());
     if (&spec == &NilSpec || &spec == &LeafSpec) {
       add_node(*this, acc, vacc, NilSpec, cix, m.obj);
       vacc.add_var(cix);

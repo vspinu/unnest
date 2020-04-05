@@ -12,6 +12,8 @@
 	}                                              \
   } while (0)
 
+#define REP1(from, to, i, body) for (i = from; i < to;  ++i) { body }
+
 
 #define FillNA(p,n,na)  std::fill(p, p + n, na)
 
@@ -47,6 +49,72 @@ void fill_vector(SEXP source, SEXP target, R_xlen_t from, R_xlen_t to) {
   }
 
   // FIXME: Add factor levels
+
+}
+
+void fill_vector_1(SEXP source, R_xlen_t source_ix, SEXP target, R_xlen_t from, R_xlen_t to) {
+
+  if (TYPEOF(source) != TYPEOF(target))
+    Rf_error("[Bug] Type of source (%s) must be the same as that of the target (%s)",
+             Rf_type2char(TYPEOF(source)), Rf_type2char(TYPEOF(target)));
+
+  R_xlen_t i;
+  switch (TYPEOF(target)) {
+   case LGLSXP: {
+     int val = LOGICAL(source)[source_ix];
+     REP1(from, to, i, LOGICAL(target)[i] = val;);
+   }; break;
+   case INTSXP: {
+     int val = INTEGER(source)[source_ix];
+     REP1(from, to, i, INTEGER(target)[i] = val;);
+   }; break;
+   case REALSXP: {
+     double val = REAL(source)[source_ix];
+     REP1(from, to, i, REAL(target)[i] = val;);
+   }; break;
+   case CPLXSXP: {
+     Rcomplex val = COMPLEX(source)[source_ix];
+     REP1(from, to, i, COMPLEX(target)[i] = val;);
+   }; break;
+   case RAWSXP: {
+     Rbyte val = RAW(source)[source_ix];
+     REP1(from, to, i, RAW(target)[i] = val;);
+   }; break;
+   case STRSXP: {
+     SEXP val = STRING_ELT(source, source_ix);
+     REP1(from, to, i, SET_STRING_ELT(target, i, val););
+   }; break;
+   case VECSXP:
+   case EXPRSXP: {
+     SEXP val = VECTOR_ELT(source, source_ix);
+     REP1(from, to, i, SET_VECTOR_ELT(target, i, lazy_duplicate(val)););
+   }; break;
+   default:
+     Rf_error("Cannot unnest lists with elements of type %s", Rf_type2char(TYPEOF(source)));
+  }
+
+  // FIXME: Add factor levels
+
+}
+
+SEXP extract_scalar(SEXP x, R_xlen_t ix) {
+
+  switch (TYPEOF(x)) {
+   case LGLSXP:
+     return Rf_ScalarLogical(LOGICAL(x)[ix]);
+   case INTSXP:
+     return Rf_ScalarInteger(INTEGER(x)[ix]);
+   case REALSXP:
+     return Rf_ScalarReal(REAL(x)[ix]);
+   case CPLXSXP:
+     return Rf_ScalarComplex(COMPLEX(x)[ix]);
+   case RAWSXP:
+     return Rf_ScalarRaw(RAW(x)[ix]);
+   case STRSXP:
+     return Rf_ScalarString(STRING_ELT(x, ix));
+   default:
+     Rf_error("Cannot extract scalar from a vector of type %s", Rf_type2char(TYPEOF(x)));
+  }
 
 }
 

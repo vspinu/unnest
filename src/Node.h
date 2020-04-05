@@ -16,6 +16,30 @@ class Node {
   Node (uint_fast32_t ix): ix(ix) {};
 };
 
+class ElNode: public Node {
+ public:
+  SEXP obj;
+  size_t el;
+  ElNode(uint_fast32_t ix, size_t el, SEXP obj): Node(ix), el(el), obj(obj) {};
+  R_xlen_t size() const override {
+    return 1;
+  }
+  SEXPTYPE type() const override {
+    return TYPEOF(obj);
+  }
+  void copy_into(SEXP target, R_xlen_t start, R_xlen_t end) const override {
+    P("el copy of node %ld: el:%ld type:%s, start:%ld, end:%ld\n",
+      ix, el, Rf_type2char(TYPEOF(target)), start, end);
+    if (TYPEOF(target) == TYPEOF(obj)) {
+      fill_vector_1(obj, el, target, start, end);
+    } else {
+      // Raw element coercion is not exposed by Rinternals. So extract scalar first.
+      SEXP obj1 = Rf_coerceVector(extract_scalar(obj, el), TYPEOF(target));
+      fill_vector_1(obj1, 0, target, start, end);
+    }
+  }
+};
+
 class SexpNode: public Node {
  public:
   SEXP obj;
@@ -86,7 +110,7 @@ class IxNode: public Node {
   }
 
   void copy_into_STRSXP(SEXP target, R_xlen_t beg, R_xlen_t end) const {
-    P("ix copy of %ld: beg:%ld, end:%ld N-ixes:%ld\n", ix, beg, end, N);
+    P("ix copy of %ld: beg:%ld, end:%ld N-ixes:%ld\n", ix, beg, end, XLENGTH(target));
 	for (R_xlen_t beg1 = beg; beg1 < end; beg1 += _size) {
       for (const auto& t: _chr_ixs) {
         R_xlen_t
