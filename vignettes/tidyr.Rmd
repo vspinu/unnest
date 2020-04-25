@@ -1,0 +1,271 @@
+---
+title: "Comparison with tidyr rectangling"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Comparison with tidyr rectangling}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>")
+```
+
+[tidyr]: https://tidyr.tidyverse.org/articles/rectangle.html
+
+## Introduction
+
+As per [tidyr]() definition unnesting (or rectangling):
+
+     ... is the art and craft of taking a deeply nested list (often sourced
+     from wild caught JSON or XML) and taming it into a tidy data set of rows and
+     columns. There are three functions from tidyr that are particularly useful for
+     rectangling:
+
+[tidyr]() contains three core functions to unnest deeply nested list `unnest_longer()`, `unnest_wider()`, `hoist()`. This guide follows the steps from [tidyr]() vignette and translates them into `unnest`'s own language.
+
+With [tidyr]() you need to unnest lists in several steps by using one of the three core functions. With `unnest` you do all at once in one step. `unnest` doesn't produce intermediate list columns.
+
+We'll use the repurrrsive package as the source of our nested lists:
+
+```{r setup, message = FALSE}
+library(tidyr)
+library(dplyr)
+library(repurrrsive)
+library(unnest)
+options(unnest.return.type = "tibble")
+```
+
+
+## GitHub repos
+
+With [tidyr]() you start by putting a list into a data.frame column. With [unnest]() this is not necessary.
+
+`gh_repos` is a nested list with maximal depth 4 "user">"repo">"owner">"[xyz]".
+
+```r
+str(gh_repos[[1]][[1]][["owner"]])
+```
+
+Assume that you want a data.frame with 3 columns, "name", "homepage" and "watchers_count", from level 3 of repo characteristics and one,"login", from level 4 of owner characteristics. This is how it's done with [tidyr]():
+
+```{r}
+repos <- tibble(repo = gh_repos)
+repos <- unnest_longer(repos, repo)
+hoist(repos, repo,
+      login = c("owner", "login"),
+      name = "name",
+      homepage = "homepage",
+      watchers = "watchers_count") %>%
+  select(-repo)
+```
+
+This is how you do it with [unnest]() in one blow:
+
+```{r}
+spec <- s(stack = TRUE,
+          s(stack = TRUE,
+            s("name"),
+            s("homepage"),
+            s("watchers_count", as = "watchers"),
+            s("owner",
+              s("login"))))
+unnest(gh_repos, spec)
+```
+
+[unnest]() selector specification (`s`) applies to each level hierarchically and describes which elements should be selected and how. The `stack = TRUE` says that the result of the extraction should be stacked row-wise (aka `rbind`ed). `stack = FALSE`, the default, means spread it across multiple columns. The `as` argument provides the name of the output. By default it's the entire path name for the selected leaf.
+
+Now assume that you want the 3 components of "repos" and all components of the owner at once:
+
+```r
+tibble(repo = gh_repos) %>%
+  unnest_longer(repo) %>%
+  hoist(repo,
+        name = "name",
+        homepage = "homepage",
+        watchers = "watchers_count") %>%
+  hoist(repo, owner = "owner") %>%
+  unnest_wider(owner)
+```
+
+With [unnest]()
+
+```{r}
+spec <- s(stack = TRUE,
+          s(stack = TRUE,
+            s("name"),
+            s("homepage"),
+            s("watchers_count", as = "watchers"),
+            s("owner")))
+unnest(gh_repos, spec) %>% tibble()
+```
+
+Note that the result of [unnest]() is namespaced, while [tidyr]()'s is not. This is a good thing as you don't have to worry about overlapping names. [tidyr]() provides a "fix" for duplicated names in the form of `names_repair` argument to its functions.
+
+## Game of Thrones characters
+
+What do you do with non-singleton leafs? Those are normally stacked, spread or melted depending on the analysis. For example the Game of Thrones dataset contains non-singleton leafs "titles", "aliases", "books" etc.
+
+```r
+str(got_chars[[1]])
+```
+
+Let's have a look at some common scenarios.
+
+### Stacking
+
+Assume that we want a row for every book and TV series that the character appears in. That is, we want a long table with all combinations (aka cross product) of books and TV series.
+
+```{r}
+tibble(char = got_chars) %>%
+  unnest_wider(char) %>%
+  select(name, books, tvSeries) %>%
+  unnest_longer(books) %>%
+  unnest_longer(tvSeries)
+
+unnest(got_chars,
+       s(stack = T,
+         s("name"),
+         s("books/", stack = T),
+         s("tvSeries/", stack = T)))
+```
+
+Implementation aside, [tidyr]()'s intermediary steps are costly. First, because they create intermediary data structures. Second, because intermediary input might produce columns that are not needed in the subsequent processing. In the above examples `unnest_wider()` produced man more columns than we need. A better approach would be to replace it with a bit more verbose `hoist` call.
+
+In contrast [unnest]() doesn't produce intermediary data structures. In fact, [unnest]() follows a 0-intermediary-copy semantics. The input vectors are directly copied into the output, no matter how complex the nesting is.
+
+Cross-product is commonly useful when only one non-singleton variable is extracted. For example, let's match title to name:
+
+```{r}
+tibble(char = got_chars) %>%
+  hoist(char, name = "name", title = "titles") %>%
+  select(-char) %>%
+  unnest_longer(title)
+
+unnest(got_chars,
+       s(stack = T,
+         s("name"),
+         s("titles/*", stack = T)))
+```
+
+### Id-value long tables (aka long pivoting, or melting)
+
+A common scenario is to stack the non-scalar leafs and replicate id labels in a separate "key" column. This is called "melting" (`reshape2`) or "long pivoting" (`tidyr`).
+
+```r
+tibble(char = got_chars) %>%
+  unnest_wider(char) %>%
+  select(name, books, tvSeries) %>%
+  pivot_longer(c(books, tvSeries), names_to = "media", values_to = "value") %>%
+  unnest_longer(value)
+
+unnest(got_chars,
+       s(stack = T,
+         s("name"),
+         s("books,tvSeries", stack = "media", as = "value",
+           s(stack = T))))
+
+```
+
+### Id-value wide tables
+
+One might want to stack id vars (media) but spread the measures (books, tvSeries) horizontally such that each row would contain all measurement for each media.
+
+```r
+# There doesn't seem to be an easy way to achieve this with tidyr.
+
+unnest(got_chars,
+       s(stack = T,
+         s("name"),
+         s("books,tvSeries", stack = "media", as = "value")))
+```
+
+### Wide Tables (aka spreading)
+
+This strategy is commonly used in machine learning scenarios when large sparse tables are plugged into black-box ML algorithms. This is the default, `stack = FALSE` behavior in [unnest]().
+
+```r
+# Currently tidyr errors on double widening due to name conflicts.
+# tibble(char = got_chars) %>%
+#   unnest_wider(char) %>%
+#   select(name, books, tvSeries) %>%
+#   unnest_wider(books) %>%
+#   unnest_wider(tvSeries)
+
+unnest(got_chars, s(stack = T, s("name"), s("books, tvSeries")))
+```
+
+## Sharla Gelfand's discography
+
+Finally, I will show how the most complex transformation from [tidyr]()'s vignette can be achieved with unnest in a single step.
+
+Let's see how a typical entry looks.
+
+```{r}
+str(discog[[3]])
+```
+
+We want to extract `artists` metadata and `formats` into separate tables.
+
+```{r}
+tibble(disc = discog) %>%
+  unnest_wider(disc) %>%
+  hoist(basic_information, artist = "artists") %>%
+  select(disc_id = id, artist) %>%
+  unnest_longer(artist) %>%
+  unnest_wider(artist)
+
+tibble(disc = discog) %>%
+  unnest_wider(disc) %>%
+  hoist(basic_information, format = "formats") %>%
+  select(disc_id = id, format) %>%
+  unnest_longer(format) %>%
+  unnest_wider(format) %>%
+  unnest_longer(descriptions)
+```
+
+With [unnest]() you can achieve this in two steps, or in a single step with a grouped children specification. The single step extraction returns a list of data.frames, but scans the data only once.
+
+Separate unnest calls:
+
+```r
+unnest(discog,
+       s(stack = T,
+         s("id", as = "disc_id"),
+         s("basic_information/artists", as = "artist",
+           s(stack = T))))
+
+unnest(discog,
+       s(stack = T,
+         s("id", as = "disc_id"),
+         s("basic_information/formats", as = "format",
+           s(stack = T,
+             s(exclude = "descriptions"),
+             s("descriptions/", stack = T)))))
+```
+
+Single unnest call:
+
+```r
+unnest(discog,
+       s(stack = T,
+         groups =
+           list(artists =
+                  list(s("id", as = "disc_id"),
+                       s("basic_information/artists", as = "artist",
+                         s(stack = T))),
+                formats =
+                  list(s("id", as = "disc_id"),
+                       s("basic_information/formats", as = "format",
+                         s(stack = T,
+                           s(exclude = "descriptions"),
+                           s("descriptions/", stack = T)))))))
+```
+
+The unnest specs inside `groups` is the same as in the separate calls case. The `groups` argument is just like `children` with the difference that the output of the extraction is not cross-joined, but simply returned as list.[^groups]
+
+The benefit is grouped extraction is twofold. First, it's faster because the list is traversed only once. Second, the de-duplication works across groups. That is, if `dedupe = TRUE`, the fields extracted in former specs are not extracted in the following specs.
+
+[^groups]: Currently `groups` argument works only on the top level of the unnest specification.
