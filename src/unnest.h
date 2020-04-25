@@ -93,9 +93,11 @@ struct Unnester {
   }
 
   uint_fast32_t child_ix(uint_fast32_t parent_ix, const SpecMatch& match) {
-    return (match.name == R_NilValue) ?
-      child_ix(parent_ix, match.ix):
-      child_ix(parent_ix, CHAR(match.name));
+    if (match.spec_name != R_NilValue)
+      return child_ix(parent_ix, CHAR(match.spec_name));
+    else if (match.elem_name != R_NilValue)
+      return child_ix(parent_ix, CHAR(match.elem_name));
+    else child_ix(parent_ix, match.ix);
   }
 
   uint_fast32_t child_ix(uint_fast32_t parent_ix, SEXP cname) {

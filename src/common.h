@@ -33,18 +33,13 @@ SEXP extract_scalar(SEXP x, R_xlen_t ix);
 void fill_vector(SEXP source, SEXP target, R_xlen_t from, R_xlen_t to);
 void fill_vector_1(SEXP source, R_xlen_t source_ix, SEXP target, R_xlen_t from, R_xlen_t to);
 
-inline bool is_char_in_strvec(SEXP ch, SEXP str) {
-  if (str == R_NilValue)
-    return false;
-  bool has = false;
-  R_len_t N = XLENGTH(str);
-  for (R_len_t i = 0; i < N; i++) {
-    if (ch == STRING_ELT(str, i)) {
-      has = true;
-      break;
-    }
+// fixme: use algorithm instead
+inline bool is_char_in_strvec(SEXP ch, const vector<SEXP>& str) {
+  for (const SEXP& strel : str) {
+    if (ch == strel)
+      return true;
   }
-  return has;
+  return false;
 }
 
 template <typename T>

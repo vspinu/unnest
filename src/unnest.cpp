@@ -26,7 +26,7 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
 
     // add index
     if (do_ix)
-      pix->push(beg, end, m.ix + 1, m.orig_name);
+      pix->push(beg, end, m.ix + 1, m.elem_name);
 
     // move to out_nodes
     while (!iacc.pnodes.empty()) {
@@ -109,7 +109,7 @@ void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
       end[gi] += iaccs[gi].nrows;
       // add index
       if (do_ix)
-        pixs[gi]->push(beg[gi], end[gi], m.ix + 1, m.orig_name);
+        pixs[gi]->push(beg[gi], end[gi], m.ix + 1, m.elem_name);
     }
 
     // move to out_nodes

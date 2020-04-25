@@ -23,30 +23,40 @@ print.unnest.spec <- function(x, ...) {
 }
 
 #' @export
-s <- function(node = NULL, ..., as = NULL,
+s <- function(selector = NULL, ..., as = NULL,
               children = NULL, groups = NULL,
               include = NULL, exclude = NULL,
               dedupe = NULL, stack = NULL) {
   children <- c(children, list(...))
   children <- children[!sapply(children, is.null)]
-  if (is.unnest.spec(node)) {
-    children <- c(list(node), children)
-    node <- NULL
+  if (is.unnest.spec(selector)) {
+    children <- c(list(selector), children)
+    selector <- NULL
   }
   if (!is.null(names(children)))
     stop(sprintf("spec children must be unnamed (not true for '%s')",
                  paste(names(children)[nzchar(names(children))], collapse = ",")))
   if (!all(isuspec <- sapply(children, is.unnest.spec)))
     stop("all spec children must be unnest.specs")
-  if (!(is.null(node) || is.character(node) || is.numeric(node)))
-    stop("Spec node must be NULL, numeric, or a character string")
+  if (!(is.null(selector) || is.character(selector) || is.numeric(selector)))
+    stop("Spec selector must be NULL, integer, or a character string")
   if (!is.null(groups))
     if (!is.list(groups) || is.null(names(groups)))
       stop("Groups argument must be a list of named specs")
-  if (is.character(node) && length(node) == 1)
-    node <- strsplit(paste0(node, "/"), "/", fixed = TRUE)[[1]]
-  node <- strsplit(paste0(node, ","), ", *")
-  el <- c(list(node = node),
+
+  if (is.character(selector)) {
+    if (length(selector) == 1) {
+      sel <- strsplit(paste0(selector, "/"), "/", fixed = TRUE)[[1]]
+      selector <- as.list(sel)
+      is_int <- grepl("^[0-9]+$", sel)
+      selector[is_int] <- as.integer(sel[is_int])
+      selector[!is_int] <- strsplit(paste0(sel[!is_int], ","), ", *")
+    } else {
+      selector <- strsplit(paste0(selector, ","), ", *")
+    }
+  }
+
+  el <- c(list(),
           if (!is.null(as)) list(as = as),
           if (!is.null(include)) list(include = include),
           if (!is.null(exclude)) list(exclude = exclude),
@@ -55,35 +65,55 @@ s <- function(node = NULL, ..., as = NULL,
           if (length(children) > 0) list(children = children),
           if (!is.null(groups)) list(groups = groups))
 
-  el_as <- el[["as"]]
   first <- TRUE
-  for (node in rev(node)) {
-    if (length(node) > 1) {
-      include <- c(node, include)
-      node <- NULL
-    } else if (identical(node, ""))
-      node <- NULL
-    else if (grepl("^\\[[0-9]+\\]$", node))
-      node <- as.integer(substr(node, 2, nchar(node) - 1))
-    el1 <- unnest.spec(list(node = node,
-                            ## special case: remove all nested names TOTHINK: better marker?
-                            as = if (first) el_as
-                                 else if (!is.null(el_as) && !is.null(node)) "",
-                            stack = stack,
-                            include = include,
-                            exclude = exclude,
-                            children = if(first) el[["children"]]
-                                       else list(unnest.spec(el1)),
-                            groups = groups))
+  tel <- el
+  for (sel in rev(selector)) {
+    if (identical(sel, ""))
+      sel <- NULL
+    include <-
+      if (first)
+        if (is.null(include)) sel
+        else if (is.null(sel)) include
+        else if (identical(class(sel), class(include))) c(sel, include)
+        else c(as.list(sel), as.list(include))
+      else sel
+    tel <-
+      unnest.spec(list(
+        ## special case: remove all nested names TOTHINK: better marker?
+        as = if (first) el[["as"]]
+             else if (!is.null(el[["as"]])) "",
+        stack = stack,
+        include = include,
+        exclude = exclude,
+        children = if(first) el[["children"]]
+                   else list(tel),
+        groups = groups))
     include <- exclude <- stack <- groups <- NULL
     first <- FALSE
   }
-  el <- el1
+  el <- tel
   unnest.spec(el)
 }
 
 #' @export
 spec <- s
+
+convert_to_tible <- function(x) {
+  if (!is.data.frame(x))
+    lapply(x, convert_to_tible)
+  else {
+    names(x) <- make.names(names(x))
+    tibble::as_tibble(x)
+  }
+}
+
+convert_to_dt <- function(x) {
+  if (!is.data.frame(x))
+    lapply(x, convert_to_dt(x))
+  else {
+    data.table::as.data.table(x)
+  }
+}
 
 #' @export
 unnest <- function(x, spec = NULL) {
@@ -93,10 +123,7 @@ unnest <- function(x, spec = NULL) {
   out <- .Call(C_unnest, x,  spec)
   switch(getOption("unnest.return.type", "data.frame"),
          data.frame = out,
-         tibble = {
-           names(out) <- make.names(names(out))
-           tibble::as_tibble(out)
-         },
-         data.table = data.table::as.data.table(out),
+         tibble = convert_to_tible(out),
+         data.table = convert_to_dt(out),
          stop("Invalid `unnest.return.type` option (%s). Valid types are `data.frame`, `data.table` and `tibble`"))
 }

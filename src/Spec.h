@@ -6,15 +6,17 @@
 
 struct SpecMatch {
   int ix = -1;
-  SEXP name, orig_name, obj;
-  SpecMatch(int ix, SEXP name, SEXP obj):
-    ix(ix), name(name), obj(obj) {};
-  SpecMatch(int ix, SEXP name, SEXP orig_name, SEXP obj):
-    ix(ix), name(name), orig_name(orig_name), obj(obj) {};
+  SEXP spec_name, elem_name, obj;
+  SpecMatch(int ix, SEXP spec_name, SEXP obj):
+    ix(ix), spec_name(spec_name), obj(obj) {};
+  SpecMatch(int ix, SEXP spec_name, SEXP elem_name, SEXP obj):
+    ix(ix), spec_name(spec_name), elem_name(elem_name), obj(obj) {};
 
   string to_string() const {
     std::ostringstream stream;
-    stream << "match[ix:" << ix << " name:" << (name == R_NilValue ? "NULL" : CHAR(name)) << "]";
+    stream << "match[ix:" << ix <<
+      " spec_name:" << (spec_name == R_NilValue ? "NULL" : CHAR(spec_name)) <<
+      " elem_name:" << (elem_name == R_NilValue ? "NULL" : CHAR(elem_name)) << "]";
     return stream.str();
   }
 };
@@ -22,27 +24,27 @@ struct SpecMatch {
 struct Spec {
   enum Dedupe {INHERIT, TRUE, FALSE};
   Dedupe dedupe = INHERIT;
-  SEXP node = R_NilValue;
+
   SEXP name = R_NilValue;
-  SEXP include = R_NilValue;
-  SEXP exclude = R_NilValue;
-  int ix = -1;
+  vector<int> include_ixes;
+  vector<SEXP> include_names;
+  vector<int> exclude_ixes;
+  vector<SEXP> exclude_names;
+
   vector<Spec> children;
   vector<tuple<SEXP, vector<Spec>>> groups;
   bool stack = false;
   SEXP ix_name = R_NilValue;
 
-  Spec(): node(R_NilValue), name(R_NilValue) {};
-  Spec(SEXP node, SEXP name): node(node), name(name) {};
+  Spec(): name(R_NilValue) {};
+  Spec(SEXP name): name(name) {};
 
   vector<SpecMatch> match(SEXP obj) const;
 
   string to_string() const {
     std::ostringstream stream;
-    stream << "[node:" <<
-      (node == R_NilValue ? "NULL" : CHAR(node)) <<
+    stream << "[spec:" <<
       " name:" << (name == R_NilValue ? "NULL" : CHAR(name)) <<
-      " ix: " << ix <<
       " stack:" << (stack ? "TRUE" : "FALSE") <<
       "]";
     return stream.str();
@@ -54,8 +56,8 @@ Spec list2spec(SEXP lspec);
 bool isSpec(SEXP s);
 tuple<SEXP, vector<Spec>> spec_group(SEXP name, SEXP obj);
 
-const Spec NilSpec = Spec(R_NilValue, R_NilValue);
-const Spec LeafSpec = Spec(R_NilValue, R_NilValue);
+const Spec NilSpec = Spec(R_NilValue);
+const Spec LeafSpec = Spec(R_NilValue);
 
 
 #endif // UNNEST_SPEC_H

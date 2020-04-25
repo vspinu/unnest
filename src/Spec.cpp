@@ -1,4 +1,5 @@
 
+#include <algorithm>
 #include "common.h"
 #include "Spec.h"
 
@@ -9,45 +10,81 @@ vector<SpecMatch> Spec::match(SEXP obj) const {
 
   vector<SpecMatch> out;
 
-  if (ix >= 0) {
-    // 1) ix has the highest priority
-    if (ix < N) {
-      SEXP nm = has_names ? STRING_ELT(obj_names, ix) : R_NilValue;
-      out.emplace_back(ix, name, nm, VECTOR_ELT(obj, ix));
-    }
-  } else if (node == R_NilValue) {
-    // 2) NULL node matches all
-    if (include == R_NilValue) {
-      out.reserve(N);
-    } else {
-      if (!has_names)
-        return (out);
-    }
+  // NULL node matches all
+  if (include_names.size() == 0 && exclude_names.size() == 0 &&
+      include_ixes.size() == 0 && exclude_ixes.size() == 0) {
+    // fixme: figure out a way not to create a full extent matcher in this case
+    out.reserve(N);
     for (int i = 0; i < N; i++) {
-      SEXP nm = R_NilValue;
-      if (has_names) {
-        nm = STRING_ELT(obj_names, i);
-        if (is_char_in_strvec(nm, exclude)) {
-          continue;
-        } else if (include != R_NilValue) {
-          if (!is_char_in_strvec(nm, include)) {
-            continue;
-          }
-        }
-      }
-      out.emplace_back(i, nm, nm, VECTOR_ELT(obj, i));
+      SEXP nm = has_names ? STRING_ELT(obj_names, i) : R_NilValue;
+      out.emplace_back(i, name, nm, VECTOR_ELT(obj, i));
     }
-  } else if (has_names) {
-    // 3) Exact node match
-    for (size_t i = 0; i < N; i++) {
-      if (STRING_ELT(obj_names, i) == node) {
-        out.emplace_back(i, name, node, VECTOR_ELT(obj, i));
-        break;
+    return out;
+  }
+
+  if (include_ixes.size() > 0) {
+    for (int ix : include_ixes) {
+      if (ix < N) {
+        if (exclude_ixes.size() > 0 &&
+            std::find(exclude_ixes.begin(), exclude_ixes.end(), ix) != exclude_ixes.end())
+          continue;
+        SEXP nm = has_names ? STRING_ELT(obj_names, ix) : R_NilValue;
+        out.emplace_back(ix, name, nm, VECTOR_ELT(obj, ix));
+      }
+    }
+  } else if (exclude_ixes.size() > 0) {
+    out.reserve(N);
+    for (int i = 0; i < N; i++) {
+      if (std::find(exclude_ixes.begin(), exclude_ixes.end(), i) == exclude_ixes.end()) {
+        SEXP nm = has_names ? STRING_ELT(obj_names, i) : R_NilValue;
+        out.emplace_back(i, name, nm, VECTOR_ELT(obj, i));
       }
     }
   }
 
+  if (has_names && (include_names.size() > 0 || exclude_names.size() > 0)) {
+    if (exclude_names.size() > 0)
+      out.reserve(N);
+
+    for (int i = 0; i < N; i++) {
+      SEXP nm = R_NilValue;
+      nm = STRING_ELT(obj_names, i);
+      if (is_char_in_strvec(nm, exclude_names)) {
+        continue;
+      } else if (include_names.size() > 0) {
+        if (!is_char_in_strvec(nm, include_names)) {
+          continue;
+        }
+      }
+      out.emplace_back(i, name, nm, VECTOR_ELT(obj, i));
+    }
+  }
+
   return out;
+}
+
+void fill_spec_ixes(const char* name, SEXP obj, vector<int>& int_ixes, vector<SEXP>& str_ixes) {
+  R_xlen_t n = XLENGTH(obj);
+  switch (TYPEOF(obj)) {
+   case STRSXP:
+     for (R_xlen_t i = 0; i < n; i++)
+       str_ixes.push_back(STRING_ELT(obj, 0));
+     break;
+   case INTSXP: ;
+     for (R_xlen_t i = 0; i < n; i++)
+       int_ixes.push_back(INTEGER(obj)[0] - 1);
+     break;
+   case REALSXP:
+     for (R_xlen_t i = 0; i < n; i++)
+       int_ixes.push_back(INTEGER(obj)[0] - 1);
+     break;
+   case VECSXP:
+     for (R_xlen_t i = 0; i < n; i++)
+       fill_spec_ixes(name, VECTOR_ELT(obj, i), int_ixes, str_ixes);;
+     break;
+   default:
+     Rf_error("spec's '%s' field must be a character, numeric or a list", name);
+  }
 }
 
 Spec list2spec(SEXP lspec) {
@@ -61,8 +98,7 @@ Spec list2spec(SEXP lspec) {
     Rf_error("unnest.spec must have non-nil names");
 
   R_xlen_t N = LENGTH(lspec);
-  bool
-    done_node = false, done_as = false,
+  bool done_as = false,
     done_children = false, done_groups = false,
     done_stack = false, done_include = false,
     done_exclude = false, done_dedupe = false;
@@ -75,18 +111,7 @@ Spec list2spec(SEXP lspec) {
     if (obj != R_NilValue) {
       const char* nm = CHAR(STRING_ELT(names, i));
 
-      if (!done_node && !strcmp(nm, "node")) {
-        if (XLENGTH(obj) != 1)
-          Rf_error("spec's 'node' fields must be of length 1");
-        switch(TYPEOF(obj)) {
-         case STRSXP: spec.node = STRING_ELT(obj, 0); break;
-         case INTSXP: spec.ix = INTEGER(obj)[0] - 1; break;
-         case REALSXP: spec.ix = REAL(obj)[0] - 1; break;
-         default:
-           Rf_error("spec's 'node' field must be NULL, string or numeric vector");
-        }
-        done_node = true;
-      } else  if (!done_as && !strcmp(nm, "as")) {
+      if (!done_as && !strcmp(nm, "as")) {
         if (TYPEOF(obj) != STRSXP || XLENGTH(obj) != 1)
           Rf_error("spec's 'as' field must be a string vector of length 1");
         spec.name = STRING_ELT(obj, 0);
@@ -112,14 +137,10 @@ Spec list2spec(SEXP lspec) {
         groups = obj;
         done_groups = true;
       } else if (!done_exclude && !strcmp(nm, "exclude")) {
-        if (TYPEOF(obj) != STRSXP)
-          Rf_error("spec's 'exclude' field must be a character vector");
-        spec.exclude = obj;
+        fill_spec_ixes("exclude", obj, spec.exclude_ixes, spec.exclude_names);
         done_exclude = true;
       } else if (!done_include && !strcmp(nm, "include")) {
-        if (TYPEOF(obj) != STRSXP)
-          Rf_error("spec's 'include' field must be a character vector");
-        spec.include = obj;
+        fill_spec_ixes("include", obj, spec.include_ixes, spec.include_names);
         done_include = true;
       } else if (!done_dedupe && !strcmp(nm, "dedupe")) {
         if (obj == R_NilValue) {
@@ -136,9 +157,12 @@ Spec list2spec(SEXP lspec) {
     }
   }
 
-  // always has name unless node is NULL
-  if (spec.node != R_NilValue && spec.name == R_NilValue)
-    spec.name = spec.node;
+  if (spec.name != R_NilValue) {
+    if (!(spec.stack ||
+          (spec.include_ixes.size() == 1 && spec.include_names.size() == 0) ||
+          (spec.include_ixes.size() == 0 && spec.include_names.size() == 1)))
+      Rf_error("Supplied 'as' value with multiple 'include' elements and `stack == FALSE`");
+  }
 
   if (children != R_NilValue) {
     R_xlen_t NC = XLENGTH(children);
@@ -148,6 +172,7 @@ Spec list2spec(SEXP lspec) {
       spec.children.emplace_back(list2spec(ch));
     }
   }
+
   if (groups != R_NilValue) {
     R_xlen_t NG = XLENGTH(groups);
     SEXP gnames = Rf_getAttrib(groups, R_NamesSymbol);
@@ -160,6 +185,7 @@ Spec list2spec(SEXP lspec) {
       spec.groups.push_back(gr);
     }
   }
+
   return spec;
 }
 
