@@ -19,11 +19,11 @@ struct VarAccumulator {
     }
   }
 
-  bool add_var(uint_fast32_t ix) {
-    P("ACCVAR: %lu [acc: %d]\n", ix, accumulate);
+  void insert(uint_fast32_t ix) {
     if (accumulate) {
       acc.insert(ix);
     }
+    P("ACCVAR: %lu [acc: %d]\n", ix, accumulate);
   }
 };
 

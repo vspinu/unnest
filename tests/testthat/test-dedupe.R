@@ -3,13 +3,18 @@ context("De-duplication")
 test_that("Spreading de-duplication works", {
 
   ref <- unnest(x, s("a", s("b",
-                            s("e", s("f")),
-                            s("e", s("g")))))
+                            s("e", s("f/", stack = T)),
+                            s("e", s("g/", stack = T)))))
 
   expect_equal(ref, unnest(x, s("a", s("b",
                                        dedupe = TRUE,
-                                       s("e", s("f")),
-                                       s("e")))))
+                                       s("e", s("f/", stack = T)),
+                                       s("e", s(s(stack = T)))))))
+
+  unnest(x, s("a", dedupe = TRUE,
+              s("b",
+                s("e", s("f/", stack = T)),
+                s("e", s(s(stack = T))))))
 
   expect_equal(ref, unnest(x, s("a", dedupe = TRUE,
                                 s("b",

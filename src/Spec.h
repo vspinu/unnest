@@ -3,6 +3,7 @@
 #define UNNEST_SPEC_H
 
 #include "common.h"
+#include "unordered_map"
 
 struct SpecMatch {
   int ix = -1;
@@ -23,7 +24,14 @@ struct SpecMatch {
 
 struct Spec {
   enum Dedupe {INHERIT, TRUE, FALSE};
+  const std::unordered_map<Dedupe, string> dedupe_names = {
+    {INHERIT, "INHERIT"},
+    {TRUE, "TRUE"},
+    {FALSE, "FALSE"}
+  };
   Dedupe dedupe = INHERIT;
+
+  bool terminal = true;
 
   SEXP name = R_NilValue;
   vector<int> include_ixes;
@@ -41,11 +49,25 @@ struct Spec {
 
   vector<SpecMatch> match(SEXP obj) const;
 
+  void set_terminal() {
+    terminal =
+      include_ixes.size() == 0 &&
+      include_names.size() == 0 &&
+      exclude_ixes.size() == 0 &&
+      exclude_names.size() == 0;
+    // FIXME: add groups?
+    for (const Spec& sp: children) {
+      terminal = terminal && sp.terminal;
+    }
+  }
+
   string to_string() const {
     std::ostringstream stream;
     stream << "[spec:" <<
       " name:" << (name == R_NilValue ? "NULL" : CHAR(name)) <<
       " stack:" << (stack ? "TRUE" : "FALSE") <<
+      " dedupe:" << dedupe_names[dedupe].c_str() <<
+      " terminal:" << (terminal ? "TRUE" : "FALSE") <<
       "]";
     return stream.str();
   }
@@ -57,7 +79,5 @@ bool isSpec(SEXP s);
 tuple<SEXP, vector<Spec>> spec_group(SEXP name, SEXP obj);
 
 const Spec NilSpec = Spec(R_NilValue);
-const Spec LeafSpec = Spec(R_NilValue);
-
 
 #endif // UNNEST_SPEC_H

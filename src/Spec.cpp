@@ -186,6 +186,8 @@ Spec list2spec(SEXP lspec) {
     }
   }
 
+  spec.set_terminal();
+
   return spec;
 }
 
