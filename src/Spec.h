@@ -32,8 +32,10 @@ struct Spec {
   Dedupe dedupe = INHERIT;
 
   bool terminal = true;
+  bool terminal_parent = true;
 
-  SEXP name = R_NilValue;
+  SEXP name = R_NilValue; //FIXME: rename into "as"
+  string type = "";
   vector<int> include_ixes;
   vector<SEXP> include_names;
   vector<int> exclude_ixes;
@@ -44,8 +46,9 @@ struct Spec {
   bool stack = false;
   SEXP ix_name = R_NilValue;
 
-  Spec(): name(R_NilValue) {};
-  Spec(SEXP name): name(name) {};
+  Spec() {};
+  Spec(string type): type(type) {};
+  Spec(string type, bool terminal_parent): type(type), terminal_parent(terminal_parent) {};
 
   vector<SpecMatch> match(SEXP obj) const;
 
@@ -59,15 +62,24 @@ struct Spec {
     for (const Spec& sp: children) {
       terminal = terminal && sp.terminal;
     }
+    if (!terminal) {
+      for (Spec& sp: children) {
+        sp.terminal_parent = false;
+      }
+    }
   }
 
   string to_string() const {
     std::ostringstream stream;
-    stream << "[spec:" <<
-      " name:" << (name == R_NilValue ? "NULL" : CHAR(name)) <<
+    std::string name = this->type;
+    for (SEXP nm: include_names) {
+      name.append(CHAR(nm)).append(",");
+    }
+    stream << "[spec:" << name <<
       " stack:" << (stack ? "TRUE" : "FALSE") <<
-      " dedupe:" << dedupe_names[dedupe].c_str() <<
-      " terminal:" << (terminal ? "TRUE" : "FALSE") <<
+      " dedupe:" << dedupe_names.at(dedupe).c_str() <<
+      " terminal[parent]:" << (terminal ? "T" : "F") <<
+      "[" << (terminal_parent ? "T" : "F") << "]" <<
       "]";
     return stream.str();
   }
@@ -78,6 +90,7 @@ Spec list2spec(SEXP lspec);
 bool isSpec(SEXP s);
 tuple<SEXP, vector<Spec>> spec_group(SEXP name, SEXP obj);
 
-const Spec NilSpec = Spec(R_NilValue);
+const Spec NilSpec = Spec("NIL");
+const Spec LeafSpec = Spec("LEAF", false);
 
 #endif // UNNEST_SPEC_H

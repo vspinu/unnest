@@ -85,10 +85,10 @@ s <- function(selector = NULL, ..., as = NULL,
         stack = stack,
         include = include,
         exclude = exclude,
-        children = if(first) el[["children"]]
-                   else list(tel),
+        dedupe = dedupe,
+        children = if(first) el[["children"]] else list(tel),
         groups = groups))
-    include <- exclude <- stack <- groups <- NULL
+    dedupe <- include <- exclude <- stack <- groups <- NULL
     first <- FALSE
   }
   el <- tel

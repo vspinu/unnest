@@ -68,15 +68,15 @@ void fill_spec_ixes(const char* name, SEXP obj, vector<int>& int_ixes, vector<SE
   switch (TYPEOF(obj)) {
    case STRSXP:
      for (R_xlen_t i = 0; i < n; i++)
-       str_ixes.push_back(STRING_ELT(obj, 0));
+       str_ixes.push_back(STRING_ELT(obj, i));
      break;
    case INTSXP: ;
      for (R_xlen_t i = 0; i < n; i++)
-       int_ixes.push_back(INTEGER(obj)[0] - 1);
+       int_ixes.push_back(INTEGER(obj)[i] - 1);
      break;
    case REALSXP:
      for (R_xlen_t i = 0; i < n; i++)
-       int_ixes.push_back(INTEGER(obj)[0] - 1);
+       int_ixes.push_back(INTEGER(obj)[i] - 1);
      break;
    case VECSXP:
      for (R_xlen_t i = 0; i < n; i++)
@@ -180,7 +180,7 @@ Spec list2spec(SEXP lspec) {
       Rf_error("groups must be a named list");
     spec.groups.reserve(NG);
     for (R_xlen_t g = 0; g < NG; g++) {
-      const tuple<SEXP, vector<Spec>> gr =
+      tuple<SEXP, vector<Spec>> gr =
         spec_group(STRING_ELT(gnames, g), VECTOR_ELT(groups, g));
       spec.groups.push_back(gr);
     }

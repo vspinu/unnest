@@ -11,19 +11,19 @@ test_that("Spreading de-duplication works", {
                                        s("e", s("f/", stack = T)),
                                        s("e", s(s(stack = T)))))))
 
-  unnest(x, s("a", dedupe = TRUE,
-              s("b",
-                s("e", s("f/", stack = T)),
-                s("e", s(s(stack = T))))))
-
   expect_equal(ref, unnest(x, s("a", dedupe = TRUE,
                                 s("b",
-                                  s("e", s("f")),
-                                  s("e")))))
+                                  s("e/f/", stack = T),
+                                  s("e", s(s(stack = T)))))))
 
 
-  expect_equal(ref, unnest(x, s("a", dedupe = TRUE,
-                                s("b", dedupe = TRUE,
+  ref <- unnest(x, s("a", dedupe = TRUE,
+                     s("b",
+                       s("e", s("f")),
+                       s("e", s("g")))))
+
+  expect_equal(ref, unnest(x, s("a", dedupe = T,
+                                s("b",
                                   s("e", s("f")),
                                   s("e")))))
 
@@ -54,18 +54,31 @@ test_that("Deduping with stacking of named level works", {
   expect_equal(unnestl(l(x = y), s("x", dedupe = T, s(stack = T, s("a")))),
                list(x.a = c(1, 2, 3)))
 
-  expect_equal(unnestl(y, s(stack = T, dedupe = T, s("a"), s("a"), s("b"))),
+  expect_equal(unnestl(y, s(stack = T, dedupe = T, s("a"), s("a"), s("b", s(s(stack = T))))),
                list(a = c(1, 1, 2, 3),
                     b.c = c(1L, 2L, NA, 3L),
                     b.d = c(NA, NA, 2L, NA)))
 
-  expect_equal(unnestl(y[1], s(dedupe = T, s("a"), s("b", s("d"), s("c"), s("c")))),
+  expect_equal(unnestl(y[1], s(dedupe = T, s("a"), s("b", s("d"),
+                                                     s("c", s(stack = T)),
+                                                     s("c", as = "C", s(stack = T))))),
+               list(`1.a` = c(1, 1, 1, 1),
+                    `1.b.C` = c(1L, 2L, 1L, 2L),
+                    `1.b.c` = c(1L, 2L, 1L, 2L)))
+
+  # No deduplication due to explicit terminal declaration
+  expect_equal(unnestl(y[1], s(dedupe = T, s("a"), s("b", s("d"),
+                                                     s("c", s(stack = T)),
+                                                     s("c", s(stack = T))))),
                list(`1.a` = c(1, 1, 1, 1),
                     `1.b.c` = c(1L, 2L, 1L, 2L),
                     `1.b.c` = c(1L, 2L, 1L, 2L)))
+
+  # No deduplication due to explicit terminal declaration
   expect_equal(unnestl(y[1], s(dedupe = F, s("a"), s("b", s("d"), s("c"), s("c")))),
                unnestl(y[1], s(dedupe = T, s("a"), s("b", s("d"), s("c"), s("c")))))
 
+  # No deduplication here as deduplication is sequential
   expect_equal(
     unnestl(y, s(dedupe = T, s("a"), s("b", s("d")), s("b"))),
     {
@@ -74,21 +87,51 @@ test_that("Deduping with stacking of named level works", {
       tt
     })
 
-
-  ## FIXME: rethink the following cases. We are eating duplicated names during
-  ## stacking.
-
-  expect_equal(unnestl(y, s(stack = T, dedupe = F, s("a"), s("b", s("d"), s("c"), s("c")))),
+  expect_equal(unnestl(y, s(stack = T,
+                            s("a"),
+                            s("b",
+                              s("d"),
+                              s("c", s(stack = T)),
+                              s("c", as = "C", s(stack = T))))),
                list(a = c(1, 1, 1, 1, 2, 3),
+                    b.C = c(1L, 2L, 1L, 2L, NA, 3L),
                     b.c = c(1L, 2L, 1L, 2L, NA, 3L),
                     b.d = c(NA, NA, NA, NA, 2L, NA)))
 
-  expect_equal(unnestl(y, s(stack = T, s("a"), s("b", s("d"), s("c")))),
-               unnestl(y, s(stack = T, dedupe = F, s("a"), s("b", s("d"), s("c")))))
+  expect_equal(unnestl(y, s(stack = T, s("a"), s("b", s("d"), s("c", s(stack = T))))),
+               unnestl(y, s(stack = T, dedupe = F, s("a"), s("b", s("d"), s("c", s(stack = T))))))
 
+  # NOTE: We are eating duplicated names during stacking. It would not make
+  # sense otherwise because during staking one would need to know which
+  # variables to join together, leaving only the positional matching as an
+  # option.
   expect_equal(unnestl(y, s(stack = T, s("a"), s("b"), s("b", s("d")))),
-               list(a = c(1, 1, 2, 3),
-                    b.c = c(1L, 2L, NA, 3L),
-                    b.d = c(NA, NA, 2L, NA)))
+               unnestl(y, s(stack = T, s("a"), s("b"))))
+  expect_equal(unnestl(y, s(stack = T, s("a"), s("b"), s("b", s("d")))),
+               unnestl(y, s(stack = T, dedupe = T, s("a"), s("b"), s("b", s("d")))))
+  expect_equal(unnestl(y, s(stack = T, s("a"), s("b"), s("b", s("d")))),
+               unnestl(y, s(stack = T, dedupe = T, s("a"), s("b"), s("b", s("d")))))
+
+  expect_equal(unnestl(y, s(stack = T,
+                            s("a"),
+                            s("b",
+                              s("d"),
+                              s("c", s(stack = T)),
+                              s("c", s(stack = T))))),
+               list(a = c(1, 1, 1, 1, 2, 3),
+                    # b.c = c(1L, 2L, 1L, 2L, NA, 3L),
+                    b.c = c(1L, 2L, 1L, 2L, NA, 3L),
+                    b.d = c(NA, NA, NA, NA, 2L, NA)))
+
+  expect_equal(unnestl(y, s(stack = T,
+                            s("a"),
+                            s("b",
+                              s("d"),
+                              s("c", s(stack = T)),
+                              s("c", as = "C", s(stack = T))))),
+               list(a = c(1, 1, 1, 1, 2, 3),
+                    b.C = c(1L, 2L, 1L, 2L, NA, 3L),
+                    b.c = c(1L, 2L, 1L, 2L, NA, 3L),
+                    b.d = c(NA, NA, NA, NA, 2L, NA)))
 
 })
