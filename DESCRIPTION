@@ -1,6 +1,6 @@
 Package: unnest
 Title: Quicly unnest hierarchical data structures
-Version: 0.0.1
+Version: 0.0.1.9000
 Authors@R:
     person(given = "Vitalie",
            family = "Spinu",

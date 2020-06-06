@@ -49,7 +49,7 @@ With [tidyr]() you start by putting a list into a data.frame column. With [unnes
 str(gh_repos[[1]][[1]][["owner"]])
 ```
 
-Assume that you want a data.frame with 3 columns, "name", "homepage" and "watchers_count", from level 3 of repo characteristics and one,"login", from level 4 of owner characteristics. This is how it's done with [tidyr]():
+Let's say that we want a `data.frame` with 3 columns, "name", "homepage" and "watchers_count", from level 3 of repo characteristics and one,"login", from level 4 of owner characteristics. This is how it's done with [tidyr]():
 
 ```{r}
 repos <- tibble(repo = gh_repos)
@@ -62,7 +62,7 @@ hoist(repos, repo,
   select(-repo)
 ```
 
-This is how you do it with [unnest]() in one blow:
+This is how you do it with [unnest]() in one blow
 
 ```{r}
 spec <- s(stack = TRUE,
@@ -75,7 +75,7 @@ spec <- s(stack = TRUE,
 unnest(gh_repos, spec)
 ```
 
-[unnest]() selector specification (`s`) applies to each level hierarchically and describes which elements should be selected and how. The `stack = TRUE` says that the result of the extraction should be stacked row-wise (aka `rbind`ed). `stack = FALSE`, the default, means spread it across multiple columns. The `as` argument provides the name of the output. By default it's the entire path name for the selected leaf.
+[unnest]() selector (`s`) applies to each level of the hierarchy and describes which elements should be selected and how. The `stack = TRUE` says that the result of the extraction should be stacked row-wise (aka `rbind`ed). `stack = FALSE`, means spread it across multiple columns. The `as` argument provides the name of the output. By default it's the entire path name for the selected leaf.
 
 Now assume that you want the 3 components of "repos" and all components of the owner at once:
 
@@ -102,7 +102,7 @@ spec <- s(stack = TRUE,
 unnest(gh_repos, spec) %>% tibble()
 ```
 
-Note that the result of [unnest]() is namespaced, while [tidyr]()'s is not. This is a good thing as you don't have to worry about overlapping names. [tidyr]() provides a "fix" for duplicated names in the form of `names_repair` argument to its functions.
+Note that [unnest]() produces namespaced column names, while [tidyr]()'s is not. This is a good thing as you don't have to worry about conflicting names. [tidyr]() provides a "fix" for duplicated names in the form of `names_repair` argument to its functions.
 
 ## Game of Thrones characters
 
@@ -128,11 +128,10 @@ tibble(char = got_chars) %>%
 unnest(got_chars,
        s(stack = T,
          s("name"),
-         s("books/", stack = T),
-         s("tvSeries/", stack = T)))
+         s("books,tvSeries/", stack = T)))
 ```
 
-Implementation aside, [tidyr]()'s intermediary steps are costly. First, because they create intermediary data structures. Second, because intermediary input might produce columns that are not needed in the subsequent processing. In the above examples `unnest_wider()` produced man more columns than we need. A better approach would be to replace it with a bit more verbose `hoist` call.
+Implementation aside, [tidyr]()'s intermediary steps are generally costly for two reasons. First, because intermediary data.frames are created during the processing. Second, because intermediary objects might contain columns that are not needed in the subsequent processing. In the above examples `unnest_wider()` produced man more columns than we need. A better approach would be to replace it with a bit more verbose `hoist` call.
 
 In contrast [unnest]() doesn't produce intermediary data structures. In fact, [unnest]() follows a 0-intermediary-copy semantics. The input vectors are directly copied into the output, no matter how complex the nesting is.
 
@@ -147,7 +146,7 @@ tibble(char = got_chars) %>%
 unnest(got_chars,
        s(stack = T,
          s("name"),
-         s("titles/*", stack = T)))
+         s("titles/", stack = T)))
 ```
 
 ### Id-value long tables (aka long pivoting, or melting)
@@ -174,7 +173,7 @@ unnest(got_chars,
 One might want to stack id vars (media) but spread the measures (books, tvSeries) horizontally such that each row would contain all measurement for each media.
 
 ```r
-# There doesn't seem to be an easy way to achieve this with tidyr.
+# There seem not to be an easy way to achieve this with tidyr
 
 unnest(got_chars,
        s(stack = T,
@@ -184,7 +183,7 @@ unnest(got_chars,
 
 ### Wide Tables (aka spreading)
 
-This strategy is commonly used in machine learning scenarios when large sparse tables are plugged into black-box ML algorithms. This is the default, `stack = FALSE` behavior in [unnest]().
+This strategy is commonly used in machine learning scenarios when large sparse tables are plugged into black-box ML algorithms. This is the default behavior in [unnest]().
 
 ```r
 # Currently tidyr errors on double widening due to name conflicts.
@@ -199,9 +198,9 @@ unnest(got_chars, s(stack = T, s("name"), s("books, tvSeries")))
 
 ## Sharla Gelfand's discography
 
-Finally, I will show how the most complex transformation from [tidyr]()'s vignette can be achieved with unnest in a single step.
+Finally, the most complex transformation from [tidyr]()'s vignette can be achieved with unnest in a single step.
 
-Let's see how a typical entry looks.
+Typical entry of `disog` collection looks like this
 
 ```{r}
 str(discog[[3]])
@@ -226,7 +225,7 @@ tibble(disc = discog) %>%
   unnest_longer(descriptions)
 ```
 
-With [unnest]() you can achieve this in two steps, or in a single step with a grouped children specification. The single step extraction returns a list of data.frames, but scans the data only once.
+With [unnest]() you can achieve this in two separate passes through the list, or in a single pass with a grouped children specification. The single pass extraction returns a list of data.frames, but scans the data only once.
 
 Separate unnest calls:
 
@@ -246,7 +245,7 @@ unnest(discog,
              s("descriptions/", stack = T)))))
 ```
 
-Single unnest call:
+Single unnest pass:
 
 ```r
 unnest(discog,
@@ -264,8 +263,8 @@ unnest(discog,
                            s("descriptions/", stack = T)))))))
 ```
 
-The unnest specs inside `groups` is the same as in the separate calls case. The `groups` argument is just like `children` with the difference that the output of the extraction is not cross-joined, but simply returned as list.[^groups]
+The unnest specs inside `groups` is the same as in the separate-calls case. The `groups` argument is just like `children` argument with the difference that the output of the extraction is not cross-joined, but simply returned as list.[^groups]
 
-The benefit is grouped extraction is twofold. First, it's faster because the list is traversed only once. Second, the de-duplication works across groups. That is, if `dedupe = TRUE`, the fields extracted in former specs are not extracted in the following specs.
+The benefit is grouped extraction is twofold. First, it's faster because the list is traversed only once. Second, the de-duplication works across groups. That is, when `dedupe = TRUE` (not shown in the above examples), the fields extracted by the preceding specs are not extracted by the specs that follow.
 
-[^groups]: Currently `groups` argument works only on the top level of the unnest specification.
+[^groups]: Currently `groups` argument works only with the top level of the unnest specification.

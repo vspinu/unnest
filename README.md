@@ -1,9 +1,8 @@
 
 ## Description
 
-Very fast, single-copy, unnesting of hierarchical data structures in R. The
-workhorse function `unnest` takes as input a hierarchical data structure (json,
-xml etc.) and produces a `data.frame` according to an unnesting spec.
+`unnest` is a 0-dependency R package for very fast, single-copy, unnesting of hierarchical data structures in R. The workhorse function `unnest` takes as
+input a hierarchical data structure (json, xml etc.) and produces a `data.frame` according to an unnesting spec.
 
 ## Instalation
 
