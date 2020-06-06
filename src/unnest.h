@@ -219,11 +219,10 @@ struct Unnester {
                                       const Spec& spec, uint_fast32_t cix,
                                       const SpecMatch& m) {
     P("---> dispatching cix:%ld %s\n", cix, m.to_string().c_str());
-    /* if (&spec == &NilSpec || &spec == &LeafSpec) { */
-    /*   add_node(*this, acc, vacc, NilSpec, cix, m.obj); */
-    /* } else  */
-    if (spec.children.empty()) {
+    if (&spec == &NilSpec || &spec == &LeafSpec) {
       add_node(*this, acc, vacc, NilSpec, cix, m.obj);
+    } else if (spec.children.empty()) {
+      add_node(*this, acc, vacc, LeafSpec, cix, m.obj);
     } else {
       for (const Spec& cspec: spec.children) {
         add_node(*this, acc, vacc, cspec, cix, m.obj);

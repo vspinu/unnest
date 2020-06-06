@@ -170,9 +170,7 @@ Spec list2spec(SEXP lspec) {
   }
 
   if (spec.name != R_NilValue) {
-    if (spec.stack != Spec::Stack::STACK &&
-        !((spec.include_ixes.size() == 1 && spec.include_names.size() == 0) ||
-          (spec.include_ixes.size() == 0 && spec.include_names.size() == 1)))
+    if (spec.stack != Spec::Stack::STACK && (spec.include_ixes.size() + spec.include_names.size()) > 1)
       Rf_error("Supplied 'as' value with multiple 'include' elements and `stack == FALSE`");
   }
 

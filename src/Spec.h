@@ -100,6 +100,6 @@ Spec list2spec(SEXP lspec);
 tuple<SEXP, vector<Spec>> spec_group(SEXP name, SEXP obj);
 
 const Spec NilSpec = Spec("NIL");
-/* const Spec LeafSpec = Spec("LEAF", false); */
+const Spec LeafSpec = Spec("LEAF", false);
 
 #endif // UNNEST_SPEC_H
