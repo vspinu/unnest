@@ -60,6 +60,8 @@ void add_node(UT& U, AT& acc, VarAccumulator& vacc,
 
 struct Unnester {
 
+  Spec::Stack stack_atomic = Spec::Stack::AUTO;
+
   cpair2ix_map cp2i;
   ix2cpair_map i2cp;
 
@@ -154,7 +156,7 @@ struct Unnester {
 	return out;
   }
 
-  void add_plain_node(NodeAccumulator& acc, const Spec& spec, uint_fast32_t ix, SEXP x) {
+  void add_atomic_node(NodeAccumulator& acc, const Spec& spec, uint_fast32_t ix, SEXP x) {
     R_xlen_t N = XLENGTH(x);
     if (N == 1) {
       acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
@@ -172,24 +174,26 @@ struct Unnester {
       P("--> add_node_impl:%s(%ld) %s\n", full_name(ix).c_str(), ix, spec.to_string().c_str());
       const vector<SpecMatch>& matches = spec.match(x);
       P("    nr. matches: %ld\n", matches.size());
-      if (spec.stack) {
-        stack_nodes(acc, vacc, spec, ix, matches);
+      if (spec.stack == Spec::Stack::STACK) {
+        stack_nodes(acc, vacc, spec, ix, matches, is_data_frame(x));
       } else {
         spread_nodes(acc, vacc, spec, ix, matches);
       }
       P("<-- added node impl:%s(%ld) acc[%ld,%ld]\n",
         full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
     } else {
-      P("---> add plain node impl:%s(%ld) %s\n", full_name(ix).c_str(), ix, spec.to_string().c_str());;
-      if (spec.children.size() == 0) {
-        if (spec.stack) {
+      // Exceeding specs are ignored
+      if (spec.terminal) {
+        P("---> add atomic node impl:%s(%ld) %s\n", full_name(ix).c_str(), ix, spec.to_string().c_str());;
+        if (spec.stack == Spec::Stack::STACK ||
+            (stack_atomic == Spec::Stack::STACK && spec.stack == Spec::Stack::AUTO)) {
           acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
           acc.nrows *= XLENGTH(x);
-          P("<--- added stacked plain node impl:%s(%ld) acc[%ld,%ld]\n",
+          P("<--- added stacked atomic node impl:%s(%ld) acc[%ld,%ld]\n",
             full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());;
         } else {
-          add_plain_node(acc, spec, ix, x);
-          P("<--- added spreaded plain node impl:%s(%ld) acc[%ld,%ld]\n",
+          add_atomic_node(acc, spec, ix, x);
+          P("<--- added spreaded atomic node impl:%s(%ld) acc[%ld,%ld]\n",
             full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
         }
       }
@@ -199,15 +203,31 @@ struct Unnester {
   void add_node_impl(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
                      const Spec& spec, uint_fast32_t ix, SEXP x) {
     if (TYPEOF(x) == VECSXP) {
-      if (spec.stack) {
+      if (spec.stack == Spec::Stack::STACK) {
         const vector<SpecMatch>& matches = spec.match(x);
-        stack_nodes(accs, vacc, spec, 0, matches);
+        stack_nodes(accs, vacc, spec, 0, matches, is_data_frame(x));
       } else {
         Rf_error("Grouped spreading is not yet implemented");
       }
     } else if (spec.children.size() > 0) {
       // fixme: not entirely sure what should be the logic here
       Rf_error("Cannot use grouped unnesting on a non-list");
+    }
+  }
+
+  inline void dispatch_match_to_child(NodeAccumulator& acc, VarAccumulator& vacc,
+                                      const Spec& spec, uint_fast32_t cix,
+                                      const SpecMatch& m) {
+    P("---> dispatching cix:%ld %s\n", cix, m.to_string().c_str());
+    /* if (&spec == &NilSpec || &spec == &LeafSpec) { */
+    /*   add_node(*this, acc, vacc, NilSpec, cix, m.obj); */
+    /* } else  */
+    if (spec.children.empty()) {
+      add_node(*this, acc, vacc, NilSpec, cix, m.obj);
+    } else {
+      for (const Spec& cspec: spec.children) {
+        add_node(*this, acc, vacc, cspec, cix, m.obj);
+      }
     }
   }
 
@@ -220,28 +240,15 @@ struct Unnester {
     }
   }
 
-  inline void dispatch_match_to_child(NodeAccumulator& acc, VarAccumulator& vacc,
-                                      const Spec& spec, uint_fast32_t cix,
-                                      const SpecMatch& m) {
-    P("---> dispatching cix:%ld %s\n", cix, m.to_string().c_str());
-    if (&spec == &NilSpec || &spec == &LeafSpec) {
-      add_node(*this, acc, vacc, NilSpec, cix, m.obj);
-    } else if (spec.children.empty()) {
-      add_node(*this, acc, vacc, LeafSpec, cix, m.obj);
-    } else {
-      for (const Spec& cspec: spec.children) {
-        add_node(*this, acc, vacc, cspec, cix, m.obj);
-      }
-    }
-  }
-
   void stack_nodes(NodeAccumulator&, VarAccumulator& vacc,
                    const Spec& spec, uint_fast32_t ix,
-                   const vector<SpecMatch>& matches);
+                   const vector<SpecMatch>& matches,
+                   const bool rep_to_max);
 
   void stack_nodes(vector<NodeAccumulator>&, VarAccumulator& vacc,
                    const Spec& spec, uint_fast32_t ix,
-                   const vector<SpecMatch>& matches);
+                   const vector<SpecMatch>& matches,
+                   const bool rep_to_max);
 
  public:
 

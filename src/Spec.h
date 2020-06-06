@@ -31,6 +31,14 @@ struct Spec {
   };
   Dedupe dedupe = INHERIT;
 
+  enum Stack {STACK, SPREAD, AUTO};
+  const std::unordered_map<Stack, string> stack_names = {
+    {STACK, "STACK"},
+    {SPREAD, "SPREAD"},
+    {AUTO, "AUTO"}
+  };
+  Stack stack = AUTO;
+
   bool terminal = true;
   bool terminal_parent = true;
 
@@ -43,7 +51,6 @@ struct Spec {
 
   vector<Spec> children;
   vector<tuple<SEXP, vector<Spec>>> groups;
-  bool stack = false;
   SEXP ix_name = R_NilValue;
 
   Spec() {};
@@ -76,7 +83,7 @@ struct Spec {
       name.append(CHAR(nm)).append(",");
     }
     stream << "[spec:" << name <<
-      " stack:" << (stack ? "TRUE" : "FALSE") <<
+      " stack:" << stack_names.at(stack).c_str() <<
       " dedupe:" << dedupe_names.at(dedupe).c_str() <<
       " terminal[parent]:" << (terminal ? "T" : "F") <<
       "[" << (terminal_parent ? "T" : "F") << "]" <<
@@ -86,11 +93,13 @@ struct Spec {
 
 };
 
-Spec list2spec(SEXP lspec);
+
 bool isSpec(SEXP s);
+Spec::Stack sexp2stack(SEXP x);
+Spec list2spec(SEXP lspec);
 tuple<SEXP, vector<Spec>> spec_group(SEXP name, SEXP obj);
 
 const Spec NilSpec = Spec("NIL");
-const Spec LeafSpec = Spec("LEAF", false);
+/* const Spec LeafSpec = Spec("LEAF", false); */
 
 #endif // UNNEST_SPEC_H

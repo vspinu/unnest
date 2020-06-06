@@ -27,6 +27,7 @@ using namespace std;
 
 
 // utils.cpp
+bool is_data_frame(SEXP s);
 SEXP rep_vector(SEXP x, R_xlen_t N);
 SEXP make_na_vector(SEXPTYPE type, R_xlen_t len);
 SEXP extract_scalar(SEXP x, R_xlen_t ix);

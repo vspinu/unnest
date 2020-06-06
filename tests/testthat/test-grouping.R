@@ -1,10 +1,6 @@
 
 test_that("Grouped stacking of unnamed levels works", {
 
-  xx <- l(x, x)
-  xx[[1]][["a"]][["id"]] <- 1L
-  xx[[2]][["a"]][["id"]] <- 2L
-
   expect_equal(unnestl(xx, s(stack = T, dedupe = T,
                              groups = list(one = s("a", s("b", s("c"))),
                                            two = s("a", s("b", s("c")))))),
@@ -20,7 +16,11 @@ test_that("Grouped stacking of unnamed levels works", {
                     two = list(a.b.c.1.a = c(1, 1), a.b.c.1.b = c(1, 1),
                                a.b.c.3.a = c(3, 3), a.b.c.3.b = c(3, 3))))
 
-  expect_equal(unnest(x, s("a", s("b", s("e", s("f")), s("c", s(stack = T))))),
+  expect_equal(unnest(x, s("a",
+                           s("b",
+                             s("e",
+                               s("f", s(stack = T))),
+                             s("c", s(stack = T))))),
                structure(list(a.b.c.a = c(1, 2, 3, 1, 2, 3),
                               a.b.c.b = c(1, NA, 3, 1, NA, 3),
                               a.b.c.c = c(NA, 2, NA, NA, 2, NA),
@@ -28,21 +28,12 @@ test_that("Grouped stacking of unnamed levels works", {
                          class = "data.frame", row.names = c(NA, 6L)))
 
 
-  xx <- l(x, x)
-  xx[[1]][["a"]][["id"]] <- 1L
-  xx[[2]][["a"]][["id"]] <- 2L
-  unnest(xx, s(stack = T, dedupe = T, as = ".ix.",
-               groups = list(one = list(s("a", s("b", s("d"))),
-                                        s("a", s("id"))),
-                             two = s("a", s("id"),
-                                     s("b", s(exclude = "c"))))))
 })
 
 
 test_that("Grouped stacking is de-duped correctly", {
 
-  # in this example s(example = "c") is a leaf node, so s("d") is considered
-  # matched here
+  # s(exclude = "c") is a leaf node, so "a.b.d" is considered matched here
   expect_equal(unnest(xx, s(stack = T, dedupe = T,
                             groups = list(one = list(s("a", s("b", s("d"))),
                                                      s("a", s("id"))),
@@ -64,6 +55,13 @@ test_that("Grouped stacking is de-duped correctly", {
                unnest(xx, s(stack = T,
                             s("a",
                               s("b", s("e"), s("c"))))))
+
+  ## stacked node is not the same as spread node
+  expect_equal(unnest(xx, s(stack = T, dedupe = T, # as = ".ix.",
+                            groups = list(one = list(s("a", s("b", s("d", stack = T))),
+                                                     s("a", s("id"))),
+                                          two = s("a"))))$two,
+               unnest(xx, s(stack = T, s("a", s(exclude = "id")))))
 
   expect_equal(unnest(xx, s(stack = T, dedupe = T, # as = ".ix.",
                             groups = list(one = list(s("a", s("b", s("d"))),

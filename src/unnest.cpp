@@ -2,7 +2,8 @@
 
 void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
                            const Spec& spec, uint_fast32_t ix,
-                           const vector<SpecMatch>& matches) {
+                           const vector<SpecMatch>& matches,
+                           const bool rep_to_max = false) {
   P(">>> stack_nodes ---\n");
   size_t N = matches.size();
 
@@ -55,21 +56,26 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
     acc.pnodes.push_front(move(pix));
   }
 
-  for (auto& on: out_nodes) {
-    on.second->set_size(end);
+  for (auto& onode: out_nodes) {
+    onode.second->set_size(end);
     P("stacked node:%s type:%s, size:%ld\n",
-      full_name(on.second->ix).c_str(), Rf_type2char(on.second->type()), on.second->size());
-    acc.pnodes.push_front(move(on.second));
+      full_name(onode.second->ix).c_str(), Rf_type2char(onode.second->type()), onode.second->size());
+    acc.pnodes.push_front(move(onode.second));
   }
 
-  acc.nrows *= end;
+  if (rep_to_max)
+    acc.nrows = max(acc.nrows, end);
+  else
+    acc.nrows = acc.nrows * end;
+
   P("<<< stack_nodes ---\n");
 
 }
 
 void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
                            const Spec& spec, uint_fast32_t ix,
-                           const vector<SpecMatch>& matches) {
+                           const vector<SpecMatch>& matches,
+                           const bool rep_to_max = false) {
 
   if (accs.size() == 0) return;
 
@@ -145,26 +151,30 @@ void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
       accs[ci].pnodes.push_front(move(pixs[ci]));
     }
 
-    for (auto& on: out_nodess[ci]) {
-      on.second->set_size(end[ci]);
+    for (auto& onode: out_nodess[ci]) {
+      onode.second->set_size(end[ci]);
       P("stacked node:%s type:%s, size:%ld\n",
-        full_name(on.second->ix).c_str(), Rf_type2char(on.second->type()), on.second->size());
-      accs[ci].pnodes.push_front(move(on.second));
+        full_name(onode.second->ix).c_str(), Rf_type2char(onode.second->type()), onode.second->size());
+      accs[ci].pnodes.push_front(move(onode.second));
     }
 
-    accs[ci].nrows *= end[ci];
+    if (rep_to_max)
+      accs[ci].nrows = max(accs[ci].nrows, end[ci]);
+    else
+      accs[ci].nrows = accs[ci].nrows * end[ci];
   }
   P("<<< gstack_nodes ---\n");
 
 }
 
-extern "C" SEXP C_unnest(SEXP x, SEXP lspec) {
+extern "C" SEXP C_unnest(SEXP x, SEXP lspec, SEXP stack_atomic) {
   SEXPTYPE type = TYPEOF(x);
   if (TYPEOF(x) != VECSXP) {
 	Rf_error("x must be a list vector");
   }
 
   Unnester unnester;
+  unnester.stack_atomic = sexp2stack(stack_atomic);
 
   return unnester.process(x, lspec);
 }

@@ -116,11 +116,11 @@ convert_to_dt <- function(x) {
 }
 
 #' @export
-unnest <- function(x, spec = NULL) {
+unnest <- function(x, spec = NULL, stack_atomic = NULL) {
   if (!is.null(spec) && !inherits(spec, "unnest.spec")) {
     stop("`spec` argument must be either `unnest.spec` or `unnest.pspec`", call. = FALSE)
   }
-  out <- .Call(C_unnest, x,  spec)
+  out <- .Call(C_unnest, x, spec, stack_atomic)
   switch(getOption("unnest.return.type", "data.frame"),
          data.frame = out,
          tibble = convert_to_tible(out),

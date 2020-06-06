@@ -26,11 +26,11 @@ test_that("Short form node spec works", {
                list(aaa = 2:1))
   expect_equal(unnestl(x, s("a//d")),
                list(a.b.d = 2:1))
-  expect_equal(unnestl(x, s("a//c/[3]")),
+  expect_equal(unnestl(x, s("a//c/3")),
                list(a.b.c.3.a = 3, a.b.c.3.b = 3))
-  expect_equal(unnestl(x, s("a//[3]/[3]")),
+  expect_equal(unnestl(x, s("a//3/3")),
                list(a.b.c.3.a = 3, a.b.c.3.b = 3))
-  expect_equal(unnestl(x, s("[1]/[1]/[3]/[3]")),
+  expect_equal(unnestl(x, s("1/1/3/3")),
                list(a.b.c.3.a = 3, a.b.c.3.b = 3))
 })
 

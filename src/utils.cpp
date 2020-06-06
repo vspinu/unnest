@@ -188,3 +188,15 @@ SEXP make_na_vector(SEXPTYPE type, R_xlen_t len) {
   // list/expression are already initialized to "NULL" by allocVector
   return out;
 }
+
+
+bool is_data_frame(SEXP s) {
+  SEXP cls;
+  if (OBJECT(s)) {
+    cls = getAttrib(s, R_ClassSymbol);
+    for (int i = 0; i < LENGTH(cls); i++)
+      if (!strcmp(CHAR(STRING_ELT(cls, i)), "data.frame"))
+        return true;
+  }
+  return false;
+}

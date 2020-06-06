@@ -16,6 +16,7 @@ class Node {
   Node (uint_fast32_t ix): ix(ix) {};
 };
 
+// Node holding an element of an atomic vector
 class ElNode: public Node {
  public:
   SEXP obj;
@@ -33,6 +34,7 @@ class ElNode: public Node {
     if (TYPEOF(target) == TYPEOF(obj)) {
       fill_vector_1(obj, el, target, start, end);
     } else {
+      // FIXME: inefficient; Implement own coercion?
       // Raw element coercion is not exposed by Rinternals. So extract scalar first.
       SEXP obj1 = Rf_coerceVector(extract_scalar(obj, el), TYPEOF(target));
       fill_vector_1(obj1, 0, target, start, end);
@@ -62,6 +64,7 @@ class SexpNode: public Node {
   }
 };
 
+// Node holding stack indexes
 class IxNode: public Node {
 
   R_xlen_t _size = 0;
@@ -145,6 +148,7 @@ class IxNode: public Node {
   }
 };
 
+// Node collection holding a range of other node types
 class RangeNode: public Node {
 
   R_xlen_t _size = 0;

@@ -3,6 +3,18 @@
 #include "common.h"
 #include "Spec.h"
 
+Spec::Stack sexp2stack(SEXP x) {
+  if (x == R_NilValue)
+    return Spec::Stack::AUTO;
+  if (TYPEOF(x) == LGLSXP) {
+    if (LOGICAL(x)[0])
+      return Spec::Stack::STACK;
+    else
+      return Spec::Stack::SPREAD;
+  }
+  Rf_error("Invalid stack argument; must be TRUE, FALSE or NULL");
+}
+
 vector<SpecMatch> Spec::match(SEXP obj) const {
   int N = LENGTH(obj);
   SEXP obj_names = Rf_getAttrib(obj, R_NamesSymbol);
@@ -76,7 +88,7 @@ void fill_spec_ixes(const char* name, SEXP obj, vector<int>& int_ixes, vector<SE
      break;
    case REALSXP:
      for (R_xlen_t i = 0; i < n; i++)
-       int_ixes.push_back(INTEGER(obj)[i] - 1);
+       int_ixes.push_back(REAL(obj)[i] - 1);
      break;
    case VECSXP:
      for (R_xlen_t i = 0; i < n; i++)
@@ -120,9 +132,9 @@ Spec list2spec(SEXP lspec) {
         if (!(TYPEOF(obj) == LGLSXP || TYPEOF(obj) == STRSXP) || XLENGTH(obj) != 1)
           Rf_error("spec's 'stack' field must be a logical or a character vector of length 1");
         if (TYPEOF(obj) == LGLSXP) {
-          spec.stack = LOGICAL(obj)[0];
+          spec.stack = sexp2stack(obj);
         } else {
-          spec.stack = true;
+          spec.stack = Spec::Stack::STACK;
           spec.ix_name = STRING_ELT(obj, 0);
         }
         done_stack = true;
@@ -158,8 +170,8 @@ Spec list2spec(SEXP lspec) {
   }
 
   if (spec.name != R_NilValue) {
-    if (!(spec.stack ||
-          (spec.include_ixes.size() == 1 && spec.include_names.size() == 0) ||
+    if (spec.stack != Spec::Stack::STACK &&
+        !((spec.include_ixes.size() == 1 && spec.include_names.size() == 0) ||
           (spec.include_ixes.size() == 0 && spec.include_names.size() == 1)))
       Rf_error("Supplied 'as' value with multiple 'include' elements and `stack == FALSE`");
   }
