@@ -47,12 +47,7 @@ void add_node(UT& U, AT& acc, VarAccumulator& vacc,
     P("   already has var %ld\n", ix);
     return;
   }
-  if (spec.dedupe == Spec::Dedupe::INHERIT) {
-    U.add_node_impl(acc, vacc, spec, ix, x);
-  } else {
-    VarAccumulator nvacc(spec.dedupe == Spec::Dedupe::TRUE);
-    U.add_node_impl(acc, nvacc, spec, ix, x);
-  }
+  U.add_node_impl(acc, vacc, spec, ix, x);
   if (spec.terminal) {
     vacc.insert(ix);
   }
@@ -60,7 +55,9 @@ void add_node(UT& U, AT& acc, VarAccumulator& vacc,
 
 struct Unnester {
 
-  Spec::Stack stack_atomic = Spec::Stack::AUTO;
+  bool dedupe;
+  bool stack_atomic;
+  bool rep_to_max;
 
   cpair2ix_map cp2i;
   ix2cpair_map i2cp;
@@ -186,7 +183,7 @@ struct Unnester {
       if (spec.terminal) {
         P("---> add atomic node impl:%s(%ld) %s\n", full_name(ix).c_str(), ix, spec.to_string().c_str());;
         if (spec.stack == Spec::Stack::STACK ||
-            (stack_atomic == Spec::Stack::STACK && spec.stack == Spec::Stack::AUTO)) {
+            (this->stack_atomic && spec.stack == Spec::Stack::AUTO)) {
           acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
           acc.nrows *= XLENGTH(x);
           P("<--- added stacked atomic node impl:%s(%ld) acc[%ld,%ld]\n",
@@ -256,7 +253,7 @@ struct Unnester {
 
     size_t Ngr = spec.groups.size();
 
-    VarAccumulator vacc(false);
+    VarAccumulator vacc(this->dedupe);
 
     if (Ngr == 0) {
       NodeAccumulator acc;

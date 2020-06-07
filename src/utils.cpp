@@ -200,3 +200,12 @@ bool is_data_frame(SEXP s) {
   }
   return false;
 }
+
+bool sexp2bool(SEXP x) {
+  if (x == R_NilValue)
+    return false;
+  if (TYPEOF(x) == LGLSXP && LENGTH(x) > 0) {
+    return (LOGICAL(x)[0]);
+  }
+  Rf_error("Invalid logical parameter; must be TRUE, FALSE or NULL");
+}

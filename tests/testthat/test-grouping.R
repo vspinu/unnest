@@ -1,7 +1,7 @@
 
 test_that("Grouped stacking of unnamed levels works", {
 
-  expect_equal(unnestl(xx, s(stack = T, dedupe = T,
+  expect_equal(unnestl(xx, dedupe = T, s(stack = T,
                              groups = list(one = s("a", s("b", s("c"))),
                                            two = s("a", s("b", s("c")))))),
                list(one = list(a.b.c.1.a = c(1, 1), a.b.c.1.b = c(1, 1),
@@ -9,9 +9,10 @@ test_that("Grouped stacking of unnamed levels works", {
                                a.b.c.3.a = c(3, 3), a.b.c.3.b = c(3, 3)),
                     two = structure(list(), .Names = character(0))))
 
-  expect_equal(unnestl(xx, s(stack = T, dedupe = T,
-                             groups = list(one = s("a", s("b", s("c", s(2)))),
-                                           two = s("a", s("b", s("c")))))),
+  expect_equal(unnestl(xx, dedupe = T,
+                       s(stack = T,
+                         groups = list(one = s("a", s("b", s("c", s(2)))),
+                                       two = s("a", s("b", s("c")))))),
                list(one = list(a.b.c.2.a = c(2, 2), a.b.c.2.c = c(2, 2)),
                     two = list(a.b.c.1.a = c(1, 1), a.b.c.1.b = c(1, 1),
                                a.b.c.3.a = c(3, 3), a.b.c.3.b = c(3, 3))))
@@ -34,12 +35,13 @@ test_that("Grouped stacking of unnamed levels works", {
 test_that("Grouped stacking is de-duped correctly", {
 
   # s(exclude = "c") is a leaf node, so "a.b.d" is considered matched here
-  expect_equal(unnest(xx, s(stack = T, dedupe = T,
-                            groups = list(one = list(s("a", s("b", s("d"))),
-                                                     s("a", s("id"))),
-                                          two = s("a",
-                                                  s("id"),
-                                                  s("b", s(exclude = "c")))))),
+  expect_equal(unnest(xx, dedupe = T,
+                      s(stack = T,
+                        groups = list(one = list(s("a", s("b", s("d"))),
+                                                 s("a", s("id"))),
+                                      two = s("a",
+                                              s("id"),
+                                              s("b", s(exclude = "c")))))),
                list(one = unnest(xx, s(stack = T,
                                        s("a", s("b", s("d"))),
                                        s("a", s("id")))),
@@ -48,27 +50,30 @@ test_that("Grouped stacking is de-duped correctly", {
                                          s("id"),
                                          s("b", s(exclude = c("c"))))))))
 
-  expect_equal(unnest(xx, s(stack = T, dedupe = T, # as = ".ix.",
-                            groups = list(one = list(s("a", s("b", s("d"))),
-                                                     s("a", s("id"))),
-                                          two = s("a"))))$two,
+  expect_equal(unnest(xx, dedupe = T,
+                      s(stack = T, # as = ".ix.",
+                        groups = list(one = list(s("a", s("b", s("d"))),
+                                                 s("a", s("id"))),
+                                      two = s("a"))))$two,
                unnest(xx, s(stack = T,
                             s("a",
                               s("b", s("e"), s("c"))))))
 
   ## stacked node is not the same as spread node
-  expect_equal(unnest(xx, s(stack = T, dedupe = T, # as = ".ix.",
-                            groups = list(one = list(s("a", s("b", s("d", stack = T))),
-                                                     s("a", s("id"))),
-                                          two = s("a"))))$two,
+  expect_equal(unnest(xx, dedupe = T,
+                      s(stack = T, # as = ".ix.",
+                        groups = list(one = list(s("a", s("b", s("d", stack = T))),
+                                                 s("a", s("id"))),
+                                      two = s("a"))))$two,
                unnest(xx, s(stack = T, s("a", s(exclude = "id")))))
 
-  expect_equal(unnest(xx, s(stack = T, dedupe = T, # as = ".ix.",
-                            groups = list(one = list(s("a", s("b", s("d"))),
-                                                     s("a", s("id"))),
-                                          two = list(s("a"),
-                                                     s("a/id"),
-                                                     s("a/b/d")))))$two,
+  expect_equal(unnest(xx, dedupe = T,
+                      s(stack = T, # as = ".ix.",
+                        groups = list(one = list(s("a", s("b", s("d"))),
+                                                 s("a", s("id"))),
+                                      two = list(s("a"),
+                                                 s("a/id"),
+                                                 s("a/b/d")))))$two,
                unnest(xx, s(stack = T,
                             s("a"))))
 

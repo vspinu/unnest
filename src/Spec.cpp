@@ -113,7 +113,7 @@ Spec list2spec(SEXP lspec) {
   bool done_as = false,
     done_children = false, done_groups = false,
     done_stack = false, done_include = false,
-    done_exclude = false, done_dedupe = false;
+    done_exclude = false;
   SEXP children = R_NilValue, groups = R_NilValue;
 
   Spec spec;
@@ -154,17 +154,6 @@ Spec list2spec(SEXP lspec) {
       } else if (!done_include && !strcmp(nm, "include")) {
         fill_spec_ixes("include", obj, spec.include_ixes, spec.include_names);
         done_include = true;
-      } else if (!done_dedupe && !strcmp(nm, "dedupe")) {
-        if (obj == R_NilValue) {
-          spec.dedupe = Spec::Dedupe::INHERIT;
-        } else {
-          if (TYPEOF(obj) != LGLSXP || XLENGTH(obj) != 1)
-            Rf_error("spec's 'dedupe' field must be a logical vector of length 1");
-          spec.dedupe = (LOGICAL(obj)[0]) ?
-            Spec::Dedupe::TRUE :
-            Spec::Dedupe::FALSE;
-        }
-        done_dedupe = true;
       }
     }
   }

@@ -26,7 +26,7 @@ print.unnest.spec <- function(x, ...) {
 s <- function(selector = NULL, ..., as = NULL,
               children = NULL, groups = NULL,
               include = NULL, exclude = NULL,
-              dedupe = NULL, stack = NULL) {
+              stack = NULL) {
   children <- c(children, list(...))
   children <- children[!sapply(children, is.null)]
   if (is.unnest.spec(selector)) {
@@ -61,7 +61,6 @@ s <- function(selector = NULL, ..., as = NULL,
           if (!is.null(include)) list(include = include),
           if (!is.null(exclude)) list(exclude = exclude),
           if (!is.null(stack))  list(stack = stack),
-          if (!is.null(dedupe)) list(dedupe = dedupe),
           if (length(children) > 0) list(children = children),
           if (!is.null(groups)) list(groups = groups))
 
@@ -85,10 +84,9 @@ s <- function(selector = NULL, ..., as = NULL,
         stack = stack,
         include = include,
         exclude = exclude,
-        dedupe = dedupe,
         children = if(first) el[["children"]] else list(tel),
         groups = groups))
-    dedupe <- include <- exclude <- stack <- groups <- NULL
+    include <- exclude <- stack <- groups <- NULL
     first <- FALSE
   }
   el <- tel
@@ -116,11 +114,11 @@ convert_to_dt <- function(x) {
 }
 
 #' @export
-unnest <- function(x, spec = NULL, stack_atomic = NULL) {
+unnest <- function(x, spec = NULL, dedupe = FALSE, stack_atomic = FALSE, rep_to_max = FALSE) {
   if (!is.null(spec) && !inherits(spec, "unnest.spec")) {
     stop("`spec` argument must be either `unnest.spec` or `unnest.pspec`", call. = FALSE)
   }
-  out <- .Call(C_unnest, x, spec, stack_atomic)
+  out <- .Call(C_unnest, x, spec, dedupe, stack_atomic, rep_to_max)
   switch(getOption("unnest.return.type", "data.frame"),
          data.frame = out,
          tibble = convert_to_tible(out),

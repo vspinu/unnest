@@ -23,14 +23,6 @@ struct SpecMatch {
 };
 
 struct Spec {
-  enum Dedupe {INHERIT, TRUE, FALSE};
-  const std::unordered_map<Dedupe, string> dedupe_names = {
-    {INHERIT, "INHERIT"},
-    {TRUE, "TRUE"},
-    {FALSE, "FALSE"}
-  };
-  Dedupe dedupe = INHERIT;
-
   enum Stack {STACK, SPREAD, AUTO};
   const std::unordered_map<Stack, string> stack_names = {
     {STACK, "STACK"},
@@ -84,7 +76,6 @@ struct Spec {
     }
     stream << "[spec:" << name <<
       " stack:" << stack_names.at(stack).c_str() <<
-      " dedupe:" << dedupe_names.at(dedupe).c_str() <<
       " terminal[parent]:" << (terminal ? "T" : "F") <<
       "[" << (terminal_parent ? "T" : "F") << "]" <<
       "]";

@@ -63,7 +63,7 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
     acc.pnodes.push_front(move(onode.second));
   }
 
-  if (rep_to_max)
+  if (rep_to_max || this->rep_to_max)
     acc.nrows = max(acc.nrows, end);
   else
     acc.nrows = acc.nrows * end;
@@ -167,14 +167,16 @@ void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
 
 }
 
-extern "C" SEXP C_unnest(SEXP x, SEXP lspec, SEXP stack_atomic) {
+extern "C" SEXP C_unnest(SEXP x, SEXP lspec, SEXP dedupe, SEXP stack_atomic, SEXP rep_to_max) {
   SEXPTYPE type = TYPEOF(x);
   if (TYPEOF(x) != VECSXP) {
 	Rf_error("x must be a list vector");
   }
 
   Unnester unnester;
-  unnester.stack_atomic = sexp2stack(stack_atomic);
+  unnester.dedupe = sexp2bool(dedupe);
+  unnester.stack_atomic = sexp2bool(stack_atomic);
+  unnester.rep_to_max = sexp2bool(rep_to_max);
 
   return unnester.process(x, lspec);
 }
