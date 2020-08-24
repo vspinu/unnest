@@ -22,6 +22,30 @@ print.unnest.spec <- function(x, ...) {
   str(x, give.head = FALSE, no.list = TRUE, give.attr = FALSE)
 }
 
+#' Unnest specs
+#'
+#' Unnest spec is a nested list with the same structure as the nested json and
+#' specifies how the deeply nested components ought to be unnested. `s()` is a
+#' shorthand synonym of `spec()`.
+#' @rdname spec
+#' @param selector A shorthand syntax of a selector. Will be substituted by a
+#'   canonical (nested) specification with elements `as`, `children`, `groups`,
+#'   `include` etc. according to the following rules: TODO
+#' @param as name for this field in the extracted data.frame
+#' @param children,... Unnamed list of children spec. `...` is merged into
+#'   `children`. `children` is part of canonical spec.
+#' @param groups Named list of specs to be processed in parallel. The return
+#'   value is a named list of unnested data.frames. The results is the same as
+#'   when each spec is `unnest`ed separately except that `dedupe` parameter of
+#'   `unnest()` will work across groups and execution is faster because the
+#'   nested list is traversed once regardless of the number of groups.
+#' @param include,exclude A list, a numeric vector or a character vector
+#'   specifying components to include. A list can combine numeric indexes and
+#'   character elements to extract.
+#' @param stack Whether to stack this node (TRUE) or to spread it (FALSE). Note
+#'   atomic vectors are stacked according to `stack_atomic` parameter in
+#'   `unnest()` call. When `stack` is specified for an atomic node, it takes
+#'   precedence over `stack_atomic`.
 #' @export
 s <- function(selector = NULL, ..., as = NULL,
               children = NULL, groups = NULL,
@@ -93,6 +117,7 @@ s <- function(selector = NULL, ..., as = NULL,
   unnest.spec(el)
 }
 
+#' @rdname spec
 #' @export
 spec <- s
 
@@ -113,6 +138,19 @@ convert_to_dt <- function(x) {
   }
 }
 
+#' Unnest nested lists
+#'
+#' @param x a nested list to unnest
+#' @param spec spec to use for unnesting. See [`spec()`].
+#' @param dedup whether to dedupe repeated elements. If TRUE, if a node is
+#'   visited for a second time and is not explicitly declared in the `spec` the
+#'   node is skipped. This is particularly useful with `group`ed specs.
+#' @param stack_atomic Whether atomic vectors should be stacked or not.
+#' @param rep_to_max When the results of sibling nodes is joined, the shorter
+#'   (in terms o number of rows) components can be either recycled to the max
+#'   number of rows (`rep_to_max = TRUE`). This is R's standard recycling
+#'   behavior. Or, the results can be cross joined (aka form all combinations of
+#'   rows).
 #' @export
 unnest <- function(x, spec = NULL, dedupe = FALSE, stack_atomic = FALSE, rep_to_max = FALSE) {
   if (!is.null(spec) && !inherits(spec, "unnest.spec")) {

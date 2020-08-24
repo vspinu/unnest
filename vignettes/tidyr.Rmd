@@ -24,11 +24,11 @@ As per [tidyr]() definition unnesting (or rectangling):
      columns. There are three functions from tidyr that are particularly useful for
      rectangling:
 
-[tidyr]() contains three core functions to unnest deeply nested list `unnest_longer()`, `unnest_wider()`, `hoist()`. This guide follows the steps from [tidyr]() vignette and translates them into `unnest`'s own language.
+[tidyr]() core functions for unnesting are `unnest_longer()`, `unnest_wider()`, `hoist()`. This guide follows the steps from [tidyr]() vignette and translates them into `unnest`'s language.
 
-With [tidyr]() you need to unnest lists in several steps by using one of the three core functions. With `unnest` you do all at once in one step. `unnest` doesn't produce intermediate list columns.
+With [tidyr]() you have to unnest lists in several steps by using one of the three core functions. With `unnest` you do all at once in one step. `unnest` doesn't produce intermediate list columns.
 
-We'll use the repurrrsive package as the source of our nested lists:
+We'll use the `repurrrsive` package as the source of our nested lists:
 
 ```{r setup, message = FALSE}
 library(tidyr)
@@ -43,7 +43,7 @@ options(unnest.return.type = "tibble")
 
 With [tidyr]() you start by putting a list into a data.frame column. With [unnest]() this is not necessary.
 
-`gh_repos` is a nested list with maximal depth 4 "user">"repo">"owner">"[xyz]".
+`gh_repos` is a nested list with maximal depth of 4 "user">"repo">"owner">"[xyz]".
 
 ```r
 str(gh_repos[[1]][[1]][["owner"]])
@@ -62,7 +62,7 @@ hoist(repos, repo,
   select(-repo)
 ```
 
-This is how you do it with [unnest]() in one blow
+With [unnest]():
 
 ```{r}
 spec <- s(stack = TRUE,
