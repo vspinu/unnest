@@ -1,4 +1,4 @@
-
+options(unnest.return.type = NULL)
 l <- base::list
 
 unnestl <- function(x, ...) {

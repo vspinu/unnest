@@ -22,15 +22,29 @@ print.unnest.spec <- function(x, ...) {
   str(x, give.head = FALSE, no.list = TRUE, give.attr = FALSE)
 }
 
-#' Unnest specs
-#'
 #' Unnest spec is a nested list with the same structure as the nested json and
 #' specifies how the deeply nested components ought to be unnested. `s()` is a
 #' shorthand synonym of `spec()`.
-#' @rdname spec
-#' @param selector A shorthand syntax of a selector. Will be substituted by a
-#'   canonical (nested) specification with elements `as`, `children`, `groups`,
-#'   `include` etc. according to the following rules: TODO
+#' @rdname unnest
+#' @param selector A shorthand syntax of an include selector. When a list each
+#'   element of the list is expanded into the `include` element at the
+#'   respective level. When `selector` is a string it is expanded into a list
+#'   according to the following steps:
+#' \enumerate{
+#'
+#'      \item When selector is length 1 and contains "/" characters it is split
+#'      with "/" separator. For instance `s(c("a", "b"), ...)`,  `s("a/b", ...)`
+#'      and `s("a", s("b", ...))` are all converted to a canonical `s(include =
+#'      "a", s(include = "b", ...))`.
+#'
+#'      Components consisting entirely of digits are converted to integer. For
+#'      example `s("a/2/b" ...)` is equivalent to `s("a", s(2, s("b", ...)))`
+#'
+#'      \item Each element of the resulting from the previous step vector is
+#'          split with `,`. Thus `s("a/b,c/d")` is equivalent to `s("a",
+#'          s(include = c("b", "c"), s("d", ...))))`
+#'
+#' }
 #' @param as name for this field in the extracted data.frame
 #' @param children,... Unnamed list of children spec. `...` is merged into
 #'   `children`. `children` is part of canonical spec.
@@ -42,10 +56,22 @@ print.unnest.spec <- function(x, ...) {
 #' @param include,exclude A list, a numeric vector or a character vector
 #'   specifying components to include. A list can combine numeric indexes and
 #'   character elements to extract.
-#' @param stack Whether to stack this node (TRUE) or to spread it (FALSE). Note
-#'   atomic vectors are stacked according to `stack_atomic` parameter in
-#'   `unnest()` call. When `stack` is specified for an atomic node, it takes
-#'   precedence over `stack_atomic`.
+#' @param stack Whether to stack this node (TRUE or "stack") or to spread it
+#'   (FALSE or "spread", the default), keep it as is ("asis") or convert to
+#'   string ("string"). "asis" and "string" are not yet implemented.
+#'
+#'   Note that atomic vectors are stacked according to `stack_atomic` parameter
+#'   in `unnest()` call, unless `stack` is specified explicitely, in which case
+#'   it takes precedence over `stack_atomic`. A value enclosed in `I()` is
+#'   equivalent to `stack = TRUE` but also adds an index column with the
+#'   respective name. See examples.
+#' @examples
+#'
+#' ## `s()` returns a canonical spec list
+#' s("a")
+#' s("a//c2")
+#' s("a/2/c2,cid")
+#'
 #' @export
 s <- function(selector = NULL, ..., as = NULL,
               children = NULL, groups = NULL,
@@ -80,11 +106,18 @@ s <- function(selector = NULL, ..., as = NULL,
     }
   }
 
+  ix <- NULL
+  if (is(stack, "AsIs")) {
+    ix <- unclass(stack)
+    stack <- TRUE
+  }
+
   el <- c(list(),
           if (!is.null(as)) list(as = as),
           if (!is.null(include)) list(include = include),
           if (!is.null(exclude)) list(exclude = exclude),
           if (!is.null(stack))  list(stack = stack),
+          if (!is.null(ix))  list(ix = ix),
           if (length(children) > 0) list(children = children),
           if (!is.null(groups)) list(groups = groups))
 
@@ -102,22 +135,24 @@ s <- function(selector = NULL, ..., as = NULL,
       else sel
     tel <-
       unnest.spec(list(
-        ## special case: remove all nested names TOTHINK: better marker?
+        ## special case: remove all nested names
+        ## TOTHINK: better marker?
         as = if (first) el[["as"]]
              else if (!is.null(el[["as"]])) "",
         stack = stack,
+        ix = ix,
         include = include,
         exclude = exclude,
         children = if(first) el[["children"]] else list(tel),
         groups = groups))
-    include <- exclude <- stack <- groups <- NULL
+    include <- exclude <- stack <- ix <- groups <- NULL
     first <- FALSE
   }
   el <- tel
   unnest.spec(el)
 }
 
-#' @rdname spec
+#' @rdname unnest
 #' @export
 spec <- s
 
@@ -146,17 +181,65 @@ convert_to_dt <- function(x) {
 #'   visited for a second time and is not explicitly declared in the `spec` the
 #'   node is skipped. This is particularly useful with `group`ed specs.
 #' @param stack_atomic Whether atomic vectors should be stacked or not.
-#' @param rep_to_max When the results of sibling nodes is joined, the shorter
-#'   (in terms o number of rows) components can be either recycled to the max
-#'   number of rows (`rep_to_max = TRUE`). This is R's standard recycling
-#'   behavior. Or, the results can be cross joined (aka form all combinations of
-#'   rows).
+#' @param cross_join Specifies how the results from sibling nodes are joined
+#'   (`cbind`) together. The shorter data.frames (in terms o number of rows) can
+#'   be either recycled to the max number of rows across all components as with
+#'   standard R's recycling (`cross_join = FALSE`). Or, with `cross_join =
+#'   TRUE`, the results are cross joined (aka form all combinations of rows
+#'   across joined components). `cross_join = TRUE` is the default because of no
+#'   data loss and it is more conducive for earlier error detection with
+#'   incorrect specs.
+#' @examples
+#'
+#' x <- list(a = list(b = list(x = 1, y = 1:2, z = 10),
+#'                    c = list(x = 2, y = 100:102)))
+#' xxx <- list(x, x, x)
+#'
+#' ## spreading
+#' unnest(x, s("a"))
+#' unnest(x, s("a"), stack_atomic = TRUE)
+#' unnest(x, s("a/b"), stack_atomic = TRUE)
+#' unnest(x, s("a/c"), stack_atomic = TRUE)
+#' unnest(x, s("a"), stack_atomic = TRUE, cross_join = TRUE)
+#' unnest(x, s("a//x"))
+#' unnest(x, s("a//x,z"))
+#' unnest(x, s("a/2/x,y"))
+#'
+#' ## stacking
+#' unnest(x, s("a/", stack = TRUE))
+#' unnest(x, s("a/", stack = TRUE, as = "A"))
+#' unnest(x, s("a/", stack = TRUE, as = "A"), stack_atomic = TRUE)
+#' unnest(x, s("a/", stack = I("id")), stack_atomic = TRUE)
+#' unnest(x, s("a/", stack = I("id"), as = ""), stack_atomic = TRUE)
+#'
+#' unnest(xxx, s(stack = I("id")))
+#' unnest(xxx, s(stack = I("id")), stack_atomic = TRUE)
+#' unnest(xxx, s(stack = I("id"), s("a/b/y/", stack = TRUE)))
+#'
+#' ## exclusion
+#' unnest(x, s("a/b/", exclude = "x"))
+#'
+#' ## dedupe
+#' unnest(x, s("a", s("b/y"), s("b")), stack_atomic = TRUE)
+#' unnest(x, s("a", s("b/y"), s("b")), dedupe = TRUE, stack_atomic = TRUE)
+#'
+#' ## grouping
+#' unnest(xxx, stack_atomic = TRUE,
+#'        s(stack = TRUE,
+#'          groups = list(first = s("a/b/x,y"),
+#'                        second = s("a/b"))))
+#'
+#' unnest(xxx, stack_atomic = TRUE, dedupe = TRUE,
+#'        s(stack = TRUE,
+#'          groups = list(first = s("a/b/x,y"),
+#'                        second = s("a/b"))))
+#'
 #' @export
-unnest <- function(x, spec = NULL, dedupe = FALSE, stack_atomic = FALSE, rep_to_max = FALSE) {
+unnest <- function(x, spec = NULL, dedupe = FALSE, stack_atomic = FALSE, cross_join = TRUE) {
   if (!is.null(spec) && !inherits(spec, "unnest.spec")) {
     stop("`spec` argument must be either `unnest.spec` or `unnest.pspec`", call. = FALSE)
   }
-  out <- .Call(C_unnest, x, spec, dedupe, stack_atomic, rep_to_max)
+  out <- .Call(C_unnest, x, spec, dedupe, stack_atomic, cross_join)
   switch(getOption("unnest.return.type", "data.frame"),
          data.frame = out,
          tibble = convert_to_tible(out),
