@@ -252,7 +252,7 @@ struct Unnester {
  public:
 
   SEXP process(SEXP x, SEXP lspec) {
-    const Spec spec = (lspec == R_NilValue) ? NilSpec : list2spec(lspec);
+    const Spec spec = (lspec == R_NilValue) ? NilSpec : sexp2spec(lspec);
 
     size_t Ngr = spec.groups.size();
 

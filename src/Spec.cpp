@@ -12,7 +12,19 @@ Spec::Stack sexp2stack(SEXP x) {
     else
       return Spec::Stack::SPREAD;
   }
-  Rf_error("Invalid stack argument; must be TRUE, FALSE or NULL");
+  if (TYPEOF(x) == STRSXP) {
+    const char* nm = CHAR(STRING_ELT(x, 0));
+    if (!strcmp(nm, "stack"))
+      return Spec::Stack::STACK;
+    else if (!strcmp(nm, "spread"))
+      return Spec::Stack::SPREAD;
+    else if (!strcmp(nm, "asis"))
+      Rf_error("'asis' stacking is not yet supported");
+    else if (!strcmp(nm, "string"))
+      Rf_error("'string' stacking is not yet supported");
+    else Rf_error("Invalid value for `stack` argument (%s). Must be one of 'stack', 'spread', 'asis' or 'string'", nm);
+  }
+  Rf_error("Invalid stack argument; must be TRUE, FALSE, NULL, 'stack', 'spread', 'asis' or 'string''");
 }
 
 vector<SpecMatch> Spec::match(SEXP obj) const {
@@ -99,7 +111,7 @@ void fill_spec_ixes(const char* name, SEXP obj, vector<int>& int_ixes, vector<SE
   }
 }
 
-Spec list2spec(SEXP lspec) {
+Spec sexp2spec(SEXP lspec) {
   if (TYPEOF(lspec) != VECSXP)
     Rf_error("'spec' must be a list");
   if (!isSpec(lspec))
@@ -112,8 +124,8 @@ Spec list2spec(SEXP lspec) {
   R_xlen_t N = LENGTH(lspec);
   bool done_as = false,
     done_children = false, done_groups = false,
-    done_stack = false, done_include = false,
-    done_exclude = false;
+    done_stack = false, done_ix = false,
+    done_include = false, done_exclude = false;
   SEXP children = R_NilValue, groups = R_NilValue;
 
   Spec spec;
@@ -129,15 +141,13 @@ Spec list2spec(SEXP lspec) {
         spec.name = STRING_ELT(obj, 0);
         done_as = true;
       } else if (!done_stack && !strcmp(nm, "stack")) {
-        if (!(TYPEOF(obj) == LGLSXP || TYPEOF(obj) == STRSXP) || XLENGTH(obj) != 1)
-          Rf_error("spec's 'stack' field must be a logical or a character vector of length 1");
-        if (TYPEOF(obj) == LGLSXP) {
-          spec.stack = sexp2stack(obj);
-        } else {
-          spec.stack = Spec::Stack::STACK;
-          spec.ix_name = STRING_ELT(obj, 0);
-        }
+        spec.stack = sexp2stack(obj);
         done_stack = true;
+      } else if (!done_ix && !strcmp(nm, "ix")) {
+        if (TYPEOF(obj) != STRSXP)
+          Rf_error("spec's 'ix' field must be a character");
+        spec.ix_name = STRING_ELT(obj, 0);
+        done_ix = true;
       } else if (!done_children && !strcmp(nm, "children")) {
         if (TYPEOF(obj) != VECSXP)
           Rf_error("spec's 'children' field must be a list");
@@ -168,7 +178,7 @@ Spec list2spec(SEXP lspec) {
     spec.children.reserve(NC);
     for (R_xlen_t c = 0; c < NC; c++) {
       SEXP ch = VECTOR_ELT(children, c);
-      spec.children.emplace_back(list2spec(ch));
+      spec.children.emplace_back(sexp2spec(ch));
     }
   }
 
@@ -206,14 +216,14 @@ tuple<SEXP, vector<Spec>> spec_group(SEXP name, SEXP obj) {
   if (TYPEOF(obj) != VECSXP)
     Rf_error("Spec group must be an `unnest.spec` or a list of `unnest.spec`s");
   if (isSpec(obj)) {
-    specs.push_back(list2spec(obj));
+    specs.push_back(sexp2spec(obj));
   } else {
     size_t N = XLENGTH(obj);
     for (size_t i = 0; i < N; i++) {
       SEXP s = VECTOR_ELT(obj, i);
       if (!isSpec(s))
         Rf_error("Each element of a group must be a spec. Not true for '%s'", CHAR(name));
-      specs.push_back(list2spec(s));
+      specs.push_back(sexp2spec(s));
     }
   }
   return tuple<SEXP, vector<Spec>>(name, specs);

@@ -22,6 +22,11 @@ test_that("Stacking of unnamed levels works", {
 
 })
 
+test_that("String stack parameter works", {
+  expect_equal(unnest(xx, s(stack = T, s("a", s("b", s("d/", stack = F)), s("id")))),
+               unnest(xx, s(stack = "stack", s("a", s("b", s("d/", stack = "spread")), s("id")))))
+})
+
 test_that("Stacking of named level works", {
 
   z <- l("1" = l(a = 1, b = l(c = 1:2)),
@@ -79,11 +84,11 @@ test_that("Double stacking works", {
 
 test_that("Stacking index is created", {
 
-  expect_equal(unnestl(xx, s(stack = "z.id",
+  expect_equal(unnestl(xx, s(stack = I("z.id"),
                             s("a",
                               s("id"),
                               s("b/c", as = "",
-                                s(stack = "c.id"))))),
+                                s(stack = I("c.id")))))),
                list(a.a = c(1, 2, 3, 1, 2, 3),
                     a.b = c(1, NA, 3, 1, NA, 3),
                     a.c = c(NA, 2, NA, NA, 2, NA),
@@ -91,4 +96,14 @@ test_that("Stacking index is created", {
                     a.id = c(1L, 1L, 1L, 2L, 2L, 2L),
                     z.id = c(1L, 1L, 1L, 2L, 2L, 2L)))
 
+  expect_equal(unnestl(xx, s(stack = I("z.id"),
+                             s("a",
+                               s("id"),
+                               s("b/c", as = "",
+                                 s(stack = I("c.id")))))),
+               unnestl(xx, s(stack = I("z.id"),
+                            s("a",
+                              s("id"),
+                              s("b/c", as = "",
+                                s(stack = I("c.id")))))))
 })

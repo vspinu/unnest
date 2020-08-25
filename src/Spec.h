@@ -23,10 +23,12 @@ struct SpecMatch {
 };
 
 struct Spec {
-  enum Stack {STACK, SPREAD, AUTO};
+  enum Stack {STACK, SPREAD, ASIS, STRING, AUTO};
   const std::unordered_map<Stack, string> stack_names = {
     {STACK, "STACK"},
     {SPREAD, "SPREAD"},
+    {ASIS, "ASIS"},
+    {STRING, "STRING"},
     {AUTO, "AUTO"}
   };
   Stack stack = AUTO;
@@ -87,7 +89,7 @@ struct Spec {
 
 bool isSpec(SEXP s);
 Spec::Stack sexp2stack(SEXP x);
-Spec list2spec(SEXP lspec);
+Spec sexp2spec(SEXP lspec);
 tuple<SEXP, vector<Spec>> spec_group(SEXP name, SEXP obj);
 
 const Spec NilSpec = Spec("NIL");
