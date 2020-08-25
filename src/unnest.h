@@ -185,7 +185,10 @@ struct Unnester {
         if (spec.stack == Spec::Stack::STACK ||
             (this->stack_atomic && spec.stack == Spec::Stack::AUTO)) {
           acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
-          acc.nrows *= XLENGTH(x);
+          if (this->rep_to_max)
+            acc.nrows = max(acc.nrows, XLENGTH(x));
+          else
+            acc.nrows *= XLENGTH(x);
           P("<--- added stacked atomic node impl:%s(%ld) acc[%ld,%ld]\n",
             full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());;
         } else {
