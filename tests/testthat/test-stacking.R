@@ -22,11 +22,6 @@ test_that("Stacking of unnamed levels works", {
 
 })
 
-test_that("String stack parameter works", {
-  expect_equal(unnest(xx, s(stack = T, s("a", s("b", s("d/", stack = F)), s("id")))),
-               unnest(xx, s(stack = "stack", s("a", s("b", s("d/", stack = "spread")), s("id")))))
-})
-
 test_that("Stacking of named level works", {
 
   z <- l("1" = l(a = 1, b = l(c = 1:2)),
@@ -106,4 +101,18 @@ test_that("Stacking index is created", {
                               s("id"),
                               s("b/c", as = "",
                                 s(stack = I("c.id")))))))
+})
+
+
+test_that("stacking attomics work", {
+
+  expect_equal(unnest(xx, s(stack = T, s("a/b/e/", stack = "id", s(stack = T)))),
+               structure(list(a.b.e = c(1L, 2L, 4L, 5L, 6L, 1L, 2L, 4L, 5L, 6L),
+                              a.b.e.id = c("f", "f", "g", "g", "g", "f", "f", "g", "g", "g")),
+                         class = "data.frame", row.names = c(NA, 10L)))
+
+  ## FIXME: atomic stack ids not working
+  # unnest(xx, s(stack = T, s("a/b/e/", as = "e", stack = "var.id",
+  #                           s(stack = "el.id"))))
+
 })

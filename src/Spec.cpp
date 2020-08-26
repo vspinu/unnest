@@ -13,18 +13,23 @@ Spec::Stack sexp2stack(SEXP x) {
       return Spec::Stack::SPREAD;
   }
   if (TYPEOF(x) == STRSXP) {
-    const char* nm = CHAR(STRING_ELT(x, 0));
-    if (!strcmp(nm, "stack"))
-      return Spec::Stack::STACK;
-    else if (!strcmp(nm, "spread"))
-      return Spec::Stack::SPREAD;
-    else if (!strcmp(nm, "asis"))
-      Rf_error("'asis' stacking is not yet supported");
-    else if (!strcmp(nm, "string"))
-      Rf_error("'string' stacking is not yet supported");
-    else Rf_error("Invalid value for `stack` argument (%s). Must be one of 'stack', 'spread', 'asis' or 'string'", nm);
+    return Spec::Stack::STACK;
   }
-  Rf_error("Invalid stack argument; must be TRUE, FALSE, NULL, 'stack', 'spread', 'asis' or 'string''");
+  Rf_error("Invalid `stack` argument. Must be TRUE, FALSE, NULL, or a string scalar");
+}
+
+Spec::Process sexp2process(SEXP x) {
+  if (x == R_NilValue)
+    return Spec::Process::NONE;
+  if (TYPEOF(x) == STRSXP) {
+    const char* nm = CHAR(STRING_ELT(x, 0));
+    if (!strcmp(nm, "asis"))
+      return Spec::Process::ASIS;
+    else if (!strcmp(nm, "paste"))
+      Rf_error("'paste' processing is not yet implemented");
+  } else {
+    Rf_error("Invalid `process` argument. Must be one of 'asis', 'paste' or NULL");
+  }
 }
 
 vector<SpecMatch> Spec::match(SEXP obj) const {
@@ -112,6 +117,9 @@ void fill_spec_ixes(const char* name, SEXP obj, vector<int>& int_ixes, vector<SE
 }
 
 Spec sexp2spec(SEXP lspec) {
+  if (LENGTH(lspec) == 0)
+    return NilSpec;
+
   if (TYPEOF(lspec) != VECSXP)
     Rf_error("'spec' must be a list");
   if (!isSpec(lspec))
@@ -124,7 +132,7 @@ Spec sexp2spec(SEXP lspec) {
   R_xlen_t N = LENGTH(lspec);
   bool done_as = false,
     done_children = false, done_groups = false,
-    done_stack = false, done_ix = false,
+    done_stack = false, done_process = false,
     done_include = false, done_exclude = false;
   SEXP children = R_NilValue, groups = R_NilValue;
 
@@ -137,17 +145,18 @@ Spec sexp2spec(SEXP lspec) {
 
       if (!done_as && !strcmp(nm, "as")) {
         if (TYPEOF(obj) != STRSXP || XLENGTH(obj) != 1)
-          Rf_error("spec's 'as' field must be a string vector of length 1");
+          Rf_error("spec's 'as' field must be a scalar string");
         spec.name = STRING_ELT(obj, 0);
         done_as = true;
       } else if (!done_stack && !strcmp(nm, "stack")) {
+        if (TYPEOF(obj) == STRSXP) {
+          spec.ix_name = STRING_ELT(obj, 0);
+        }
         spec.stack = sexp2stack(obj);
         done_stack = true;
-      } else if (!done_ix && !strcmp(nm, "ix")) {
-        if (TYPEOF(obj) != STRSXP)
-          Rf_error("spec's 'ix' field must be a character");
-        spec.ix_name = STRING_ELT(obj, 0);
-        done_ix = true;
+      } else if (!done_process && !strcmp(nm, "process")) {
+        spec.process = sexp2process(obj);
+        done_process = true;
       } else if (!done_children && !strcmp(nm, "children")) {
         if (TYPEOF(obj) != VECSXP)
           Rf_error("spec's 'children' field must be a list");

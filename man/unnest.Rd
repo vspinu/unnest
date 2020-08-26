@@ -16,7 +16,8 @@ s(
   groups = NULL,
   include = NULL,
   exclude = NULL,
-  stack = NULL
+  stack = NULL,
+  process = NULL
 )
 
 spec(
@@ -27,7 +28,8 @@ spec(
   groups = NULL,
   include = NULL,
   exclude = NULL,
-  stack = NULL
+  stack = NULL,
+  process = NULL
 )
 
 unnest(x, spec = NULL, dedupe = FALSE, stack_atomic = FALSE, cross_join = TRUE)
@@ -68,15 +70,11 @@ nested list is traversed once regardless of the number of groups.}
 specifying components to include. A list can combine numeric indexes and
 character elements to extract.}
 
-\item{stack}{Whether to stack this node (TRUE or "stack") or to spread it
-  (FALSE or "spread", the default), keep it as is ("asis") or convert to
-  string ("string"). "asis" and "string" are not yet implemented.
+\item{stack}{Whether to stack this node (TRUE) or to spread it (FALSE). When
+  `stack`is a string an index column is created with this name.
 
   Note that atomic vectors are stacked according to `stack_atomic` parameter
-  in `unnest()` call, unless `stack` is specified explicitely, in which case
-  it takes precedence over `stack_atomic`. A value enclosed in `I()` is
-  equivalent to `stack = TRUE` but also adds an index column with the
-  respective name. See examples.}
+  in `unnest()` call, unless `stack` is specified explicitly.}
 
 \item{x}{a nested list to unnest}
 

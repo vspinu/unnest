@@ -23,15 +23,16 @@ struct SpecMatch {
 };
 
 struct Spec {
-  enum Stack {STACK, SPREAD, ASIS, STRING, AUTO};
+  enum Process {ASIS, PASTE, NONE};
+  const std::unordered_map<Process, string> process_names = {
+    {ASIS, "ASIS"}, {PASTE, "PASTE"}, {NONE, "NONE"}
+  };
+  enum Stack {STACK, SPREAD, AUTO};
   const std::unordered_map<Stack, string> stack_names = {
-    {STACK, "STACK"},
-    {SPREAD, "SPREAD"},
-    {ASIS, "ASIS"},
-    {STRING, "STRING"},
-    {AUTO, "AUTO"}
+    {STACK, "STACK"}, {SPREAD, "SPREAD"}, {AUTO, "AUTO"}
   };
   Stack stack = AUTO;
+  Process process = NONE;
 
   bool terminal = true;
   bool terminal_parent = true;
@@ -76,8 +77,9 @@ struct Spec {
     for (SEXP nm: include_names) {
       name.append(CHAR(nm)).append(",");
     }
-    stream << "[spec:" << name <<
+    stream << "spec[" << name <<
       " stack:" << stack_names.at(stack).c_str() <<
+      " process:" << process_names.at(process).c_str() <<
       " terminal[parent]:" << (terminal ? "T" : "F") <<
       "[" << (terminal_parent ? "T" : "F") << "]" <<
       "]";
@@ -89,10 +91,12 @@ struct Spec {
 
 bool isSpec(SEXP s);
 Spec::Stack sexp2stack(SEXP x);
+Spec::Process sexp2process(SEXP x);
 Spec sexp2spec(SEXP lspec);
 tuple<SEXP, vector<Spec>> spec_group(SEXP name, SEXP obj);
 
 const Spec NilSpec = Spec("NIL");
 const Spec LeafSpec = Spec("LEAF", false);
+const Spec AsIsSpec = Spec("ASIS", false);
 
 #endif // UNNEST_SPEC_H

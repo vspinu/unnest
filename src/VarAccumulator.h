@@ -6,12 +6,12 @@
 #include <unordered_set>
 
 struct VarAccumulator {
-  bool accumulate = false;
+  bool dedupe = false;
   unordered_set<uint_fast32_t> acc;
-  VarAccumulator(bool accumulate = false): accumulate(accumulate) {};
+  VarAccumulator(bool dedupe = false): dedupe(dedupe) {};
 
   bool has_var(uint_fast32_t ix) {
-    if (accumulate) {
+    if (dedupe) {
       const auto it = acc.find(ix);
       return (it != acc.end());
     } else {
@@ -20,10 +20,9 @@ struct VarAccumulator {
   }
 
   void insert(uint_fast32_t ix) {
-    if (accumulate) {
+    if (dedupe) {
       acc.insert(ix);
     }
-    P("ACCVAR: %lu [acc: %d]\n", ix, accumulate);
   }
 };
 

@@ -42,6 +42,7 @@ class ElNode: public Node {
   }
 };
 
+// Standard node holding an full SEXP
 class SexpNode: public Node {
  public:
   SEXP obj;
@@ -60,6 +61,30 @@ class SexpNode: public Node {
     } else {
       SEXP obj1 = Rf_coerceVector(obj, TYPEOF(target));
       fill_vector(obj1, target, start, end);
+    }
+  }
+};
+
+
+// Node coping objects into list output
+class AsIsNode: public Node {
+ public:
+  SEXP obj;
+  AsIsNode(uint_fast32_t ix, SEXP obj): Node(ix), obj(obj) {};
+  R_xlen_t size() const override {
+    return 1;
+  }
+  SEXPTYPE type() const override {
+    return VECSXP;
+  }
+  void copy_into(SEXP target, R_xlen_t start, R_xlen_t end) const override {
+    P("AsIs copy of node %ld: type:%s, start:%ld, end:%ld\n",
+      ix, Rf_type2char(TYPEOF(target)), start, end);
+    if (TYPEOF(target) != VECSXP) {
+      Rf_error("Invalid target type for AsIsNode copy_into");
+    }
+    for (R_xlen_t i = start; i < end; i++) {
+      SET_VECTOR_ELT(target, i, lazy_duplicate(obj));
     }
   }
 };
@@ -164,7 +189,7 @@ class RangeNode: public Node {
   void push(R_xlen_t start, R_xlen_t end, unique_ptr<Node> pnode) {
     if (pnodes.size() == 0) {
       _type = pnode->type();
-    } else if (_type != STRSXP) {
+    } else if (_type != STRSXP && _type != VECSXP) {
       SEXPTYPE new_type = pnode->type();
       if (_type != new_type) {
         if (new_type == STRSXP)

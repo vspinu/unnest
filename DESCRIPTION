@@ -18,3 +18,4 @@ RoxygenNote: 7.1.1
 Suggests:
     testthat,
     roxygen2
+Roxygen: list(wrap = FALSE)

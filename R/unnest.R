@@ -56,15 +56,14 @@ print.unnest.spec <- function(x, ...) {
 #' @param include,exclude A list, a numeric vector or a character vector
 #'   specifying components to include. A list can combine numeric indexes and
 #'   character elements to extract.
-#' @param stack Whether to stack this node (TRUE or "stack") or to spread it
-#'   (FALSE or "spread", the default), keep it as is ("asis") or convert to
-#'   string ("string"). "asis" and "string" are not yet implemented.
+#' @param stack Whether to stack this node (TRUE) or to spread it (FALSE). When
+#'   `stack`is a string an index column is created with this name.
 #'
 #'   Note that atomic vectors are stacked according to `stack_atomic` parameter
-#'   in `unnest()` call, unless `stack` is specified explicitely, in which case
-#'   it takes precedence over `stack_atomic`. A value enclosed in `I()` is
-#'   equivalent to `stack = TRUE` but also adds an index column with the
-#'   respective name. See examples.
+#'   in `unnest()` call, unless `stack` is specified explicitly.
+#' @param process Extra processing step for this element. Either NULL for no
+#'   processing (the default), "asis" to return the entire element "as is" in a
+#'   list column, or "paste" to paste elements together in a character column.
 #' @examples
 #'
 #' ## `s()` returns a canonical spec list
@@ -76,7 +75,7 @@ print.unnest.spec <- function(x, ...) {
 s <- function(selector = NULL, ..., as = NULL,
               children = NULL, groups = NULL,
               include = NULL, exclude = NULL,
-              stack = NULL) {
+              stack = NULL, process = NULL) {
   children <- c(children, list(...))
   children <- children[!sapply(children, is.null)]
   if (is.unnest.spec(selector)) {
@@ -106,18 +105,12 @@ s <- function(selector = NULL, ..., as = NULL,
     }
   }
 
-  ix <- NULL
-  if (is(stack, "AsIs")) {
-    ix <- unclass(stack)
-    stack <- TRUE
-  }
-
   el <- c(list(),
           if (!is.null(as)) list(as = as),
           if (!is.null(include)) list(include = include),
           if (!is.null(exclude)) list(exclude = exclude),
           if (!is.null(stack))  list(stack = stack),
-          if (!is.null(ix))  list(ix = ix),
+          if (!is.null(process))  list(process = process),
           if (length(children) > 0) list(children = children),
           if (!is.null(groups)) list(groups = groups))
 
@@ -140,12 +133,12 @@ s <- function(selector = NULL, ..., as = NULL,
         as = if (first) el[["as"]]
              else if (!is.null(el[["as"]])) "",
         stack = stack,
-        ix = ix,
+        process = process,
         include = include,
         exclude = exclude,
         children = if(first) el[["children"]] else list(tel),
         groups = groups))
-    include <- exclude <- stack <- ix <- groups <- NULL
+    include <- exclude <- stack <- process <- groups <- NULL
     first <- FALSE
   }
   el <- tel
@@ -234,10 +227,17 @@ convert_to_dt <- function(x) {
 #'          groups = list(first = s("a/b/x,y"),
 #'                        second = s("a/b"))))
 #'
+#' ## processing
+#' str(unnest(xxx, s(stack = "id",
+#'                   s("a/b/y", process = "asis"),
+#'                   s("a/c", process = "asis"))))
+#'
+#' str(unnest(xxx, s(stack = "id", s("a/b/", process = "asis"))))
+#'
 #' @export
 unnest <- function(x, spec = NULL, dedupe = FALSE, stack_atomic = FALSE, cross_join = TRUE) {
   if (!is.null(spec) && !inherits(spec, "unnest.spec")) {
-    stop("`spec` argument must be either `unnest.spec` or `unnest.pspec`", call. = FALSE)
+    stop("`spec` argument must be of class `unnest.spec`", call. = FALSE)
   }
   out <- .Call(C_unnest, x, spec, dedupe, stack_atomic, cross_join)
   switch(getOption("unnest.return.type", "data.frame"),

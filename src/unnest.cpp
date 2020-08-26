@@ -1,5 +1,6 @@
 #include "unnest.h"
 
+// simple stacker
 void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
                            const Spec& spec, uint_fast32_t ix,
                            const vector<SpecMatch>& matches,
@@ -20,7 +21,7 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
   int i = 1;
   for (const SpecMatch& m: matches) {
     NodeAccumulator iacc;
-    VarAccumulator ivacc(vacc.accumulate);
+    VarAccumulator ivacc(vacc.dedupe);
 
     dispatch_match_to_child(iacc, ivacc, spec, cix, m);
     end += iacc.nrows;
@@ -48,6 +49,7 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
       }
       iacc.pnodes.pop_front();
     }
+
     beg = end;
   }
 
@@ -72,6 +74,7 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
 
 }
 
+// grouped stacker
 void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
                            const Spec& spec, uint_fast32_t ix,
                            const vector<SpecMatch>& matches,
@@ -105,7 +108,7 @@ void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
 
   for (const SpecMatch& m: matches) {
     vector<NodeAccumulator> iaccs(Ngr);
-    VarAccumulator ivacc(vacc.accumulate);
+    VarAccumulator ivacc(vacc.dedupe);
 
     for (size_t gi = 0; gi < Ngr; gi++) {
       const vector<Spec>& gspecs = get<1>(spec.groups[gi]);

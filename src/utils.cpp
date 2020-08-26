@@ -185,7 +185,8 @@ SEXP make_na_vector(SEXPTYPE type, R_xlen_t len) {
      // for RAW we set 0s
      FillNA(RAW(out), len, 0);
   }
-  // list/expression are already initialized to "NULL" by allocVector
+  // Elements of list/expression are already initialized to "NULL" by
+  // allocVector
   return out;
 }
 
