@@ -98,5 +98,6 @@ tuple<SEXP, vector<Spec>> spec_group(SEXP name, SEXP obj);
 const Spec NilSpec = Spec("NIL");
 const Spec LeafSpec = Spec("LEAF", false);
 const Spec AsIsSpec = Spec("ASIS", false);
+const Spec PasteSpec = Spec("PASTE", false);
 
 #endif // UNNEST_SPEC_H

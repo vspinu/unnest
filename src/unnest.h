@@ -156,11 +156,13 @@ struct Unnester {
   // NB: spec is a child spec
   void add_node_impl(NodeAccumulator& acc, VarAccumulator& vacc,
                      const Spec& spec, uint_fast32_t ix, SEXP x) {
+    // LENGTH(X) > 0 here
     if (&spec == &AsIsSpec) {
-      // AsIs
-      P("---> add ASIS node impl:%s(%ld) %s\n",
-        full_name(ix).c_str(), ix, spec.to_string().c_str());
       acc.pnodes.push_front(make_unique<AsIsNode>(ix, x));
+      P("<--- added ASIS node impl:%s(%ld) acc[%ld,%ld]\n",
+        full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
+    } else if (&spec == &PasteSpec) {
+      acc.pnodes.push_front(make_unique<PasteNode>(ix, x));
       P("<--- added ASIS node impl:%s(%ld) acc[%ld,%ld]\n",
         full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
     } else if (TYPEOF(x) == VECSXP) {
@@ -178,18 +180,20 @@ struct Unnester {
     } else {
       // Atomics
       if (spec.terminal) {// Specs deeper than the object itself are ignored
-        P("---> add atomic node impl:%s(%ld) %s\n", full_name(ix).c_str(), ix, spec.to_string().c_str());
+        P("---> add atomic node impl:%s(%ld) %s\n",
+          full_name(ix).c_str(), ix, spec.to_string().c_str());
         R_xlen_t N = XLENGTH(x);
         if (spec.stack == Spec::Stack::STACK ||
             (this->stack_atomic && spec.stack == Spec::Stack::AUTO)) {
           if (spec.process == Spec::Process::ASIS) {
-            // AsIs
-            P("---> add ASIS atomic node impl:%s(%ld) %s\n",
-              full_name(ix).c_str(), ix, spec.to_string().c_str());
             acc.pnodes.push_front(make_unique<AsIsNode>(ix, x));
             P("<--- added ASIS atomic node impl:%s(%ld) acc[%ld,%ld]\n",
               full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
-          } else {
+          } else if (spec.process == Spec::Process::PASTE) {
+            acc.pnodes.push_front(make_unique<PasteNode>(ix, x));
+            P("<--- added PASTE atomic node impl:%s(%ld) acc[%ld,%ld]\n",
+              full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
+          }else {
             acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
             if (this->rep_to_max)
               acc.nrows = max(acc.nrows, N);
@@ -236,6 +240,8 @@ struct Unnester {
     P("---> dispatching cix:%ld %s %s\n", cix, m.to_string().c_str(), spec.to_string().c_str());
     if (spec.process == Spec::Process::ASIS) {
       add_node(*this, acc, vacc, AsIsSpec, cix, m.obj);
+    } else if (spec.process == Spec::Process::PASTE) {
+      add_node(*this, acc, vacc, PasteSpec, cix, m.obj);
     } else if (&spec == &NilSpec || &spec == &LeafSpec) {
       add_node(*this, acc, vacc, NilSpec, cix, m.obj);
     } else if (spec.children.empty()) {

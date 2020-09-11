@@ -26,10 +26,9 @@ Spec::Process sexp2process(SEXP x) {
     if (!strcmp(nm, "asis"))
       return Spec::Process::ASIS;
     else if (!strcmp(nm, "paste"))
-      Rf_error("'paste' processing is not yet implemented");
-  } else {
-    Rf_error("Invalid `process` argument. Must be one of 'asis', 'paste' or NULL");
+      return Spec::Process::PASTE;
   }
+  Rf_error("Invalid `process` argument. Must be one of 'asis', 'paste' or NULL");
 }
 
 vector<SpecMatch> Spec::match(SEXP obj) const {

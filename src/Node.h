@@ -4,6 +4,8 @@
 
 #include "common.h"
 
+// NB: obj inside is always len > 0
+
 class Node {
  public:
   uint_fast32_t ix;
@@ -86,6 +88,42 @@ class AsIsNode: public Node {
     for (R_xlen_t i = start; i < end; i++) {
       SET_VECTOR_ELT(target, i, lazy_duplicate(obj));
     }
+  }
+};
+
+// Node pasting objects into a character output
+class PasteNode: public Node {
+ public:
+  SEXP obj;
+  PasteNode(uint_fast32_t ix, SEXP obj): Node(ix), obj(obj) {};
+  R_xlen_t size() const override {
+    return 1;
+  }
+  SEXPTYPE type() const override {
+    return STRSXP;
+  }
+  void copy_into(SEXP target, R_xlen_t start, R_xlen_t end) const override {
+    P("Paste copy of node %ld: type:%s, start:%ld, end:%ld\n",
+      ix, Rf_type2char(TYPEOF(target)), start, end);
+    if (TYPEOF(target) != STRSXP) {
+      Rf_error("Invalid target type for PasteNode copy_into (%s). Must be STRSXP.",
+               Rf_type2char(TYPEOF(target)));
+    }
+    SEXP str = (TYPEOF(obj) == STRSXP)? obj : Rf_coerceVector(obj, STRSXP);
+    PROTECT(str);
+    bool isUTF8 = false;
+    R_xlen_t N = XLENGTH(str);
+    cetype_t cet = Rf_getCharCE(STRING_ELT(str, 0));
+    std::ostringstream stream;
+    stream << CHAR(STRING_ELT(str, 0));
+    for (R_xlen_t i = 1; i < N; i++) {
+      stream << "," << CHAR(STRING_ELT(str, i));
+    }
+    SEXP cs = PROTECT(mkCharCE(stream.str().c_str(), cet));
+    for (R_xlen_t i = start; i < end; i++) {
+      SET_STRING_ELT(target, i, cs);
+    }
+    UNPROTECT(2);
   }
 };
 
