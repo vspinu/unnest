@@ -2,8 +2,8 @@
 
 // simple stacker
 void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
-                           const Spec& spec, uint_fast32_t ix,
-                           const vector<SpecMatch>& matches,
+                           const Spec& pspec, const Spec& spec,
+                           uint_fast32_t ix, const vector<SpecMatch>& matches,
                            const bool rep_to_max = false) {
   P(">>> stack_nodes ---\n");
   size_t N = matches.size();
@@ -23,7 +23,7 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
     NodeAccumulator iacc;
     VarAccumulator ivacc(vacc.dedupe);
 
-    dispatch_match_to_child(iacc, ivacc, spec, cix, m);
+    dispatch_match_to_child(iacc, ivacc, pspec, spec, cix, m);
     end += iacc.nrows;
 
     // add index
@@ -76,8 +76,8 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
 
 // grouped stacker
 void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
-                           const Spec& spec, uint_fast32_t ix,
-                           const vector<SpecMatch>& matches,
+                           const Spec& pspec, const Spec& spec,
+                           uint_fast32_t ix, const vector<SpecMatch>& matches,
                            const bool rep_to_max = false) {
 
   if (accs.size() == 0) return;
@@ -113,7 +113,7 @@ void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
     for (size_t gi = 0; gi < Ngr; gi++) {
       const vector<Spec>& gspecs = get<1>(spec.groups[gi]);
       for (const Spec& s: gspecs) {
-        add_node(*this, iaccs[gi], ivacc, s, cix, m.obj);
+        add_node(*this, iaccs[gi], ivacc, spec, s, cix, m.obj);
       }
       end[gi] += iaccs[gi].nrows;
       // add index

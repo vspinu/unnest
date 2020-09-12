@@ -35,7 +35,6 @@ struct Spec {
   Process process = NONE;
 
   bool terminal = true;
-  bool terminal_parent = true;
 
   SEXP name = R_NilValue; //FIXME: rename into "as"
   string type = "";
@@ -50,7 +49,6 @@ struct Spec {
 
   Spec() {};
   Spec(string type): type(type) {};
-  Spec(string type, bool terminal_parent): type(type), terminal_parent(terminal_parent) {};
 
   vector<SpecMatch> match(SEXP obj) const;
 
@@ -64,11 +62,6 @@ struct Spec {
     for (const Spec& sp: children) {
       terminal = terminal && sp.terminal;
     }
-    if (!terminal) {
-      for (Spec& sp: children) {
-        sp.terminal_parent = false;
-      }
-    }
   }
 
   string to_string() const {
@@ -81,7 +74,6 @@ struct Spec {
       " stack:" << stack_names.at(stack).c_str() <<
       " process:" << process_names.at(process).c_str() <<
       " terminal[parent]:" << (terminal ? "T" : "F") <<
-      "[" << (terminal_parent ? "T" : "F") << "]" <<
       "]";
     return stream.str();
   }
@@ -96,8 +88,5 @@ Spec sexp2spec(SEXP lspec);
 tuple<SEXP, vector<Spec>> spec_group(SEXP name, SEXP obj);
 
 const Spec NilSpec = Spec("NIL");
-const Spec LeafSpec = Spec("LEAF", false);
-const Spec AsIsSpec = Spec("ASIS", false);
-const Spec PasteSpec = Spec("PASTE", false);
 
 #endif // UNNEST_SPEC_H

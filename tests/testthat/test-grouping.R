@@ -1,3 +1,4 @@
+context("Grouping")
 
 test_that("Grouped stacking of unnamed levels works", {
 
