@@ -22,15 +22,16 @@ print.unnest.spec <- function(x, ...) {
   str(x, give.head = FALSE, no.list = TRUE, give.attr = FALSE)
 }
 
-#' Unnest spec is a nested list with the same structure as the nested json and
-#' specifies how the deeply nested components ought to be unnested. `s()` is a
-#' shorthand synonym of `spec()`.
+#' Unnest spec is a nested list with the same structure as the nested json. It
+#' specifies concisely how the deeply nested components ought to be
+#' unnested. `s()` is a shorthand for `spec()`.
 #' @rdname unnest
-#' @param selector A shorthand syntax of an include selector. When a list each
-#'   element of the list is expanded into the `include` element at the
+#' @param selector A shorthand syntax for an `include` selector. When a list
+#'   each element of the list is expanded into the `include` element at the
 #'   respective level. When `selector` is a string it is expanded into a list
-#'   according to the following steps:
-#' \enumerate{
+#'   according to the following rules:
+#'
+#'   \enumerate{
 #'
 #'      \item When selector is length 1 and contains "/" characters it is split
 #'      with "/" separator. For instance `s(c("a", "b"), ...)`,  `s("a/b", ...)`
@@ -47,23 +48,21 @@ print.unnest.spec <- function(x, ...) {
 #' }
 #' @param as name for this field in the extracted data.frame
 #' @param children,... Unnamed list of children spec. `...` is merged into
-#'   `children`. `children` is part of canonical spec.
+#'   `children`. `children` is part of the canonical spec.
 #' @param groups Named list of specs to be processed in parallel. The return
 #'   value is a named list of unnested data.frames. The results is the same as
 #'   when each spec is `unnest`ed separately except that `dedupe` parameter of
 #'   `unnest()` will work across groups and execution is faster because the
 #'   nested list is traversed once regardless of the number of groups.
 #' @param include,exclude A list, a numeric vector or a character vector
-#'   specifying components to include. A list can combine numeric indexes and
-#'   character elements to extract.
+#'   specifying components to include or exclude. A list can combine numeric
+#'   indexes and character elements to extract.
 #' @param stack Whether to stack this node (TRUE) or to spread it (FALSE). When
-#'   `stack`is a string an index column is created with this name.
-#'
-#'   Note that atomic vectors are stacked according to `stack_atomic` parameter
-#'   in `unnest()` call, unless `stack` is specified explicitly.
+#'   `stack`is a string an index column is created with that name.
 #' @param process Extra processing step for this element. Either NULL for no
 #'   processing (the default), "asis" to return the entire element "as is" in a
 #'   list column, or "paste" to paste elements together in a character column.
+#' @return A canonical spec; a list suitable for the C level unnest routine.
 #' @examples
 #'
 #' ## `s()` returns a canonical spec list
@@ -202,12 +201,12 @@ convert_to_dt <- function(x) {
 #' unnest(x, s("a/", stack = TRUE))
 #' unnest(x, s("a/", stack = TRUE, as = "A"))
 #' unnest(x, s("a/", stack = TRUE, as = "A"), stack_atomic = TRUE)
-#' unnest(x, s("a/", stack = I("id")), stack_atomic = TRUE)
-#' unnest(x, s("a/", stack = I("id"), as = ""), stack_atomic = TRUE)
+#' unnest(x, s("a/", stack = "id"), stack_atomic = TRUE)
+#' unnest(x, s("a/", stack = "id", as = ""), stack_atomic = TRUE)
 #'
-#' unnest(xxx, s(stack = I("id")))
-#' unnest(xxx, s(stack = I("id")), stack_atomic = TRUE)
-#' unnest(xxx, s(stack = I("id"), s("a/b/y/", stack = TRUE)))
+#' unnest(xxx, s(stack = "id"))
+#' unnest(xxx, s(stack = "id"), stack_atomic = TRUE)
+#' unnest(xxx, s(stack = "id", s("a/b/y/", stack = TRUE)))
 #'
 #' ## exclusion
 #' unnest(x, s("a/b/", exclude = "x"))
