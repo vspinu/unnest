@@ -26,7 +26,6 @@ struct Spec {
   enum Stack {STACK, SPREAD, AUTO};
   enum Process {ASIS, PASTE, NONE};
 #if __GNUC__ > 5
-  // doesn't compile on GCC5
   const std::unordered_map<Process, string> process_names = {
     {ASIS, "ASIS"}, {PASTE, "PASTE"}, {NONE, "NONE"}
   };
