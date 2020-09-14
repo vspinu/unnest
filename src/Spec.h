@@ -25,7 +25,7 @@ struct SpecMatch {
 struct Spec {
   enum Stack {STACK, SPREAD, AUTO};
   enum Process {ASIS, PASTE, NONE};
-#ifdef DEBUG
+#if __GNUC__ > 5
   // doesn't compile on GCC5
   const std::unordered_map<Process, string> process_names = {
     {ASIS, "ASIS"}, {PASTE, "PASTE"}, {NONE, "NONE"}
@@ -74,7 +74,7 @@ struct Spec {
       name.append(CHAR(nm)).append(",");
     }
     stream << "spec[" << name <<
-#ifdef DEBUG
+#if __GNUC__ > 5
       " stack:" << stack_names.at(stack).c_str() <<
       " process:" << process_names.at(process).c_str() <<
 #endif
