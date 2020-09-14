@@ -21,8 +21,8 @@ class Node {
 // Node holding an element of an atomic vector
 class ElNode: public Node {
  public:
-  SEXP obj;
   size_t el;
+  SEXP obj;
   ElNode(uint_fast32_t ix, size_t el, SEXP obj): Node(ix), el(el), obj(obj) {};
   R_xlen_t size() const override {
     return 1;

@@ -23,14 +23,17 @@ struct SpecMatch {
 };
 
 struct Spec {
+  enum Stack {STACK, SPREAD, AUTO};
   enum Process {ASIS, PASTE, NONE};
+#ifdef DEBUG
+  // doesn't compile on GCC5
   const std::unordered_map<Process, string> process_names = {
     {ASIS, "ASIS"}, {PASTE, "PASTE"}, {NONE, "NONE"}
   };
-  enum Stack {STACK, SPREAD, AUTO};
   const std::unordered_map<Stack, string> stack_names = {
     {STACK, "STACK"}, {SPREAD, "SPREAD"}, {AUTO, "AUTO"}
   };
+#endif
   Stack stack = AUTO;
   Process process = NONE;
 
@@ -71,8 +74,10 @@ struct Spec {
       name.append(CHAR(nm)).append(",");
     }
     stream << "spec[" << name <<
+#ifdef DEBUG
       " stack:" << stack_names.at(stack).c_str() <<
       " process:" << process_names.at(process).c_str() <<
+#endif
       " terminal[parent]:" << (terminal ? "T" : "F") <<
       "]";
     return stream.str();
