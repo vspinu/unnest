@@ -1,0 +1,18 @@
+url: https://github.com/vspinu/unnest
+
+template:
+  params:
+     bootswatch: flatly
+
+authors:
+  Vitalie Spinu:
+    href: https://github.com/vspinu
+
+home:
+  strip_header: true
+
+reference:
+
+- title: Unnest and Specs
+  contents:
+  - unnest
