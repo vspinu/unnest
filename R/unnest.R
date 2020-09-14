@@ -56,7 +56,7 @@ print.unnest.spec <- function(x, ...) {
 #'   `stack`is a string an index column is created with that name.
 #' @param process Extra processing step for this element. Either NULL for no
 #'   processing (the default), "asis" to return the entire element "as is" in a
-#'   list column, or "paste" to paste elements together in a character column.
+#'   list column, or "paste" to paste elements together into a character column.
 #' @return A canonical spec; a list suitable for the C level unnest routine.
 #' @examples
 #'
@@ -221,12 +221,17 @@ convert_to_dt <- function(x) {
 #'          groups = list(first = s("a/b/x,y"),
 #'                        second = s("a/b"))))
 #'
-#' ## processing
+#' ## processing asis
 #' str(unnest(xxx, s(stack = "id",
 #'                   s("a/b/y", process = "asis"),
 #'                   s("a/c", process = "asis"))))
-#'
 #' str(unnest(xxx, s(stack = "id", s("a/b/", process = "asis"))))
+#' str(unnest(xxx, s(stack = "id", s("a/b", process = "asis"))))
+#'
+#' ## processing paste
+#' str(unnest(x, s("a/b/y", process = "paste")))
+#' str(unnest(xxx, s(stack = T, s("a/b/", process = "paste"))))
+#' str(unnest(xxx, s(stack = T, s("a/b", process = "paste"))))
 #'
 #' @export
 unnest <- function(x, spec = NULL, dedupe = FALSE, stack_atomic = FALSE, cross_join = TRUE) {

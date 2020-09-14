@@ -69,7 +69,7 @@ indexes and character elements to extract.}
 
 \item{process}{Extra processing step for this element. Either NULL for no
 processing (the default), "asis" to return the entire element "as is" in a
-list column, or "paste" to paste elements together in a character column.}
+list column, or "paste" to paste elements together into a character column.}
 
 \item{x}{a nested list to unnest}
 
@@ -150,11 +150,16 @@ unnest(xxx, stack_atomic = TRUE, dedupe = TRUE,
          groups = list(first = s("a/b/x,y"),
                        second = s("a/b"))))
 
-## processing
+## processing asis
 str(unnest(xxx, s(stack = "id",
                   s("a/b/y", process = "asis"),
                   s("a/c", process = "asis"))))
-
 str(unnest(xxx, s(stack = "id", s("a/b/", process = "asis"))))
+str(unnest(xxx, s(stack = "id", s("a/b", process = "asis"))))
+
+## processing paste
+str(unnest(x, s("a/b/y", process = "paste")))
+str(unnest(xxx, s(stack = T, s("a/b/", process = "paste"))))
+str(unnest(xxx, s(stack = T, s("a/b", process = "paste"))))
 
 }
