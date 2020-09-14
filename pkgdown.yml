@@ -1,0 +1,10 @@
+pandoc: 2.7.3
+pkgdown: 1.6.1
+pkgdown_sha: ~
+articles:
+  tidyr: tidyr.html
+last_built: 2020-09-14T17:28Z
+urls:
+  reference: https://github.com/vspinu/unnest/reference
+  article: https://github.com/vspinu/unnest/articles
+
