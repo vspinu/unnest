@@ -40,19 +40,13 @@ each element of the list is expanded into the \code{include} element at the
 respective level. When \code{selector} is a string it is expanded into a list
 according to the following rules:
 
-\enumerate{\preformatted{ \\item When selector is length 1 and contains "/" characters it is split
- with "/" separator. For instance `s(c("a", "b"), ...)`,  `s("a/b", ...)`
- and `s("a", s("b", ...))` are all converted to a canonical `s(include =
- "a", s(include = "b", ...))`.
-
- Components consisting entirely of digits are converted to integer. For
- example `s("a/2/b" ...)` is equivalent to `s("a", s(2, s("b", ...)))`
-
- \\item Each element of the resulting from the previous step vector is
-     split with `,`. Thus `s("a/b,c/d")` is equivalent to `s("a",
-     s(include = c("b", "c"), s("d", ...))))`
-}
-
+\enumerate{
+\item When selector is length 1 and contains "/" characters it is split
+with "/" separator. For instance \code{s(c("a", "b"), ...)},  \code{s("a/b", ...)}
+and \code{s("a", s("b", ...))} are all converted to a canonical \code{s(include = "a", s(include = "b", ...))}. Components consisting entirely of digits are converted to integer. For
+example \verb{s("a/2/b" ...)} is equivalent to \code{s("a", s(2, s("b", ...)))}
+\item Each element of the resulting from the previous step vector is
+split with \verb{,}. Thus \code{s("a/b,c/d")} is equivalent to \code{s("a", s(include = c("b", "c"), s("d", ...)))}
 }}
 
 \item{as}{name for this field in the extracted data.frame}

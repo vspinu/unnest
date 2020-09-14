@@ -32,20 +32,15 @@ print.unnest.spec <- function(x, ...) {
 #'   according to the following rules:
 #'
 #'   \enumerate{
-#'
 #'      \item When selector is length 1 and contains "/" characters it is split
-#'      with "/" separator. For instance `s(c("a", "b"), ...)`,  `s("a/b", ...)`
-#'      and `s("a", s("b", ...))` are all converted to a canonical `s(include =
-#'      "a", s(include = "b", ...))`.
-#'
-#'      Components consisting entirely of digits are converted to integer. For
-#'      example `s("a/2/b" ...)` is equivalent to `s("a", s(2, s("b", ...)))`
-#'
+#'            with "/" separator. For instance `s(c("a", "b"), ...)`,  `s("a/b", ...)`
+#'            and `s("a", s("b", ...))` are all converted to a canonical `s(include =
+#'            "a", s(include = "b", ...))`. Components consisting entirely of digits are converted to integer. For
+#'            example `s("a/2/b" ...)` is equivalent to `s("a", s(2, s("b", ...)))`
 #'      \item Each element of the resulting from the previous step vector is
-#'          split with `,`. Thus `s("a/b,c/d")` is equivalent to `s("a",
-#'          s(include = c("b", "c"), s("d", ...))))`
-#'
-#' }
+#'            split with `,`. Thus `s("a/b,c/d")` is equivalent to `s("a",
+#'            s(include = c("b", "c"), s("d", ...)))`
+#'  }
 #' @param as name for this field in the extracted data.frame
 #' @param children,... Unnamed list of children spec. `...` is merged into
 #'   `children`. `children` is part of the canonical spec.

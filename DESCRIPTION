@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "spinuvit@gmail.com")
 Description: Fast flattening of hierarchical data structures (e.g. JSON and XML
-             documents) into a data.frame.
+             documents) into data.frames with a flexible spec language.
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
