@@ -16,6 +16,14 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
 Suggests:
+    data.table,
+    dplyr,
+    knitr,
+    repurrrsive,
+    roxygen2,
     testthat,
-    roxygen2
-Roxygen: list(wrap = FALSE)
+    tibble,
+    tidyr
+Roxygen: list(markdown = TRUE)
+VignetteBuilder:
+    knitr

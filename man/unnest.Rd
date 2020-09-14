@@ -6,7 +6,7 @@
 \alias{unnest}
 \title{Unnest spec is a nested list with the same structure as the nested json. It
 specifies concisely how the deeply nested components ought to be
-unnested. `s()` is a shorthand for `spec()`.}
+unnested. \code{s()} is a shorthand for \code{spec()}.}
 \usage{
 s(
   selector = NULL,
@@ -35,36 +35,35 @@ spec(
 unnest(x, spec = NULL, dedupe = FALSE, stack_atomic = FALSE, cross_join = TRUE)
 }
 \arguments{
-\item{selector}{A shorthand syntax for an `include` selector. When a list
-  each element of the list is expanded into the `include` element at the
-  respective level. When `selector` is a string it is expanded into a list
-  according to the following rules:
+\item{selector}{A shorthand syntax for an \code{include} selector. When a list
+each element of the list is expanded into the \code{include} element at the
+respective level. When \code{selector} is a string it is expanded into a list
+according to the following rules:
 
-  \enumerate{
+\enumerate{\preformatted{ \\item When selector is length 1 and contains "/" characters it is split
+ with "/" separator. For instance `s(c("a", "b"), ...)`,  `s("a/b", ...)`
+ and `s("a", s("b", ...))` are all converted to a canonical `s(include =
+ "a", s(include = "b", ...))`.
 
-     \item When selector is length 1 and contains "/" characters it is split
-     with "/" separator. For instance `s(c("a", "b"), ...)`,  `s("a/b", ...)`
-     and `s("a", s("b", ...))` are all converted to a canonical `s(include =
-     "a", s(include = "b", ...))`.
+ Components consisting entirely of digits are converted to integer. For
+ example `s("a/2/b" ...)` is equivalent to `s("a", s(2, s("b", ...)))`
 
-     Components consisting entirely of digits are converted to integer. For
-     example `s("a/2/b" ...)` is equivalent to `s("a", s(2, s("b", ...)))`
-
-     \item Each element of the resulting from the previous step vector is
-         split with `,`. Thus `s("a/b,c/d")` is equivalent to `s("a",
-         s(include = c("b", "c"), s("d", ...))))`
+ \\item Each element of the resulting from the previous step vector is
+     split with `,`. Thus `s("a/b,c/d")` is equivalent to `s("a",
+     s(include = c("b", "c"), s("d", ...))))`
+}
 
 }}
 
 \item{as}{name for this field in the extracted data.frame}
 
-\item{children, ...}{Unnamed list of children spec. `...` is merged into
-`children`. `children` is part of the canonical spec.}
+\item{children, ...}{Unnamed list of children spec. \code{...} is merged into
+\code{children}. \code{children} is part of the canonical spec.}
 
 \item{groups}{Named list of specs to be processed in parallel. The return
 value is a named list of unnested data.frames. The results is the same as
-when each spec is `unnest`ed separately except that `dedupe` parameter of
-`unnest()` will work across groups and execution is faster because the
+when each spec is \code{unnest}ed separately except that \code{dedupe} parameter of
+\code{unnest()} will work across groups and execution is faster because the
 nested list is traversed once regardless of the number of groups.}
 
 \item{include, exclude}{A list, a numeric vector or a character vector
@@ -72,7 +71,7 @@ specifying components to include or exclude. A list can combine numeric
 indexes and character elements to extract.}
 
 \item{stack}{Whether to stack this node (TRUE) or to spread it (FALSE). When
-`stack`is a string an index column is created with that name.}
+\code{stack}is a string an index column is created with that name.}
 
 \item{process}{Extra processing step for this element. Either NULL for no
 processing (the default), "asis" to return the entire element "as is" in a
@@ -80,22 +79,21 @@ list column, or "paste" to paste elements together in a character column.}
 
 \item{x}{a nested list to unnest}
 
-\item{spec}{spec to use for unnesting. See [`spec()`].}
+\item{spec}{spec to use for unnesting. See \code{\link[=spec]{spec()}}.}
+
+\item{dedupe}{whether to dedupe repeated elements. If TRUE, if a node is
+visited for a second time and is not explicitly declared in the \code{spec} the
+node is skipped. This is particularly useful with \code{group}ed specs.}
 
 \item{stack_atomic}{Whether atomic vectors should be stacked or not.}
 
 \item{cross_join}{Specifies how the results from sibling nodes are joined
-(`cbind`) together. The shorter data.frames (in terms o number of rows) can
+(\code{cbind}) together. The shorter data.frames (in terms o number of rows) can
 be either recycled to the max number of rows across all components as with
-standard R's recycling (`cross_join = FALSE`). Or, with `cross_join =
-TRUE`, the results are cross joined (aka form all combinations of rows
-across joined components). `cross_join = TRUE` is the default because of no
+standard R's recycling (\code{cross_join = FALSE}). Or, with \code{cross_join = TRUE}, the results are cross joined (aka form all combinations of rows
+across joined components). \code{cross_join = TRUE} is the default because of no
 data loss and it is more conducive for earlier error detection with
 incorrect specs.}
-
-\item{dedup}{whether to dedupe repeated elements. If TRUE, if a node is
-visited for a second time and is not explicitly declared in the `spec` the
-node is skipped. This is particularly useful with `group`ed specs.}
 }
 \value{
 A canonical spec; a list suitable for the C level unnest routine.
@@ -103,7 +101,7 @@ A canonical spec; a list suitable for the C level unnest routine.
 \description{
 Unnest spec is a nested list with the same structure as the nested json. It
 specifies concisely how the deeply nested components ought to be
-unnested. `s()` is a shorthand for `spec()`.
+unnested. \code{s()} is a shorthand for \code{spec()}.
 
 Unnest nested lists
 }

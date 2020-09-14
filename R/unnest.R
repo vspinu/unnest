@@ -14,7 +14,7 @@ unnest.spec <- function(x) {
 #' @export
 str.unnest.spec <- function(object, nest.lev = 0, no.list = FALSE, ...) {
   cat(sprintf("<%s>\n", paste(class(object), collapse = ",")))
-  utils:::str.default(object, nest.lev = nest.lev, no.list = T, ...)
+  utils::str(unclass(object), nest.lev = nest.lev, no.list = T, ...)
 }
 
 #' @export
@@ -169,7 +169,7 @@ convert_to_dt <- function(x) {
 #'
 #' @param x a nested list to unnest
 #' @param spec spec to use for unnesting. See [`spec()`].
-#' @param dedup whether to dedupe repeated elements. If TRUE, if a node is
+#' @param dedupe whether to dedupe repeated elements. If TRUE, if a node is
 #'   visited for a second time and is not explicitly declared in the `spec` the
 #'   node is skipped. This is particularly useful with `group`ed specs.
 #' @param stack_atomic Whether atomic vectors should be stacked or not.
