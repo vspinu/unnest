@@ -478,11 +478,11 @@ incorrect specs.</p></td>
 <span class='co'>## processing paste</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a/b/y"</span>, process = <span class='st'>"paste"</span>)))
 </div><div class='output co'>#&gt; 'data.frame':	1 obs. of  1 variable:
-#&gt;  $ a.b.y: chr "1,2"</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='fu'>unnest</span>(<span class='kw'>xxx</span>, <span class='fu'>s</span>(stack = <span class='kw'>T</span>, <span class='fu'>s</span>(<span class='st'>"a/b/"</span>, process = <span class='st'>"paste"</span>))))
+#&gt;  $ a.b.y: chr "1,2"</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='fu'>unnest</span>(<span class='kw'>xxx</span>, <span class='fu'>s</span>(stack = <span class='fl'>TRUE</span>, <span class='fu'>s</span>(<span class='st'>"a/b/"</span>, process = <span class='st'>"paste"</span>))))
 </div><div class='output co'>#&gt; 'data.frame':	3 obs. of  3 variables:
 #&gt;  $ a.b.x: chr  "1" "1" "1"
 #&gt;  $ a.b.y: chr  "1,2" "1,2" "1,2"
-#&gt;  $ a.b.z: chr  "10" "10" "10"</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='fu'>unnest</span>(<span class='kw'>xxx</span>, <span class='fu'>s</span>(stack = <span class='kw'>T</span>, <span class='fu'>s</span>(<span class='st'>"a/b"</span>, process = <span class='st'>"paste"</span>))))
+#&gt;  $ a.b.z: chr  "10" "10" "10"</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='fu'>unnest</span>(<span class='kw'>xxx</span>, <span class='fu'>s</span>(stack = <span class='fl'>TRUE</span>, <span class='fu'>s</span>(<span class='st'>"a/b"</span>, process = <span class='st'>"paste"</span>))))
 </div><div class='output co'>#&gt; 'data.frame':	3 obs. of  1 variable:
 #&gt;  $ a.b: chr  "1,1:2,10" "1,1:2,10" "1,1:2,10"</div><div class='input'>
 </div></pre>
