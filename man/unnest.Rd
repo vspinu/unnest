@@ -159,7 +159,7 @@ str(unnest(xxx, s(stack = "id", s("a/b", process = "asis"))))
 
 ## processing paste
 str(unnest(x, s("a/b/y", process = "paste")))
-str(unnest(xxx, s(stack = T, s("a/b/", process = "paste"))))
-str(unnest(xxx, s(stack = T, s("a/b", process = "paste"))))
+str(unnest(xxx, s(stack = TRUE, s("a/b/", process = "paste"))))
+str(unnest(xxx, s(stack = TRUE, s("a/b", process = "paste"))))
 
 }
