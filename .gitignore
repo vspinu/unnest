@@ -26,3 +26,4 @@ announcement.*
 *.tar.gz
 .Rprofile
 
+cran-comments.md
