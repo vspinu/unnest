@@ -79,7 +79,7 @@ Unnest nested lists" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">unnest</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.2</span>
       </span>
     </div>
 
@@ -144,31 +144,31 @@ unnested. <code>s()</code> is a shorthand for <code>spec()</code>.</p>
 <p>Unnest nested lists</p>
     </div>
 
-    <pre class="usage"><span class='fu'>s</span>(
-  selector = <span class='kw'>NULL</span>,
-  <span class='kw'>...</span>,
-  as = <span class='kw'>NULL</span>,
-  children = <span class='kw'>NULL</span>,
-  groups = <span class='kw'>NULL</span>,
-  include = <span class='kw'>NULL</span>,
-  exclude = <span class='kw'>NULL</span>,
-  stack = <span class='kw'>NULL</span>,
-  process = <span class='kw'>NULL</span>
-)
+    <pre class="usage"><span class='fu'>s</span><span class='op'>(</span>
+  selector <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>...</span>,
+  as <span class='op'>=</span> <span class='cn'>NULL</span>,
+  children <span class='op'>=</span> <span class='cn'>NULL</span>,
+  groups <span class='op'>=</span> <span class='cn'>NULL</span>,
+  include <span class='op'>=</span> <span class='cn'>NULL</span>,
+  exclude <span class='op'>=</span> <span class='cn'>NULL</span>,
+  stack <span class='op'>=</span> <span class='cn'>NULL</span>,
+  process <span class='op'>=</span> <span class='cn'>NULL</span>
+<span class='op'>)</span>
 
-<span class='fu'>spec</span>(
-  selector = <span class='kw'>NULL</span>,
-  <span class='kw'>...</span>,
-  as = <span class='kw'>NULL</span>,
-  children = <span class='kw'>NULL</span>,
-  groups = <span class='kw'>NULL</span>,
-  include = <span class='kw'>NULL</span>,
-  exclude = <span class='kw'>NULL</span>,
-  stack = <span class='kw'>NULL</span>,
-  process = <span class='kw'>NULL</span>
-)
+<span class='fu'>spec</span><span class='op'>(</span>
+  selector <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>...</span>,
+  as <span class='op'>=</span> <span class='cn'>NULL</span>,
+  children <span class='op'>=</span> <span class='cn'>NULL</span>,
+  groups <span class='op'>=</span> <span class='cn'>NULL</span>,
+  include <span class='op'>=</span> <span class='cn'>NULL</span>,
+  exclude <span class='op'>=</span> <span class='cn'>NULL</span>,
+  stack <span class='op'>=</span> <span class='cn'>NULL</span>,
+  process <span class='op'>=</span> <span class='cn'>NULL</span>
+<span class='op'>)</span>
 
-<span class='fu'>unnest</span>(<span class='kw'>x</span>, spec = <span class='kw'>NULL</span>, dedupe = <span class='fl'>FALSE</span>, stack_atomic = <span class='fl'>FALSE</span>, cross_join = <span class='fl'>TRUE</span>)</pre>
+<span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, spec <span class='op'>=</span> <span class='cn'>NULL</span>, dedupe <span class='op'>=</span> <span class='cn'>FALSE</span>, stack_atomic <span class='op'>=</span> <span class='cn'>FALSE</span>, cross_join <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -259,16 +259,16 @@ incorrect specs.</p></td>
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'>
 <span class='co'>## `s()` returns a canonical spec list</span>
-<span class='fu'>s</span>(<span class='st'>"a"</span>)
+<span class='fu'>s</span><span class='op'>(</span><span class='st'>"a"</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; &lt;unnest.spec&gt;
-#&gt;  $ include:"a"</div><div class='input'><span class='fu'>s</span>(<span class='st'>"a//c2"</span>)
+#&gt;  $ include:"a"</div><div class='input'><span class='fu'>s</span><span class='op'>(</span><span class='st'>"a//c2"</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; &lt;unnest.spec&gt;
 #&gt;  $ include :"a"
 #&gt;  $ children:List of 1
 #&gt;   ..$ :&lt;unnest.spec&gt;
 #&gt;   .. ..$ children:List of 1
 #&gt;   .. .. ..$ :&lt;unnest.spec&gt;
-#&gt;   .. .. .. ..$ include:"c2"</div><div class='input'><span class='fu'>s</span>(<span class='st'>"a/2/c2,cid"</span>)
+#&gt;   .. .. .. ..$ include:"c2"</div><div class='input'><span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/2/c2,cid"</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; &lt;unnest.spec&gt;
 #&gt;  $ include :"a"
 #&gt;  $ children:List of 1
@@ -278,72 +278,72 @@ incorrect specs.</p></td>
 #&gt;   .. .. ..$ :&lt;unnest.spec&gt;
 #&gt;   .. .. .. ..$ include:"c2" "cid"</div><div class='input'>
 
-<span class='kw'>x</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(a = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(b = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(x = <span class='fl'>1</span>, y = <span class='fl'>1</span><span class='op'>:</span><span class='fl'>2</span>, z = <span class='fl'>10</span>),
-                   c = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(x = <span class='fl'>2</span>, y = <span class='fl'>100</span><span class='op'>:</span><span class='fl'>102</span>)))
-<span class='kw'>xxx</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>x</span>, <span class='kw'>x</span>, <span class='kw'>x</span>)
+<span class='va'>x</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>a <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>b <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>x <span class='op'>=</span> <span class='fl'>1</span>, y <span class='op'>=</span> <span class='fl'>1</span><span class='op'>:</span><span class='fl'>2</span>, z <span class='op'>=</span> <span class='fl'>10</span><span class='op'>)</span>,
+                   c <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>x <span class='op'>=</span> <span class='fl'>2</span>, y <span class='op'>=</span> <span class='fl'>100</span><span class='op'>:</span><span class='fl'>102</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>xxx</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>x</span>, <span class='va'>x</span><span class='op'>)</span>
 
 <span class='co'>## spreading</span>
-<span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a"</span>))
+<span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a"</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   a.b.x a.b.y a.b.y.2 a.b.z a.c.x a.c.y a.c.y.2 a.c.y.3
-#&gt; 1     1     1       2    10     2   100     101     102</div><div class='input'><span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a"</span>), stack_atomic = <span class='fl'>TRUE</span>)
+#&gt; 1     1     1       2    10     2   100     101     102</div><div class='input'><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a"</span><span class='op'>)</span>, stack_atomic <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   a.b.x a.b.y a.b.z a.c.x a.c.y
 #&gt; 1     1     1    10     2   100
 #&gt; 2     1     2    10     2   101
 #&gt; 3     1     1    10     2   102
 #&gt; 4     1     2    10     2   100
 #&gt; 5     1     1    10     2   101
-#&gt; 6     1     2    10     2   102</div><div class='input'><span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a/b"</span>), stack_atomic = <span class='fl'>TRUE</span>)
+#&gt; 6     1     2    10     2   102</div><div class='input'><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/b"</span><span class='op'>)</span>, stack_atomic <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   a.b.x a.b.y a.b.z
 #&gt; 1     1     1    10
-#&gt; 2     1     2    10</div><div class='input'><span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a/c"</span>), stack_atomic = <span class='fl'>TRUE</span>)
+#&gt; 2     1     2    10</div><div class='input'><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/c"</span><span class='op'>)</span>, stack_atomic <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   a.c.x a.c.y
 #&gt; 1     2   100
 #&gt; 2     2   101
-#&gt; 3     2   102</div><div class='input'><span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a"</span>), stack_atomic = <span class='fl'>TRUE</span>, cross_join = <span class='fl'>TRUE</span>)
+#&gt; 3     2   102</div><div class='input'><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a"</span><span class='op'>)</span>, stack_atomic <span class='op'>=</span> <span class='cn'>TRUE</span>, cross_join <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   a.b.x a.b.y a.b.z a.c.x a.c.y
 #&gt; 1     1     1    10     2   100
 #&gt; 2     1     2    10     2   101
 #&gt; 3     1     1    10     2   102
 #&gt; 4     1     2    10     2   100
 #&gt; 5     1     1    10     2   101
-#&gt; 6     1     2    10     2   102</div><div class='input'><span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a//x"</span>))
+#&gt; 6     1     2    10     2   102</div><div class='input'><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a//x"</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   a.b.x a.c.x
-#&gt; 1     1     2</div><div class='input'><span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a//x,z"</span>))
+#&gt; 1     1     2</div><div class='input'><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a//x,z"</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   a.b.x a.b.z a.c.x
-#&gt; 1     1    10     2</div><div class='input'><span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a/2/x,y"</span>))
+#&gt; 1     1    10     2</div><div class='input'><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/2/x,y"</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   a.c.x a.c.y a.c.y.2 a.c.y.3
 #&gt; 1     2   100     101     102</div><div class='input'>
 <span class='co'>## stacking</span>
-<span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a/"</span>, stack = <span class='fl'>TRUE</span>))
+<span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/"</span>, stack <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   a.x a.y a.y.2 a.y.3 a.z
 #&gt; 1   1   1     2    NA  10
-#&gt; 2   2 100   101   102  NA</div><div class='input'><span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a/"</span>, stack = <span class='fl'>TRUE</span>, as = <span class='st'>"A"</span>))
+#&gt; 2   2 100   101   102  NA</div><div class='input'><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/"</span>, stack <span class='op'>=</span> <span class='cn'>TRUE</span>, as <span class='op'>=</span> <span class='st'>"A"</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   A.x A.y A.y.2 A.y.3 A.z
 #&gt; 1   1   1     2    NA  10
-#&gt; 2   2 100   101   102  NA</div><div class='input'><span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a/"</span>, stack = <span class='fl'>TRUE</span>, as = <span class='st'>"A"</span>), stack_atomic = <span class='fl'>TRUE</span>)
+#&gt; 2   2 100   101   102  NA</div><div class='input'><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/"</span>, stack <span class='op'>=</span> <span class='cn'>TRUE</span>, as <span class='op'>=</span> <span class='st'>"A"</span><span class='op'>)</span>, stack_atomic <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   A.x A.y A.z
 #&gt; 1   1   1  10
 #&gt; 2   1   2  10
 #&gt; 3   2 100  NA
 #&gt; 4   2 101  NA
-#&gt; 5   2 102  NA</div><div class='input'><span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a/"</span>, stack = <span class='st'>"id"</span>), stack_atomic = <span class='fl'>TRUE</span>)
+#&gt; 5   2 102  NA</div><div class='input'><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/"</span>, stack <span class='op'>=</span> <span class='st'>"id"</span><span class='op'>)</span>, stack_atomic <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   a.id a.x a.y a.z
 #&gt; 1    b   1   1  10
 #&gt; 2    b   1   2  10
 #&gt; 3    c   2 100  NA
 #&gt; 4    c   2 101  NA
-#&gt; 5    c   2 102  NA</div><div class='input'><span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a/"</span>, stack = <span class='st'>"id"</span>, as = <span class='st'>""</span>), stack_atomic = <span class='fl'>TRUE</span>)
+#&gt; 5    c   2 102  NA</div><div class='input'><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/"</span>, stack <span class='op'>=</span> <span class='st'>"id"</span>, as <span class='op'>=</span> <span class='st'>""</span><span class='op'>)</span>, stack_atomic <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   id x   y  z
 #&gt; 1  b 1   1 10
 #&gt; 2  b 1   2 10
 #&gt; 3  c 2 100 NA
 #&gt; 4  c 2 101 NA
 #&gt; 5  c 2 102 NA</div><div class='input'>
-<span class='fu'>unnest</span>(<span class='kw'>xxx</span>, <span class='fu'>s</span>(stack = <span class='st'>"id"</span>))
+<span class='fu'>unnest</span><span class='op'>(</span><span class='va'>xxx</span>, <span class='fu'>s</span><span class='op'>(</span>stack <span class='op'>=</span> <span class='st'>"id"</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   a.b.x a.b.y a.b.y.2 a.b.z a.c.x a.c.y a.c.y.2 a.c.y.3 id
 #&gt; 1     1     1       2    10     2   100     101     102  1
 #&gt; 2     1     1       2    10     2   100     101     102  2
-#&gt; 3     1     1       2    10     2   100     101     102  3</div><div class='input'><span class='fu'>unnest</span>(<span class='kw'>xxx</span>, <span class='fu'>s</span>(stack = <span class='st'>"id"</span>), stack_atomic = <span class='fl'>TRUE</span>)
+#&gt; 3     1     1       2    10     2   100     101     102  3</div><div class='input'><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>xxx</span>, <span class='fu'>s</span><span class='op'>(</span>stack <span class='op'>=</span> <span class='st'>"id"</span><span class='op'>)</span>, stack_atomic <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;    a.b.x a.b.y a.b.z a.c.x a.c.y id
 #&gt; 1      1     1    10     2   100  1
 #&gt; 2      1     2    10     2   101  1
@@ -362,7 +362,7 @@ incorrect specs.</p></td>
 #&gt; 15     1     1    10     2   102  3
 #&gt; 16     1     2    10     2   100  3
 #&gt; 17     1     1    10     2   101  3
-#&gt; 18     1     2    10     2   102  3</div><div class='input'><span class='fu'>unnest</span>(<span class='kw'>xxx</span>, <span class='fu'>s</span>(stack = <span class='st'>"id"</span>, <span class='fu'>s</span>(<span class='st'>"a/b/y/"</span>, stack = <span class='fl'>TRUE</span>)))
+#&gt; 18     1     2    10     2   102  3</div><div class='input'><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>xxx</span>, <span class='fu'>s</span><span class='op'>(</span>stack <span class='op'>=</span> <span class='st'>"id"</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/b/y/"</span>, stack <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   a.b.y id
 #&gt; 1     1  1
 #&gt; 2     2  1
@@ -371,24 +371,24 @@ incorrect specs.</p></td>
 #&gt; 5     1  3
 #&gt; 6     2  3</div><div class='input'>
 <span class='co'>## exclusion</span>
-<span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a/b/"</span>, exclude = <span class='st'>"x"</span>))
+<span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/b/"</span>, exclude <span class='op'>=</span> <span class='st'>"x"</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   a.b.y a.b.y.2 a.b.z
 #&gt; 1     1       2    10</div><div class='input'>
 <span class='co'>## dedupe</span>
-<span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a"</span>, <span class='fu'>s</span>(<span class='st'>"b/y"</span>), <span class='fu'>s</span>(<span class='st'>"b"</span>)), stack_atomic = <span class='fl'>TRUE</span>)
+<span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a"</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"b/y"</span><span class='op'>)</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"b"</span><span class='op'>)</span><span class='op'>)</span>, stack_atomic <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   a.b.x a.b.y a.b.y a.b.z
 #&gt; 1     1     1     1    10
 #&gt; 2     1     2     2    10
 #&gt; 3     1     1     1    10
-#&gt; 4     1     2     2    10</div><div class='input'><span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a"</span>, <span class='fu'>s</span>(<span class='st'>"b/y"</span>), <span class='fu'>s</span>(<span class='st'>"b"</span>)), dedupe = <span class='fl'>TRUE</span>, stack_atomic = <span class='fl'>TRUE</span>)
+#&gt; 4     1     2     2    10</div><div class='input'><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a"</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"b/y"</span><span class='op'>)</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"b"</span><span class='op'>)</span><span class='op'>)</span>, dedupe <span class='op'>=</span> <span class='cn'>TRUE</span>, stack_atomic <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;   a.b.x a.b.y a.b.z
 #&gt; 1     1     1    10
 #&gt; 2     1     2    10</div><div class='input'>
 <span class='co'>## grouping</span>
-<span class='fu'>unnest</span>(<span class='kw'>xxx</span>, stack_atomic = <span class='fl'>TRUE</span>,
-       <span class='fu'>s</span>(stack = <span class='fl'>TRUE</span>,
-         groups = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(first = <span class='fu'>s</span>(<span class='st'>"a/b/x,y"</span>),
-                       second = <span class='fu'>s</span>(<span class='st'>"a/b"</span>))))
+<span class='fu'>unnest</span><span class='op'>(</span><span class='va'>xxx</span>, stack_atomic <span class='op'>=</span> <span class='cn'>TRUE</span>,
+       <span class='fu'>s</span><span class='op'>(</span>stack <span class='op'>=</span> <span class='cn'>TRUE</span>,
+         groups <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>first <span class='op'>=</span> <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/b/x,y"</span><span class='op'>)</span>,
+                       second <span class='op'>=</span> <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/b"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; $first
 #&gt;   a.b.x a.b.y
 #&gt; 1     1     1
@@ -407,10 +407,10 @@ incorrect specs.</p></td>
 #&gt; 5     1     1    10
 #&gt; 6     1     2    10
 #&gt; </div><div class='input'>
-<span class='fu'>unnest</span>(<span class='kw'>xxx</span>, stack_atomic = <span class='fl'>TRUE</span>, dedupe = <span class='fl'>TRUE</span>,
-       <span class='fu'>s</span>(stack = <span class='fl'>TRUE</span>,
-         groups = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(first = <span class='fu'>s</span>(<span class='st'>"a/b/x,y"</span>),
-                       second = <span class='fu'>s</span>(<span class='st'>"a/b"</span>))))
+<span class='fu'>unnest</span><span class='op'>(</span><span class='va'>xxx</span>, stack_atomic <span class='op'>=</span> <span class='cn'>TRUE</span>, dedupe <span class='op'>=</span> <span class='cn'>TRUE</span>,
+       <span class='fu'>s</span><span class='op'>(</span>stack <span class='op'>=</span> <span class='cn'>TRUE</span>,
+         groups <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>first <span class='op'>=</span> <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/b/x,y"</span><span class='op'>)</span>,
+                       second <span class='op'>=</span> <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/b"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; $first
 #&gt;   a.b.x a.b.y
 #&gt; 1     1     1
@@ -427,9 +427,9 @@ incorrect specs.</p></td>
 #&gt; 3    10
 #&gt; </div><div class='input'>
 <span class='co'>## processing asis</span>
-<span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='fu'>unnest</span>(<span class='kw'>xxx</span>, <span class='fu'>s</span>(stack = <span class='st'>"id"</span>,
-                  <span class='fu'>s</span>(<span class='st'>"a/b/y"</span>, process = <span class='st'>"asis"</span>),
-                  <span class='fu'>s</span>(<span class='st'>"a/c"</span>, process = <span class='st'>"asis"</span>))))
+<span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span><span class='op'>(</span><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>xxx</span>, <span class='fu'>s</span><span class='op'>(</span>stack <span class='op'>=</span> <span class='st'>"id"</span>,
+                  <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/b/y"</span>, process <span class='op'>=</span> <span class='st'>"asis"</span><span class='op'>)</span>,
+                  <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/c"</span>, process <span class='op'>=</span> <span class='st'>"asis"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; 'data.frame':	3 obs. of  3 variables:
 #&gt;  $ a.b.y:List of 3
 #&gt;   ..$ : int  1 2
@@ -445,7 +445,7 @@ incorrect specs.</p></td>
 #&gt;   ..$ :List of 2
 #&gt;   .. ..$ x: num 2
 #&gt;   .. ..$ y: int  100 101 102
-#&gt;  $ id   : int  1 2 3</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='fu'>unnest</span>(<span class='kw'>xxx</span>, <span class='fu'>s</span>(stack = <span class='st'>"id"</span>, <span class='fu'>s</span>(<span class='st'>"a/b/"</span>, process = <span class='st'>"asis"</span>))))
+#&gt;  $ id   : int  1 2 3</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span><span class='op'>(</span><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>xxx</span>, <span class='fu'>s</span><span class='op'>(</span>stack <span class='op'>=</span> <span class='st'>"id"</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/b/"</span>, process <span class='op'>=</span> <span class='st'>"asis"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; 'data.frame':	3 obs. of  4 variables:
 #&gt;  $ a.b.x:List of 3
 #&gt;   ..$ : num 1
@@ -459,7 +459,7 @@ incorrect specs.</p></td>
 #&gt;   ..$ : num 10
 #&gt;   ..$ : num 10
 #&gt;   ..$ : num 10
-#&gt;  $ id   : int  1 2 3</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='fu'>unnest</span>(<span class='kw'>xxx</span>, <span class='fu'>s</span>(stack = <span class='st'>"id"</span>, <span class='fu'>s</span>(<span class='st'>"a/b"</span>, process = <span class='st'>"asis"</span>))))
+#&gt;  $ id   : int  1 2 3</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span><span class='op'>(</span><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>xxx</span>, <span class='fu'>s</span><span class='op'>(</span>stack <span class='op'>=</span> <span class='st'>"id"</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/b"</span>, process <span class='op'>=</span> <span class='st'>"asis"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; 'data.frame':	3 obs. of  2 variables:
 #&gt;  $ a.b:List of 3
 #&gt;   ..$ :List of 3
@@ -476,13 +476,13 @@ incorrect specs.</p></td>
 #&gt;   .. ..$ z: num 10
 #&gt;  $ id : int  1 2 3</div><div class='input'>
 <span class='co'>## processing paste</span>
-<span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='fu'>unnest</span>(<span class='kw'>x</span>, <span class='fu'>s</span>(<span class='st'>"a/b/y"</span>, process = <span class='st'>"paste"</span>)))
+<span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span><span class='op'>(</span><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/b/y"</span>, process <span class='op'>=</span> <span class='st'>"paste"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; 'data.frame':	1 obs. of  1 variable:
-#&gt;  $ a.b.y: chr "1,2"</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='fu'>unnest</span>(<span class='kw'>xxx</span>, <span class='fu'>s</span>(stack = <span class='fl'>TRUE</span>, <span class='fu'>s</span>(<span class='st'>"a/b/"</span>, process = <span class='st'>"paste"</span>))))
+#&gt;  $ a.b.y: chr "1,2"</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span><span class='op'>(</span><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>xxx</span>, <span class='fu'>s</span><span class='op'>(</span>stack <span class='op'>=</span> <span class='cn'>TRUE</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/b/"</span>, process <span class='op'>=</span> <span class='st'>"paste"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; 'data.frame':	3 obs. of  3 variables:
 #&gt;  $ a.b.x: chr  "1" "1" "1"
 #&gt;  $ a.b.y: chr  "1,2" "1,2" "1,2"
-#&gt;  $ a.b.z: chr  "10" "10" "10"</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span>(<span class='fu'>unnest</span>(<span class='kw'>xxx</span>, <span class='fu'>s</span>(stack = <span class='fl'>TRUE</span>, <span class='fu'>s</span>(<span class='st'>"a/b"</span>, process = <span class='st'>"paste"</span>))))
+#&gt;  $ a.b.z: chr  "10" "10" "10"</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/str.html'>str</a></span><span class='op'>(</span><span class='fu'>unnest</span><span class='op'>(</span><span class='va'>xxx</span>, <span class='fu'>s</span><span class='op'>(</span>stack <span class='op'>=</span> <span class='cn'>TRUE</span>, <span class='fu'>s</span><span class='op'>(</span><span class='st'>"a/b"</span>, process <span class='op'>=</span> <span class='st'>"paste"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; 'data.frame':	3 obs. of  1 variable:
 #&gt;  $ a.b: chr  "1,1:2,10" "1,1:2,10" "1,1:2,10"</div><div class='input'>
 </div></pre>

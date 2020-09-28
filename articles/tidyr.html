@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">unnest</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.2</span>
       </span>
     </div>
 
@@ -104,12 +104,11 @@
 <p>With <a href="https://tidyr.tidyverse.org/articles/rectangle.html">tidyr</a> you have to unnest lists in several steps by using one of the three core functions. With <code>unnest</code> you do all at once in one step. <code>unnest</code> doesn’t produce intermediate list columns.</p>
 <p>We’ll use the <code>repurrrsive</code> package as the source of our nested lists:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit">
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="kw"><a href="https://tidyr.tidyverse.org">tidyr</a></span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="kw"><a href="https://dplyr.tidyverse.org">dplyr</a></span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="kw"><a href="https://github.com/jennybc/repurrrsive">repurrrsive</a></span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="kw"><a href="https://github.com/vspinu/unnest">unnest</a></span>)
-<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(unnest.return.type = <span class="st">"tibble"</span>)
-</pre></div>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyr.tidyverse.org">tidyr</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org">dplyr</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/jennybc/repurrrsive">repurrrsive</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/vspinu/unnest">unnest</a></span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>unnest.return.type <span class="op">=</span> <span class="st">"tibble"</span><span class="op">)</span></pre></div>
 </div>
 <div id="github-repos" class="section level2">
 <h2 class="hasAnchor">
@@ -117,18 +116,17 @@
 <p>With <a href="https://tidyr.tidyverse.org/articles/rectangle.html">tidyr</a> you start by putting a list into a data.frame column. With <a href="https://vspinu.github.io/unnest/">unnest</a> this is not necessary.</p>
 <p><code>gh_repos</code> is a nested list with maximal depth of 4 “user”&gt;“repo”&gt;“owner”&gt;“[xyz]”.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit">
-<span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span>(<span class="kw">gh_repos</span>[[<span class="fl">1</span>]][[<span class="fl">1</span>]][[<span class="st">"owner"</span>]])
-</pre></div>
+<span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span><span class="op">(</span><span class="va">gh_repos</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="st">"owner"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></pre></div>
 <p>Let’s say that we want a <code>data.frame</code> with 3 columns, “name”, “homepage” and “watchers_count”, from level 3 of repo characteristics and one,“login”, from level 4 of owner characteristics. This is how it’s done with <a href="https://tidyr.tidyverse.org/articles/rectangle.html">tidyr</a>:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit">
-<span class="kw">repos</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span>(repo = <span class="kw">gh_repos</span>)
-<span class="kw">repos</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span>(<span class="kw">repos</span>, <span class="kw">repo</span>)
-<span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">hoist</a></span>(<span class="kw">repos</span>, <span class="kw">repo</span>,
-      login = <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"owner"</span>, <span class="st">"login"</span>),
-      name = <span class="st">"name"</span>,
-      homepage = <span class="st">"homepage"</span>,
-      watchers = <span class="st">"watchers_count"</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="op">-</span><span class="kw">repo</span>)
+<span class="va">repos</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>repo <span class="op">=</span> <span class="va">gh_repos</span><span class="op">)</span>
+<span class="va">repos</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span><span class="op">(</span><span class="va">repos</span>, <span class="va">repo</span><span class="op">)</span>
+<span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">hoist</a></span><span class="op">(</span><span class="va">repos</span>, <span class="va">repo</span>,
+      login <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"owner"</span>, <span class="st">"login"</span><span class="op">)</span>,
+      name <span class="op">=</span> <span class="st">"name"</span>,
+      homepage <span class="op">=</span> <span class="st">"homepage"</span>,
+      watchers <span class="op">=</span> <span class="st">"watchers_count"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">repo</span><span class="op">)</span>
 <span class="co">#&gt; # A tibble: 176 x 4</span>
 <span class="co">#&gt;    login       name        homepage watchers</span>
 <span class="co">#&gt;    &lt;chr&gt;       &lt;chr&gt;       &lt;chr&gt;       &lt;int&gt;</span>
@@ -142,18 +140,17 @@
 <span class="co">#&gt;  8 gaborcsardi cmark        &lt;NA&gt;           0</span>
 <span class="co">#&gt;  9 gaborcsardi conditions   &lt;NA&gt;           0</span>
 <span class="co">#&gt; 10 gaborcsardi crayon       &lt;NA&gt;          52</span>
-<span class="co">#&gt; # … with 166 more rows</span>
-</pre></div>
+<span class="co">#&gt; # … with 166 more rows</span></pre></div>
 <p>With <a href="https://vspinu.github.io/unnest/">unnest</a>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit">
-<span class="kw">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="fl">TRUE</span>,
-          <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="fl">TRUE</span>,
-            <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"name"</span>),
-            <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"homepage"</span>),
-            <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"watchers_count"</span>, as = <span class="st">"watchers"</span>),
-            <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"owner"</span>,
-              <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"login"</span>))))
-<span class="fu"><a href="../reference/s.html">unnest</a></span>(<span class="kw">gh_repos</span>, <span class="kw">spec</span>)
+<span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">TRUE</span>,
+          <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">TRUE</span>,
+            <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"name"</span><span class="op">)</span>,
+            <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"homepage"</span><span class="op">)</span>,
+            <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"watchers_count"</span>, as <span class="op">=</span> <span class="st">"watchers"</span><span class="op">)</span>,
+            <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"owner"</span>,
+              <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"login"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="../reference/s.html">unnest</a></span><span class="op">(</span><span class="va">gh_repos</span>, <span class="va">spec</span><span class="op">)</span>
 <span class="co">#&gt; # A tibble: 176 x 4</span>
 <span class="co">#&gt;    homepage name        owner.login watchers</span>
 <span class="co">#&gt;    &lt;chr&gt;    &lt;chr&gt;       &lt;chr&gt;          &lt;int&gt;</span>
@@ -167,29 +164,27 @@
 <span class="co">#&gt;  8  &lt;NA&gt;    cmark       gaborcsardi        0</span>
 <span class="co">#&gt;  9  &lt;NA&gt;    conditions  gaborcsardi        0</span>
 <span class="co">#&gt; 10  &lt;NA&gt;    crayon      gaborcsardi       52</span>
-<span class="co">#&gt; # … with 166 more rows</span>
-</pre></div>
+<span class="co">#&gt; # … with 166 more rows</span></pre></div>
 <p><a href="https://vspinu.github.io/unnest/">unnest</a> selector (<code>s</code>) applies to each level of the hierarchy and describes which elements should be selected and how. The <code>stack = TRUE</code> says that the result of the extraction should be stacked row-wise (aka <code>rbind</code>ed). <code>stack = FALSE</code>, means spread it across multiple columns. The <code>as</code> argument provides the name of the output. By default it’s the entire path name for the selected leaf.</p>
 <p>Now assume that you want the 3 components of “repos” and all components of the owner at once:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit">
-<span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span>(repo = <span class="kw">gh_repos</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span>(<span class="kw">repo</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">hoist</a></span>(<span class="kw">repo</span>,
-        name = <span class="st">"name"</span>,
-        homepage = <span class="st">"homepage"</span>,
-        watchers = <span class="st">"watchers_count"</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">hoist</a></span>(<span class="kw">repo</span>, owner = <span class="st">"owner"</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span>(<span class="kw">owner</span>)
-</pre></div>
+<span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>repo <span class="op">=</span> <span class="va">gh_repos</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span><span class="op">(</span><span class="va">repo</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">hoist</a></span><span class="op">(</span><span class="va">repo</span>,
+        name <span class="op">=</span> <span class="st">"name"</span>,
+        homepage <span class="op">=</span> <span class="st">"homepage"</span>,
+        watchers <span class="op">=</span> <span class="st">"watchers_count"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">hoist</a></span><span class="op">(</span><span class="va">repo</span>, owner <span class="op">=</span> <span class="st">"owner"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span><span class="op">(</span><span class="va">owner</span><span class="op">)</span></pre></div>
 <p>With <a href="https://vspinu.github.io/unnest/">unnest</a></p>
 <div class="sourceCode" id="cb7"><pre class="downlit">
-<span class="kw">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="fl">TRUE</span>,
-          <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="fl">TRUE</span>,
-            <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"name"</span>),
-            <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"homepage"</span>),
-            <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"watchers_count"</span>, as = <span class="st">"watchers"</span>),
-            <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"owner"</span>)))
-<span class="fu"><a href="../reference/s.html">unnest</a></span>(<span class="kw">gh_repos</span>, <span class="kw">spec</span>) <span class="op">%&gt;%</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span>()
+<span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">TRUE</span>,
+          <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">TRUE</span>,
+            <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"name"</span><span class="op">)</span>,
+            <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"homepage"</span><span class="op">)</span>,
+            <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"watchers_count"</span>, as <span class="op">=</span> <span class="st">"watchers"</span><span class="op">)</span>,
+            <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"owner"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="../reference/s.html">unnest</a></span><span class="op">(</span><span class="va">gh_repos</span>, <span class="va">spec</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span><span class="op">)</span>
 <span class="co">#&gt; # A tibble: 176 x 20</span>
 <span class="co">#&gt;    homepage name  owner.avatar_url owner.events_url owner.followers…</span>
 <span class="co">#&gt;    &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt;            &lt;chr&gt;            &lt;chr&gt;           </span>
@@ -209,8 +204,7 @@
 <span class="co">#&gt; #   owner.received_events_url &lt;chr&gt;, owner.repos_url &lt;chr&gt;,</span>
 <span class="co">#&gt; #   owner.site_admin &lt;lgl&gt;, owner.starred_url &lt;chr&gt;,</span>
 <span class="co">#&gt; #   owner.subscriptions_url &lt;chr&gt;, owner.type &lt;chr&gt;, owner.url &lt;chr&gt;,</span>
-<span class="co">#&gt; #   watchers &lt;int&gt;</span>
-</pre></div>
+<span class="co">#&gt; #   watchers &lt;int&gt;</span></pre></div>
 <p>Note that <a href="https://vspinu.github.io/unnest/">unnest</a> produces namespaced column names, while [tidyr’[s is not. This is a good thing as you don’t have to worry about conflicting names. <a href="https://tidyr.tidyverse.org/articles/rectangle.html">tidyr</a> provides a “fix” for duplicated names in the form of <code>names_repair</code> argument to its functions.</p>
 </div>
 <div id="game-of-thrones-characters" class="section level2">
@@ -218,19 +212,18 @@
 <a href="#game-of-thrones-characters" class="anchor"></a>Game of Thrones characters</h2>
 <p>What do you do with non-singleton leafs? Those are normally stacked, spread or melted depending on the analysis. For example the Game of Thrones dataset contains non-singleton leafs “titles”, “aliases”, “books” etc.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit">
-<span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span>(<span class="kw">got_chars</span>[[<span class="fl">1</span>]])
-</pre></div>
+<span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span><span class="op">(</span><span class="va">got_chars</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></pre></div>
 <p>Let’s have a look at some common scenarios.</p>
 <div id="stacking" class="section level3">
 <h3 class="hasAnchor">
 <a href="#stacking" class="anchor"></a>Stacking</h3>
 <p>Assume that we want a row for every book and TV series that the character appears in. That is, we want a long table with all combinations (aka cross product) of books and TV series.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit">
-<span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span>(char = <span class="kw">got_chars</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span>(<span class="kw">char</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="kw">name</span>, <span class="kw">books</span>, <span class="kw">tvSeries</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span>(<span class="kw">books</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span>(<span class="kw">tvSeries</span>)
+<span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>char <span class="op">=</span> <span class="va">got_chars</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span><span class="op">(</span><span class="va">char</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="va">name</span>, <span class="va">books</span>, <span class="va">tvSeries</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span><span class="op">(</span><span class="va">books</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span><span class="op">(</span><span class="va">tvSeries</span><span class="op">)</span>
 <span class="co">#&gt; # A tibble: 236 x 3</span>
 <span class="co">#&gt;    name          books             tvSeries</span>
 <span class="co">#&gt;    &lt;chr&gt;         &lt;chr&gt;             &lt;chr&gt;   </span>
@@ -246,10 +239,10 @@
 <span class="co">#&gt; 10 Theon Greyjoy A Storm of Swords Season 4</span>
 <span class="co">#&gt; # … with 226 more rows</span>
 
-<span class="fu"><a href="../reference/s.html">unnest</a></span>(<span class="kw">got_chars</span>,
-       <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="kw">T</span>,
-         <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"name"</span>),
-         <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"books,tvSeries/"</span>, stack = <span class="kw">T</span>)))
+<span class="fu"><a href="../reference/s.html">unnest</a></span><span class="op">(</span><span class="va">got_chars</span>,
+       <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span>,
+         <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"name"</span><span class="op">)</span>,
+         <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"books,tvSeries/"</span>, stack <span class="op">=</span> <span class="cn">T</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; # A tibble: 236 x 3</span>
 <span class="co">#&gt;    books             name          tvSeries</span>
 <span class="co">#&gt;    &lt;chr&gt;             &lt;chr&gt;         &lt;chr&gt;   </span>
@@ -263,16 +256,15 @@
 <span class="co">#&gt;  8 A Storm of Swords Theon Greyjoy Season 2</span>
 <span class="co">#&gt;  9 A Feast for Crows Theon Greyjoy Season 3</span>
 <span class="co">#&gt; 10 A Game of Thrones Theon Greyjoy Season 4</span>
-<span class="co">#&gt; # … with 226 more rows</span>
-</pre></div>
+<span class="co">#&gt; # … with 226 more rows</span></pre></div>
 <p>Implementation aside, [tidyr’[s intermediary steps are generally costly for two reasons. First, because intermediary data.frames are created during the processing. Second, because intermediary objects might contain columns that are not needed in the subsequent processing. In the above examples <code><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider()</a></code> produced man more columns than we need. A better approach would be to replace it with a bit more verbose <code>hoist</code> call.</p>
 <p>In contrast <a href="https://vspinu.github.io/unnest/">unnest</a> doesn’t produce intermediary data structures. In fact, <a href="https://vspinu.github.io/unnest/">unnest</a> follows a 0-intermediary-copy semantics. The input vectors are directly copied into the output, no matter how complex the nesting is.</p>
 <p>Cross-product is commonly useful when only one non-singleton variable is extracted. For example, let’s match title to name:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit">
-<span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span>(char = <span class="kw">got_chars</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">hoist</a></span>(<span class="kw">char</span>, name = <span class="st">"name"</span>, title = <span class="st">"titles"</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="op">-</span><span class="kw">char</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span>(<span class="kw">title</span>)
+<span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>char <span class="op">=</span> <span class="va">got_chars</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">hoist</a></span><span class="op">(</span><span class="va">char</span>, name <span class="op">=</span> <span class="st">"name"</span>, title <span class="op">=</span> <span class="st">"titles"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">char</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span><span class="op">(</span><span class="va">title</span><span class="op">)</span>
 <span class="co">#&gt; # A tibble: 60 x 2</span>
 <span class="co">#&gt;    name              title                                                 </span>
 <span class="co">#&gt;    &lt;chr&gt;             &lt;chr&gt;                                                 </span>
@@ -288,10 +280,10 @@
 <span class="co">#&gt; 10 Chett             ""                                                    </span>
 <span class="co">#&gt; # … with 50 more rows</span>
 
-<span class="fu"><a href="../reference/s.html">unnest</a></span>(<span class="kw">got_chars</span>,
-       <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="kw">T</span>,
-         <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"name"</span>),
-         <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"titles/"</span>, stack = <span class="kw">T</span>)))
+<span class="fu"><a href="../reference/s.html">unnest</a></span><span class="op">(</span><span class="va">got_chars</span>,
+       <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span>,
+         <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"name"</span><span class="op">)</span>,
+         <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"titles/"</span>, stack <span class="op">=</span> <span class="cn">T</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; # A tibble: 60 x 2</span>
 <span class="co">#&gt;    name              titles                                                </span>
 <span class="co">#&gt;    &lt;chr&gt;             &lt;chr&gt;                                                 </span>
@@ -305,26 +297,24 @@
 <span class="co">#&gt;  8 Will              ""                                                    </span>
 <span class="co">#&gt;  9 Areo Hotah        "Captain of the Guard at Sunspear"                    </span>
 <span class="co">#&gt; 10 Chett             ""                                                    </span>
-<span class="co">#&gt; # … with 50 more rows</span>
-</pre></div>
+<span class="co">#&gt; # … with 50 more rows</span></pre></div>
 </div>
 <div id="id-value-long-tables-aka-long-pivoting-or-melting" class="section level3">
 <h3 class="hasAnchor">
 <a href="#id-value-long-tables-aka-long-pivoting-or-melting" class="anchor"></a>Id-value long tables (aka long pivoting, or melting)</h3>
 <p>A common scenario is to stack the non-scalar leafs and replicate id labels in a separate “key” column. This is called “melting” (<code>reshape2</code>) or “long pivoting” (<code>tidyr</code>).</p>
 <div class="sourceCode" id="cb11"><pre class="downlit">
-<span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span>(char = <span class="kw">got_chars</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span>(<span class="kw">char</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="kw">name</span>, <span class="kw">books</span>, <span class="kw">tvSeries</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html">pivot_longer</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="kw">books</span>, <span class="kw">tvSeries</span>), names_to = <span class="st">"media"</span>, values_to = <span class="st">"value"</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span>(<span class="kw">value</span>)
+<span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>char <span class="op">=</span> <span class="va">got_chars</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span><span class="op">(</span><span class="va">char</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="va">name</span>, <span class="va">books</span>, <span class="va">tvSeries</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html">pivot_longer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">books</span>, <span class="va">tvSeries</span><span class="op">)</span>, names_to <span class="op">=</span> <span class="st">"media"</span>, values_to <span class="op">=</span> <span class="st">"value"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span><span class="op">(</span><span class="va">value</span><span class="op">)</span>
 
-<span class="fu"><a href="../reference/s.html">unnest</a></span>(<span class="kw">got_chars</span>,
-       <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="kw">T</span>,
-         <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"name"</span>),
-         <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"books,tvSeries"</span>, stack = <span class="st">"media"</span>, as = <span class="st">"value"</span>,
-           <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="kw">T</span>))))
-</pre></div>
+<span class="fu"><a href="../reference/s.html">unnest</a></span><span class="op">(</span><span class="va">got_chars</span>,
+       <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span>,
+         <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"name"</span><span class="op">)</span>,
+         <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"books,tvSeries"</span>, stack <span class="op">=</span> <span class="st">"media"</span>, as <span class="op">=</span> <span class="st">"value"</span>,
+           <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></pre></div>
 </div>
 <div id="id-value-wide-tables" class="section level3">
 <h3 class="hasAnchor">
@@ -333,11 +323,10 @@
 <div class="sourceCode" id="cb12"><pre class="downlit">
 <span class="co"># There seem not to be an easy way to achieve this with tidyr</span>
 
-<span class="fu"><a href="../reference/s.html">unnest</a></span>(<span class="kw">got_chars</span>,
-       <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="kw">T</span>,
-         <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"name"</span>),
-         <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"books,tvSeries"</span>, stack = <span class="st">"media"</span>, as = <span class="st">"value"</span>)))
-</pre></div>
+<span class="fu"><a href="../reference/s.html">unnest</a></span><span class="op">(</span><span class="va">got_chars</span>,
+       <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span>,
+         <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"name"</span><span class="op">)</span>,
+         <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"books,tvSeries"</span>, stack <span class="op">=</span> <span class="st">"media"</span>, as <span class="op">=</span> <span class="st">"value"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></pre></div>
 </div>
 <div id="wide-tables-aka-spreading" class="section level3">
 <h3 class="hasAnchor">
@@ -351,8 +340,7 @@
 <span class="co">#   unnest_wider(books) %&gt;%</span>
 <span class="co">#   unnest_wider(tvSeries)</span>
 
-<span class="fu"><a href="../reference/s.html">unnest</a></span>(<span class="kw">got_chars</span>, <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="kw">T</span>, <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"name"</span>), <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"books, tvSeries"</span>)))
-</pre></div>
+<span class="fu"><a href="../reference/s.html">unnest</a></span><span class="op">(</span><span class="va">got_chars</span>, <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span>, <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"name"</span><span class="op">)</span>, <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"books, tvSeries"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></pre></div>
 </div>
 </div>
 <div id="sharla-gelfands-discography" class="section level2">
@@ -361,7 +349,7 @@
 <p>Finally, the most complex transformation from [tidyr’[s vignette can be achieved with unnest in a single step.</p>
 <p>Typical entry of <code>disog</code> collection looks like this</p>
 <div class="sourceCode" id="cb14"><pre class="downlit">
-<span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span>(<span class="kw">discog</span>[[<span class="fl">3</span>]])
+<span class="fu"><a href="https://rdrr.io/r/utils/str.html">str</a></span><span class="op">(</span><span class="va">discog</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>
 <span class="co">#&gt; List of 5</span>
 <span class="co">#&gt;  $ instance_id      : int 354091476</span>
 <span class="co">#&gt;  $ date_added       : chr "2019-02-13T14:07:23-08:00"</span>
@@ -400,16 +388,15 @@
 <span class="co">#&gt;   ..$ resource_url: chr "https://api.discogs.com/releases/9827276"</span>
 <span class="co">#&gt;   ..$ master_id   : int 1109943</span>
 <span class="co">#&gt;  $ id               : int 9827276</span>
-<span class="co">#&gt;  $ rating           : int 0</span>
-</pre></div>
+<span class="co">#&gt;  $ rating           : int 0</span></pre></div>
 <p>We want to extract <code>artists</code> metadata and <code>formats</code> into separate tables.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit">
-<span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span>(disc = <span class="kw">discog</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span>(<span class="kw">disc</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">hoist</a></span>(<span class="kw">basic_information</span>, artist = <span class="st">"artists"</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(disc_id = <span class="kw">id</span>, <span class="kw">artist</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span>(<span class="kw">artist</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span>(<span class="kw">artist</span>)
+<span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>disc <span class="op">=</span> <span class="va">discog</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span><span class="op">(</span><span class="va">disc</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">hoist</a></span><span class="op">(</span><span class="va">basic_information</span>, artist <span class="op">=</span> <span class="st">"artists"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span>disc_id <span class="op">=</span> <span class="va">id</span>, <span class="va">artist</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span><span class="op">(</span><span class="va">artist</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span><span class="op">(</span><span class="va">artist</span><span class="op">)</span>
 <span class="co">#&gt; # A tibble: 167 x 8</span>
 <span class="co">#&gt;     disc_id join  name          anv   tracks role  resource_url               id</span>
 <span class="co">#&gt;       &lt;int&gt; &lt;chr&gt; &lt;chr&gt;         &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;                   &lt;int&gt;</span>
@@ -425,13 +412,13 @@
 <span class="co">#&gt; 10 11726853 ""    Small Man (2) ""    ""     ""    https://api.discogs.c… 6.37e6</span>
 <span class="co">#&gt; # … with 157 more rows</span>
 
-<span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span>(disc = <span class="kw">discog</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span>(<span class="kw">disc</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">hoist</a></span>(<span class="kw">basic_information</span>, format = <span class="st">"formats"</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(disc_id = <span class="kw">id</span>, <span class="kw">format</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span>(<span class="kw">format</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span>(<span class="kw">format</span>) <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span>(<span class="kw">descriptions</span>)
+<span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>disc <span class="op">=</span> <span class="va">discog</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span><span class="op">(</span><span class="va">disc</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">hoist</a></span><span class="op">(</span><span class="va">basic_information</span>, format <span class="op">=</span> <span class="st">"formats"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span>disc_id <span class="op">=</span> <span class="va">id</span>, <span class="va">format</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span><span class="op">(</span><span class="va">format</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span><span class="op">(</span><span class="va">format</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span><span class="op">(</span><span class="va">descriptions</span><span class="op">)</span>
 <span class="co">#&gt; # A tibble: 281 x 5</span>
 <span class="co">#&gt;     disc_id descriptions text  name     qty  </span>
 <span class="co">#&gt;       &lt;int&gt; &lt;chr&gt;        &lt;chr&gt; &lt;chr&gt;    &lt;chr&gt;</span>
@@ -445,41 +432,38 @@
 <span class="co">#&gt;  8  7237138 "7\""        &lt;NA&gt;  Vinyl    1    </span>
 <span class="co">#&gt;  9  7237138 "45 RPM"     &lt;NA&gt;  Vinyl    1    </span>
 <span class="co">#&gt; 10 13117042 "7\""        &lt;NA&gt;  Vinyl    1    </span>
-<span class="co">#&gt; # … with 271 more rows</span>
-</pre></div>
+<span class="co">#&gt; # … with 271 more rows</span></pre></div>
 <p>With <a href="https://vspinu.github.io/unnest/">unnest</a> you can achieve this in two separate passes through the list, or in a single pass with a grouped children specification. The single pass extraction returns a list of data.frames, but scans the data only once.</p>
 <p>Separate unnest calls:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit">
-<span class="fu"><a href="../reference/s.html">unnest</a></span>(<span class="kw">discog</span>,
-       <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="kw">T</span>,
-         <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"id"</span>, as = <span class="st">"disc_id"</span>),
-         <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"basic_information/artists"</span>, as = <span class="st">"artist"</span>,
-           <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="kw">T</span>))))
+<span class="fu"><a href="../reference/s.html">unnest</a></span><span class="op">(</span><span class="va">discog</span>,
+       <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span>,
+         <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"id"</span>, as <span class="op">=</span> <span class="st">"disc_id"</span><span class="op">)</span>,
+         <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"basic_information/artists"</span>, as <span class="op">=</span> <span class="st">"artist"</span>,
+           <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
 
-<span class="fu"><a href="../reference/s.html">unnest</a></span>(<span class="kw">discog</span>,
-       <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="kw">T</span>,
-         <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"id"</span>, as = <span class="st">"disc_id"</span>),
-         <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"basic_information/formats"</span>, as = <span class="st">"format"</span>,
-           <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="kw">T</span>,
-             <span class="fu"><a href="../reference/s.html">s</a></span>(exclude = <span class="st">"descriptions"</span>),
-             <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"descriptions/"</span>, stack = <span class="kw">T</span>)))))
-</pre></div>
+<span class="fu"><a href="../reference/s.html">unnest</a></span><span class="op">(</span><span class="va">discog</span>,
+       <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span>,
+         <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"id"</span>, as <span class="op">=</span> <span class="st">"disc_id"</span><span class="op">)</span>,
+         <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"basic_information/formats"</span>, as <span class="op">=</span> <span class="st">"format"</span>,
+           <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span>,
+             <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>exclude <span class="op">=</span> <span class="st">"descriptions"</span><span class="op">)</span>,
+             <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"descriptions/"</span>, stack <span class="op">=</span> <span class="cn">T</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></pre></div>
 <p>Single unnest pass:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit">
-<span class="fu"><a href="../reference/s.html">unnest</a></span>(<span class="kw">discog</span>,
-       <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="kw">T</span>,
-         groups =
-           <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(artists =
-                  <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"id"</span>, as = <span class="st">"disc_id"</span>),
-                       <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"basic_information/artists"</span>, as = <span class="st">"artist"</span>,
-                         <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="kw">T</span>))),
-                formats =
-                  <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(<span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"id"</span>, as = <span class="st">"disc_id"</span>),
-                       <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"basic_information/formats"</span>, as = <span class="st">"format"</span>,
-                         <span class="fu"><a href="../reference/s.html">s</a></span>(stack = <span class="kw">T</span>,
-                           <span class="fu"><a href="../reference/s.html">s</a></span>(exclude = <span class="st">"descriptions"</span>),
-                           <span class="fu"><a href="../reference/s.html">s</a></span>(<span class="st">"descriptions/"</span>, stack = <span class="kw">T</span>)))))))
-</pre></div>
+<span class="fu"><a href="../reference/s.html">unnest</a></span><span class="op">(</span><span class="va">discog</span>,
+       <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span>,
+         groups <span class="op">=</span>
+           <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>artists <span class="op">=</span>
+                  <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"id"</span>, as <span class="op">=</span> <span class="st">"disc_id"</span><span class="op">)</span>,
+                       <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"basic_information/artists"</span>, as <span class="op">=</span> <span class="st">"artist"</span>,
+                         <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,
+                formats <span class="op">=</span>
+                  <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"id"</span>, as <span class="op">=</span> <span class="st">"disc_id"</span><span class="op">)</span>,
+                       <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"basic_information/formats"</span>, as <span class="op">=</span> <span class="st">"format"</span>,
+                         <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span>,
+                           <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>exclude <span class="op">=</span> <span class="st">"descriptions"</span><span class="op">)</span>,
+                           <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"descriptions/"</span>, stack <span class="op">=</span> <span class="cn">T</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></pre></div>
 <p>The unnest specs inside <code>groups</code> is the same as in the separate-calls case. The <code>groups</code> argument is just like <code>children</code> argument with the difference that the output of the extraction is not cross-joined, but simply returned as list.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 <p>The benefit is grouped extraction is twofold. First, it’s faster because the list is traversed only once. Second, the de-duplication works across groups. That is, when <code>dedupe = TRUE</code> (not shown in the above examples), the fields extracted by the preceding specs are not extracted by the specs that follow.</p>
 </div>
