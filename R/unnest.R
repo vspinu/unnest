@@ -25,24 +25,24 @@ print.unnest.spec <- function(x, ...) {
 #'
 #' @description Unnest spec is a nested list with the same structure as the
 #'   nested json. It specifies concisely how the deeply nested components ought
-#'   to be unnested. `s()` is a shorthand for `spec()`.
+#'   to be unnested. `s()` is a shorthand for `spec()` and returns the canonical
+#'   spec (a spec which can be consumed directly by the C++ routines).
 #'
 #' @rdname unnest
-#' @param selector A shorthand syntax for an `include` selector. When a list
+#' @param selector A shorthand syntax for an `include` selector. When a list,
 #'   each element of the list is expanded into the `include` element at the
-#'   respective level. When `selector` is a string it is expanded into a list
-#'   according to the following rules:
+#'   respective level. When a string, it is expanded into a list according to
+#'   the following rules:
 #'
-#'   \enumerate{
-#'      \item When selector is length 1 and contains "/" characters it is split
-#'            with "/" separator. For instance `s(c("a", "b"), ...)`,  `s("a/b", ...)`
-#'            and `s("a", s("b", ...))` are all converted to a canonical `s(include =
-#'            "a", s(include = "b", ...))`. Components consisting entirely of digits are converted to integer. For
-#'            example `s("a/2/b" ...)` is equivalent to `s("a", s(2, s("b", ...)))`
-#'      \item Each element of the resulting from the previous step vector is
-#'            split with `,`. Thus `s("a/b,c/d")` is equivalent to `s("a",
-#'            s(include = c("b", "c"), s("d", ...)))`
-#'  }
+#'   \enumerate{ \item When selector is of length 1 and contains "/" characters
+#'      it is split with the "/" separator. For instance `s(c("a", "b"), ...)`,
+#'      `s("a/b", ...)` and `s("a", s("b", ...))` are all converted to the
+#'      canonical `s(include = "a", s(include = "b", ...))`. Components
+#'      consisting entirely of digits are converted to integers. For example
+#'      `s("a/2/b" ...)` is equivalent to `s("a", s(2, s("b", ...)))` \item Each
+#'      element of the resulting from the previous step vector is split with
+#'      `,`. Thus `s("a/b,c/d")` is equivalent to `s("a", s(include = c("b",
+#'      "c"), s("d", ...)))` }
 #' @param as name for this field in the extracted data.frame
 #' @param children,... Unnamed list of children spec. `...` is merged into
 #'   `children`. `children` is part of the canonical spec.
@@ -55,11 +55,11 @@ print.unnest.spec <- function(x, ...) {
 #'   specifying components to include or exclude. A list can combine numeric
 #'   indexes and character elements to extract.
 #' @param stack Whether to stack this node (TRUE) or to spread it (FALSE). When
-#'   `stack`is a string an index column is created with that name.
+#'   `stack` is a string an index column is created with that name.
 #' @param process Extra processing step for this element. Either NULL for no
 #'   processing (the default), "asis" to return the entire element "as is" in a
 #'   list column, or "paste" to paste elements together into a character column.
-#' @return A canonical spec; a list suitable for the C level unnest routine.
+#' @return `spec()`: a canonical spec - a list consumed by C++ unnesting routines.
 #' @examples
 #'
 #' ## `s()` returns a canonical spec list

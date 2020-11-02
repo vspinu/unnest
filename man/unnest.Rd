@@ -33,19 +33,19 @@ spec(
 unnest(x, spec = NULL, dedupe = FALSE, stack_atomic = FALSE, cross_join = TRUE)
 }
 \arguments{
-\item{selector}{A shorthand syntax for an \code{include} selector. When a list
+\item{selector}{A shorthand syntax for an \code{include} selector. When a list,
 each element of the list is expanded into the \code{include} element at the
-respective level. When \code{selector} is a string it is expanded into a list
-according to the following rules:
+respective level. When a string, it is expanded into a list according to
+the following rules:
 
-\enumerate{
-\item When selector is length 1 and contains "/" characters it is split
-with "/" separator. For instance \code{s(c("a", "b"), ...)},  \code{s("a/b", ...)}
-and \code{s("a", s("b", ...))} are all converted to a canonical \code{s(include = "a", s(include = "b", ...))}. Components consisting entirely of digits are converted to integer. For
-example \verb{s("a/2/b" ...)} is equivalent to \code{s("a", s(2, s("b", ...)))}
-\item Each element of the resulting from the previous step vector is
-split with \verb{,}. Thus \code{s("a/b,c/d")} is equivalent to \code{s("a", s(include = c("b", "c"), s("d", ...)))}
-}}
+\enumerate{ \item When selector is of length 1 and contains "/" characters
+it is split with the "/" separator. For instance \code{s(c("a", "b"), ...)},
+\code{s("a/b", ...)} and \code{s("a", s("b", ...))} are all converted to the
+canonical \code{s(include = "a", s(include = "b", ...))}. Components
+consisting entirely of digits are converted to integers. For example
+\verb{s("a/2/b" ...)} is equivalent to \code{s("a", s(2, s("b", ...)))} \item Each
+element of the resulting from the previous step vector is split with
+\verb{,}. Thus \code{s("a/b,c/d")} is equivalent to \code{s("a", s(include = c("b", "c"), s("d", ...)))} }}
 
 \item{as}{name for this field in the extracted data.frame}
 
@@ -63,7 +63,7 @@ specifying components to include or exclude. A list can combine numeric
 indexes and character elements to extract.}
 
 \item{stack}{Whether to stack this node (TRUE) or to spread it (FALSE). When
-\code{stack}is a string an index column is created with that name.}
+\code{stack} is a string an index column is created with that name.}
 
 \item{process}{Extra processing step for this element. Either NULL for no
 processing (the default), "asis" to return the entire element "as is" in a
@@ -88,12 +88,13 @@ data loss and it is more conducive for earlier error detection with
 incorrect specs.}
 }
 \value{
-A canonical spec; a list suitable for the C level unnest routine.
+\code{spec()}: a canonical spec - a list consumed by C++ unnesting routines.
 }
 \description{
 Unnest spec is a nested list with the same structure as the
 nested json. It specifies concisely how the deeply nested components ought
-to be unnested. \code{s()} is a shorthand for \code{spec()}.
+to be unnested. \code{s()} is a shorthand for \code{spec()} and returns the canonical
+spec (a spec which can be consumed directly by the C++ routines).
 }
 \examples{
 
