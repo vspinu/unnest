@@ -4,9 +4,7 @@
 \alias{s}
 \alias{spec}
 \alias{unnest}
-\title{Unnest spec is a nested list with the same structure as the nested json. It
-specifies concisely how the deeply nested components ought to be
-unnested. \code{s()} is a shorthand for \code{spec()}.}
+\title{Unnest nested lists}
 \usage{
 s(
   selector = NULL,
@@ -93,11 +91,9 @@ incorrect specs.}
 A canonical spec; a list suitable for the C level unnest routine.
 }
 \description{
-Unnest spec is a nested list with the same structure as the nested json. It
-specifies concisely how the deeply nested components ought to be
-unnested. \code{s()} is a shorthand for \code{spec()}.
-
-Unnest nested lists
+Unnest spec is a nested list with the same structure as the
+nested json. It specifies concisely how the deeply nested components ought
+to be unnested. \code{s()} is a shorthand for \code{spec()}.
 }
 \examples{
 

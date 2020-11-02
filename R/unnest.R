@@ -1,4 +1,3 @@
-
 inset <- `[<-`
 
 is.unnest.spec <- function(x) {
@@ -22,9 +21,12 @@ print.unnest.spec <- function(x, ...) {
   str(x, give.head = FALSE, no.list = TRUE, give.attr = FALSE)
 }
 
-#' Unnest spec is a nested list with the same structure as the nested json. It
-#' specifies concisely how the deeply nested components ought to be
-#' unnested. `s()` is a shorthand for `spec()`.
+#' @title Unnest nested lists
+#'
+#' @description Unnest spec is a nested list with the same structure as the
+#'   nested json. It specifies concisely how the deeply nested components ought
+#'   to be unnested. `s()` is a shorthand for `spec()`.
+#'
 #' @rdname unnest
 #' @param selector A shorthand syntax for an `include` selector. When a list
 #'   each element of the list is expanded into the `include` element at the
@@ -160,8 +162,7 @@ convert_to_dt <- function(x) {
   }
 }
 
-#' Unnest nested lists
-#'
+
 #' @param x a nested list to unnest
 #' @param spec spec to use for unnesting. See [`spec()`].
 #' @param dedupe whether to dedupe repeated elements. If TRUE, if a node is
