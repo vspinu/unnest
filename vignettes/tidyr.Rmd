@@ -73,7 +73,7 @@ spec <- s(stack = TRUE,
 unnest(gh_repos, spec)
 ```
 
-[unnest][] selector (`s`) applies to each level of the hierarchy and describes which elements should be selected and how. The `stack = TRUE` says that the result of the extraction should be stacked row-wise (aka `rbind`ed). `stack = FALSE`, means spread it across multiple columns. The `as` argument provides the name of the output. By default it's the entire path name for the selected leaf.
+[unnest][] selectors (`s()`) apply to corresponding levels of the hierarchy and describe which elements should be selected and how. The `stack = TRUE` says that the result of the extraction should be stacked row-wise (aka `rbind`ed). `stack = FALSE`, means spread it across multiple columns (aka `cbind`ed). The `as` argument provides the name of the output. By default it's the entire path name to the selected leaf.
 
 Now assume that you want the 3 components of "repos" and all components of the owner at once:
 
@@ -191,7 +191,7 @@ This strategy is commonly used in machine learning scenarios when large sparse t
 #   unnest_wider(books) %>%
 #   unnest_wider(tvSeries)
 
-unnest(got_chars, s(stack = T, s("name"), s("books, tvSeries")))
+unnest(got_chars, s(stack = T, s("name, books, tvSeries")))
 ```
 
 ## Sharla Gelfand's discography
