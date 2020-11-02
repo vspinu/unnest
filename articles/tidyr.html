@@ -166,7 +166,7 @@
 <span class="co">#&gt;  9  &lt;NA&gt;    conditions  gaborcsardi        0</span>
 <span class="co">#&gt; 10  &lt;NA&gt;    crayon      gaborcsardi       52</span>
 <span class="co">#&gt; # … with 166 more rows</span></pre></div>
-<p><a href="https://vspinu.github.io/unnest/">unnest</a> selector (<code>s</code>) applies to each level of the hierarchy and describes which elements should be selected and how. The <code>stack = TRUE</code> says that the result of the extraction should be stacked row-wise (aka <code>rbind</code>ed). <code>stack = FALSE</code>, means spread it across multiple columns. The <code>as</code> argument provides the name of the output. By default it’s the entire path name for the selected leaf.</p>
+<p><a href="https://vspinu.github.io/unnest/">unnest</a> selectors (<code><a href="../reference/s.html">s()</a></code>) apply to corresponding levels of the hierarchy and describe which elements should be selected and how. The <code>stack = TRUE</code> says that the result of the extraction should be stacked row-wise (aka <code>rbind</code>ed). <code>stack = FALSE</code>, means spread it across multiple columns (aka <code>cbind</code>ed). The <code>as</code> argument provides the name of the output. By default it’s the entire path name to the selected leaf.</p>
 <p>Now assume that you want the 3 components of “repos” and all components of the owner at once:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit">
 <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>repo <span class="op">=</span> <span class="va">gh_repos</span><span class="op">)</span> <span class="op">%&gt;%</span>
@@ -341,7 +341,7 @@
 <span class="co">#   unnest_wider(books) %&gt;%</span>
 <span class="co">#   unnest_wider(tvSeries)</span>
 
-<span class="fu"><a href="../reference/s.html">unnest</a></span><span class="op">(</span><span class="va">got_chars</span>, <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span>, <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"name"</span><span class="op">)</span>, <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"books, tvSeries"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></pre></div>
+<span class="fu"><a href="../reference/s.html">unnest</a></span><span class="op">(</span><span class="va">got_chars</span>, <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span>, <span class="fu"><a href="../reference/s.html">s</a></span><span class="op">(</span><span class="st">"name, books, tvSeries"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></pre></div>
 </div>
 </div>
 <div id="sharla-gelfands-discography" class="section level2">
