@@ -42,7 +42,8 @@
 <meta property="og:title" content="Unnest nested lists — s" />
 <meta property="og:description" content="Unnest spec is a nested list with the same structure as the
 nested json. It specifies concisely how the deeply nested components ought
-to be unnested. s() is a shorthand for spec()." />
+to be unnested. s() is a shorthand for spec() and returns the canonical
+spec (a spec which can be consumed directly by the C++ routines)." />
 
 
 
@@ -133,7 +134,8 @@ to be unnested. s() is a shorthand for spec()." />
     <div class="ref-description">
     <p>Unnest spec is a nested list with the same structure as the
 nested json. It specifies concisely how the deeply nested components ought
-to be unnested. <code>s()</code> is a shorthand for <code>spec()</code>.</p>
+to be unnested. <code>s()</code> is a shorthand for <code>spec()</code> and returns the canonical
+spec (a spec which can be consumed directly by the C++ routines).</p>
     </div>
 
     <pre class="usage"><span class='fu'>s</span><span class='op'>(</span>
@@ -167,17 +169,20 @@ to be unnested. <code>s()</code> is a shorthand for <code>spec()</code>.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>selector</th>
-      <td><p>A shorthand syntax for an <code>include</code> selector. When a list
+      <td><p>A shorthand syntax for an <code>include</code> selector. When a list,
 each element of the list is expanded into the <code>include</code> element at the
-respective level. When <code>selector</code> is a string it is expanded into a list
-according to the following rules:</p>
+respective level. When a string, it is expanded into a list according to
+the following rules:</p>
 <ol>
-<li><p>When selector is length 1 and contains "/" characters it is split
-with "/" separator. For instance <code>s(c("a", "b"), ...)</code>,  <code>s("a/b", ...)</code>
-and <code>s("a", s("b", ...))</code> are all converted to a canonical <code>s(include = "a", s(include = "b", ...))</code>. Components consisting entirely of digits are converted to integer. For
-example <code>s("a/2/b" ...)</code> is equivalent to <code>s("a", s(2, s("b", ...)))</code></p></li>
-<li><p>Each element of the resulting from the previous step vector is
-split with <code>,</code>. Thus <code>s("a/b,c/d")</code> is equivalent to <code>s("a", s(include = c("b", "c"), s("d", ...)))</code></p></li>
+<li><p>When selector is of length 1 and contains "/" characters
+it is split with the "/" separator. For instance <code>s(c("a", "b"), ...)</code>,
+<code>s("a/b", ...)</code> and <code>s("a", s("b", ...))</code> are all converted to the
+canonical <code>s(include = "a", s(include = "b", ...))</code>. Components
+consisting entirely of digits are converted to integers. For example
+<code>s("a/2/b" ...)</code> is equivalent to <code>s("a", s(2, s("b", ...)))</code></p></li>
+<li><p>Each
+element of the resulting from the previous step vector is split with
+<code>,</code>. Thus <code>s("a/b,c/d")</code> is equivalent to <code>s("a", s(include = c("b", "c"), s("d", ...)))</code></p></li>
 </ol></td>
     </tr>
     <tr>
@@ -206,7 +211,7 @@ indexes and character elements to extract.</p></td>
     <tr>
       <th>stack</th>
       <td><p>Whether to stack this node (TRUE) or to spread it (FALSE). When
-<code>stack</code>is a string an index column is created with that name.</p></td>
+<code>stack</code> is a string an index column is created with that name.</p></td>
     </tr>
     <tr>
       <th>process</th>
@@ -246,7 +251,7 @@ incorrect specs.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A canonical spec; a list suitable for the C level unnest routine.</p>
+    <p><code>spec()</code>: a canonical spec - a list consumed by C++ unnesting routines.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'>
