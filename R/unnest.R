@@ -58,8 +58,9 @@ print.unnest.spec <- function(x, ...) {
 #'   `stack` is a string an index column is created with that name.
 #' @param process Extra processing step for this element. Either NULL for no
 #'   processing (the default), "asis" to return the entire element "as is" in a
-#'   list column, or "paste" to paste elements together into a character column.
-#' @return `spec()`: a canonical spec - a list consumed by C++ unnesting routines.
+#'   list column, "paste" to paste elements together into a character column.
+#' @return `spec()`: a canonical spec - a list consumed by C++ unnesting
+#'   routines.
 #' @examples
 #'
 #' ## `s()` returns a canonical spec list
@@ -168,7 +169,9 @@ convert_to_dt <- function(x) {
 #' @param dedupe whether to dedupe repeated elements. If TRUE, if a node is
 #'   visited for a second time and is not explicitly declared in the `spec` the
 #'   node is skipped. This is particularly useful with `group`ed specs.
-#' @param stack_atomic Whether atomic vectors should be stacked or not.
+#' @param stack_atomic Whether atomic leaf vectors should be stacked or not.
+#' @param process_atomic Process spec for atomic leaf vectors. (Unstable: Might
+#'   be removed in the future as the use case is not clear.)
 #' @param cross_join Specifies how the results from sibling nodes are joined
 #'   (`cbind`) together. The shorter data.frames (in terms o number of rows) can
 #'   be either recycled to the max number of rows across all components as with
@@ -235,11 +238,16 @@ convert_to_dt <- function(x) {
 #' str(unnest(xxx, s(stack = TRUE, s("a/b", process = "paste"))))
 #'
 #' @export
-unnest <- function(x, spec = NULL, dedupe = FALSE, stack_atomic = FALSE, cross_join = TRUE) {
+unnest <- function(x, spec = NULL, dedupe = FALSE,
+                   stack_atomic = FALSE,
+                   process_atomic = NULL,
+                   cross_join = TRUE) {
   if (!is.null(spec) && !inherits(spec, "unnest.spec")) {
     stop("`spec` argument must be of class `unnest.spec`", call. = FALSE)
   }
-  out <- .Call(C_unnest, x, spec, dedupe, stack_atomic, cross_join)
+  out <- .Call(C_unnest, x, spec, dedupe,
+               stack_atomic, process_atomic,
+               cross_join)
   switch(getOption("unnest.return.type", "data.frame"),
          data.frame = out,
          tibble = convert_to_tible(out),

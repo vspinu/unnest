@@ -58,6 +58,7 @@ struct Unnester {
 
   bool dedupe;
   bool stack_atomic;
+  Spec::Process process_atomic;
   bool rep_to_max;
 
   cpair2ix_map cp2i;
@@ -184,25 +185,36 @@ struct Unnester {
         P("---> add atomic node impl:%s(%ld) %s\n",
           full_name(ix).c_str(), ix, spec.to_string().c_str());
         R_xlen_t N = XLENGTH(x);
-        if (spec.stack == Spec::Stack::STACK ||
-            (this->stack_atomic && spec.stack == Spec::Stack::AUTO)) {
+        if (spec.process != Spec::Process::NONE &&
+            (spec.process != Spec::Process::PASTE_STRING || TYPEOF(x) == STRSXP)) {
           if (spec.process == Spec::Process::ASIS) {
             acc.pnodes.push_front(make_unique<AsIsNode>(ix, x));
-            P("<--- added ASIS atomic node impl:%s(%ld) acc[%ld,%ld]\n",
-              full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
-          } else if (spec.process == Spec::Process::PASTE) {
+            P("<--- added ASIS atomic node impl:%s(%ld) acc[%ld,%ld]\n", full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
+          } else if (spec.process == Spec::Process::PASTE ||
+                     spec.process == Spec::Process::PASTE_STRING) {
             acc.pnodes.push_front(make_unique<PasteNode>(ix, x));
-            P("<--- added PASTE atomic node impl:%s(%ld) acc[%ld,%ld]\n",
-              full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
-          }else {
-            acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
-            if (this->rep_to_max)
-              acc.nrows = max(acc.nrows, N);
-            else
-              acc.nrows *= N;
-            P("<--- added stacked atomic node impl:%s(%ld) acc[%ld,%ld]\n",
-              full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
+            P("<--- added PASTE atomic node impl:%s(%ld) acc[%ld,%ld]\n", full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
           }
+        } else if (this->process_atomic != Spec::Process::NONE &&
+                   (this->process_atomic != Spec::Process::PASTE_STRING || TYPEOF(x) == STRSXP)) {
+          P("this->process_atomic: %s\n", spec.process_names.at(this->process_atomic).c_str());
+          if (this->process_atomic == Spec::Process::ASIS) {
+            acc.pnodes.push_front(make_unique<AsIsNode>(ix, x));
+            P("<--- added ASIS atomic node impl:%s(%ld) acc[%ld,%ld]\n", full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
+          } else if (this->process_atomic == Spec::Process::PASTE ||
+                     this->process_atomic == Spec::Process::PASTE_STRING) {
+            acc.pnodes.push_front(make_unique<PasteNode>(ix, x));
+            P("<--- added PASTE atomic node impl:%s(%ld) acc[%ld,%ld]\n", full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
+          }
+        } else if (spec.stack == Spec::Stack::STACK ||
+                   (this->stack_atomic && spec.stack == Spec::Stack::AUTO)) {
+          acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
+          if (this->rep_to_max)
+            acc.nrows = max(acc.nrows, N);
+          else
+            acc.nrows *= N;
+          P("<--- added stacked atomic node impl:%s(%ld) acc[%ld,%ld]\n",
+            full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
         } else {
           // current implementation doesn't allow spec at a sub-vector level
           if (N == 1) {

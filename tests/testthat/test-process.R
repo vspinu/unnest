@@ -31,11 +31,14 @@ test_that("ASIS processing works", {
                               x.id = 1:2),
                          class = "data.frame", row.names = c(NA, 2L)))
 
-  ## ignore excessively nested asis
-  expect_equal(unnest(x, s("a/b/e/", s(process = "asis"))),
-               structure(list(a.b.e.f = 1L, a.b.e.f.2 = 2L, a.b.e.g = 4L,
-                              a.b.e.g.2 = 5L, a.b.e.g.3 = 6L),
-                         class = "data.frame", row.names = c(NA, 1L)))
+  expect_equal(unnestl(x, s("a/b/e/", s(process = "asis"))),
+               list(a.b.e.f = list(1:2), a.b.e.g = list(4:6)))
+
+  expect_equal(unnestl(x, s("a/b/e/", stack = T, s(process = "asis"))),
+               list(a.b.e = list(1:2, 4:6)))
+
+  expect_equal(unnestl(x, s("a/b/e/", stack = "id", s(process = "asis"))),
+               list(a.b.e = list(1:2, 4:6), a.b.e.id = c("f", "g")))
 
 })
 
@@ -58,7 +61,7 @@ test_that("PASTE processing works", {
 
   expect_error(unnest(xx, s(stack = "x.id",
                             s("a/b/e", s(process = "blabla")))),
-               "Invalid `process` argument")
+               "Invalid `process`")
 
   expect_equal(unnest(x, s("a/b/e", process = "paste")),
                structure(list(a.b.e = "1:2,4:6"),
@@ -79,10 +82,48 @@ test_that("PASTE processing works", {
                               x.id = 1:2),
                          class = "data.frame", row.names = c(NA, 2L)))
 
-  ## ignore excessively nested process spec
-  expect_equal(unnest(x, s("a/b/e/", s(process = "asis"))),
-               structure(list(a.b.e.f = 1L, a.b.e.f.2 = 2L, a.b.e.g = 4L,
-                              a.b.e.g.2 = 5L, a.b.e.g.3 = 6L),
-                         class = "data.frame", row.names = c(NA, 1L)))
+  expect_equal(unnestl(x, s("a/b/e/", s(process = "paste"))),
+               list(a.b.e.f = "1,2", a.b.e.g = "4,5,6"))
+
+  expect_equal(unnestl(x, s("a/b/e/", stack = T, s(process = "paste"))),
+               list(a.b.e = c("1,2", "4,5,6")))
+
+  expect_equal(unnestl(x, s("a/b/e/", stack = "id", s(process = "paste"))),
+               list(a.b.e = c("1,2", "4,5,6"), a.b.e.id = c("f", "g")))
+
+})
+
+
+test_that("PASTE_STRINGS processing works", {
+
+  expect_equal(unnestl(x, s("a/b/e/", s(process = "paste_strings"))),
+               unnestl(x, s("a/b/e/", s(process = NULL))))
+
+  expect_equal(unnestl(x, s("a/b/e/", s(process = "paste_strings"))),
+               list(a.b.e.f = 1L, a.b.e.f.2 = 2L, a.b.e.g = 4L, a.b.e.g.2 = 5L,
+                    a.b.e.g.3 = 6L))
+
+  expect_equal(unnestl(x, s("a/b/e/", stack = T, s(process = "paste_strings"))),
+               unnestl(x, s("a/b/e/", stack = T, s(process = NULL))))
+
+})
+
+
+test_that("process_atomic works", {
+
+  tt <- l(a = l(
+            b = l(
+              d = c("a", "b"),
+              e = l(
+                f = 1,
+                g = 2:3))))
+
+  expect_equal(unnestl(tt, process_atomic = "paste"),
+               list(a.b.d = "a,b", a.b.e.f = "1", a.b.e.g = "2,3"))
+  expect_equal(unnestl(tt, process_atomic = "paste_strings"),
+               list(a.b.d = "a,b", a.b.e.f = 1L, a.b.e.g = 2L, a.b.e.g.2 = 3L))
+  expect_equal(unnestl(tt, process_atomic = "asis"),
+               list(a.b.d = list(c("a", "b")),
+                    a.b.e.f = list(1), a.b.e.g = list(2:3)))
 
 })

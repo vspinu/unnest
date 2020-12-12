@@ -30,7 +30,14 @@ spec(
   process = NULL
 )
 
-unnest(x, spec = NULL, dedupe = FALSE, stack_atomic = FALSE, cross_join = TRUE)
+unnest(
+  x,
+  spec = NULL,
+  dedupe = FALSE,
+  stack_atomic = FALSE,
+  process_atomic = NULL,
+  cross_join = TRUE
+)
 }
 \arguments{
 \item{selector}{A shorthand syntax for an \code{include} selector. When a list,
@@ -67,7 +74,7 @@ indexes and character elements to extract.}
 
 \item{process}{Extra processing step for this element. Either NULL for no
 processing (the default), "asis" to return the entire element "as is" in a
-list column, or "paste" to paste elements together into a character column.}
+list column, "paste" to paste elements together into a character column.}
 
 \item{x}{a nested list to unnest}
 
@@ -77,7 +84,10 @@ list column, or "paste" to paste elements together into a character column.}
 visited for a second time and is not explicitly declared in the \code{spec} the
 node is skipped. This is particularly useful with \code{group}ed specs.}
 
-\item{stack_atomic}{Whether atomic vectors should be stacked or not.}
+\item{stack_atomic}{Whether atomic leaf vectors should be stacked or not.}
+
+\item{process_atomic}{Process spec for atomic leaf vectors. (Unstable: Might
+be removed in the future as the use case is not clear.)}
 
 \item{cross_join}{Specifies how the results from sibling nodes are joined
 (\code{cbind}) together. The shorter data.frames (in terms o number of rows) can
@@ -88,7 +98,8 @@ data loss and it is more conducive for earlier error detection with
 incorrect specs.}
 }
 \value{
-\code{spec()}: a canonical spec - a list consumed by C++ unnesting routines.
+\code{spec()}: a canonical spec - a list consumed by C++ unnesting
+routines.
 }
 \description{
 Unnest spec is a nested list with the same structure as the

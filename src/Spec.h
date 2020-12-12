@@ -24,10 +24,10 @@ struct SpecMatch {
 
 struct Spec {
   enum Stack {STACK, SPREAD, AUTO};
-  enum Process {ASIS, PASTE, NONE};
+  enum Process {ASIS, PASTE, PASTE_STRING, NONE};
 #if __GNUC__ > 5
   const std::unordered_map<Process, string> process_names = {
-    {ASIS, "ASIS"}, {PASTE, "PASTE"}, {NONE, "NONE"}
+    {ASIS, "ASIS"}, {PASTE, "PASTE"}, {PASTE_STRING, "PASTE_STRING"}, {NONE, "NONE"}
   };
   const std::unordered_map<Stack, string> stack_names = {
     {STACK, "STACK"}, {SPREAD, "SPREAD"}, {AUTO, "AUTO"}

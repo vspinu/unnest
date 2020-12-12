@@ -27,8 +27,12 @@ Spec::Process sexp2process(SEXP x) {
       return Spec::Process::ASIS;
     else if (!strcmp(nm, "paste"))
       return Spec::Process::PASTE;
+    else if (!strcmp(nm, "paste_strings"))
+      return Spec::Process::PASTE_STRING;
   }
-  Rf_error("Invalid `process` argument. Must be one of 'asis', 'paste' or NULL");
+  // don't popularize paste_strings as yet. Not very useful in practice as
+  // string vectors come as lists usually.
+  Rf_error("Invalid `process` or `process_atomic` argument. Must be one of 'asis', 'paste' or NULL");
 }
 
 vector<SpecMatch> Spec::match(SEXP obj) const {
