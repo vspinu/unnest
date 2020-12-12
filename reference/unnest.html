@@ -162,7 +162,14 @@ spec (a spec which can be consumed directly by the C++ routines).</p>
   process <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span>
 
-<span class='fu'>unnest</span><span class='op'>(</span><span class='va'>x</span>, spec <span class='op'>=</span> <span class='cn'>NULL</span>, dedupe <span class='op'>=</span> <span class='cn'>FALSE</span>, stack_atomic <span class='op'>=</span> <span class='cn'>FALSE</span>, cross_join <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
+<span class='fu'>unnest</span><span class='op'>(</span>
+  <span class='va'>x</span>,
+  spec <span class='op'>=</span> <span class='cn'>NULL</span>,
+  dedupe <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  stack_atomic <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  process_atomic <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cross_join <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -217,7 +224,7 @@ indexes and character elements to extract.</p></td>
       <th>process</th>
       <td><p>Extra processing step for this element. Either NULL for no
 processing (the default), "asis" to return the entire element "as is" in a
-list column, or "paste" to paste elements together into a character column.</p></td>
+list column, "paste" to paste elements together into a character column.</p></td>
     </tr>
     <tr>
       <th>x</th>
@@ -235,7 +242,11 @@ node is skipped. This is particularly useful with <code>group</code>ed specs.</p
     </tr>
     <tr>
       <th>stack_atomic</th>
-      <td><p>Whether atomic vectors should be stacked or not.</p></td>
+      <td><p>Whether atomic leaf vectors should be stacked or not.</p></td>
+    </tr>
+    <tr>
+      <th>process_atomic</th>
+      <td><p>Process spec for atomic leaf vectors. Unstable: might be removed in the future as it doesn't seem to be useful</p></td>
     </tr>
     <tr>
       <th>cross_join</th>
@@ -251,7 +262,8 @@ incorrect specs.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><code>spec()</code>: a canonical spec - a list consumed by C++ unnesting routines.</p>
+    <p><code>spec()</code>: a canonical spec - a list consumed by C++ unnesting
+routines.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'>
