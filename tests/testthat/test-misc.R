@@ -1,5 +1,34 @@
 context("Misc")
 
+test_that("Automatic treatment of data.frames works",  {
+  dd <- list(a = data.frame(b = 1:2, c = 11:12, d = c("21", "22")))
+  expect_equal(unnestl(dd, s("a")),
+               list(a.b = 1:2, a.c = 11:12, a.d = c("21", "22")))
+  expect_equal(unnestl(dd, s("a"), stack_atomic = F),
+               list(a.b = 1L, a.b.2 = 2L, a.c = 11L, a.c.2 = 12L, a.d = "21", a.d.2 = "22"))
+  expect_equal(unnestl(dd, s("a/b,d")),
+               list(a.b = 1:2, a.d = c("21", "22")))
+  expect_equal(unnestl(dd, s("a/b,d/", stack = T)),
+               list(a.b = 1:2, a.d = c("21", "22")))
+  expect_equal(unnestl(dd, s("a/b,d/", stack = F)),
+               list(a.b = 1L, a.b.2 = 2L, a.d = "21", a.d.2 = "22"))
+  expect_equal(unnest(dd, s("a", as = "", s("/", stack = T))),
+               dd$a)
+  expect_equal(unnestl(dd, s("a//", stack = T)),
+               list(a.b = 1:2, a.c = 11:12, a.d = c("21", "22")))
+  expect_equal(unnestl(dd, s("a/", stack = "ix")),
+               list(a = c("1", "2", "11", "12", "21", "22"),
+                    a.ix = c("b", "b", "c", "c", "d", "d")))
+  expect_equal(unnest(dd, s("a/", stack = "ix"), stack_atomic = T),
+               unnest(dd, s("a/", stack = "ix")))
+  expect_equal(unnestl(dd, s("a/", stack = "ix"), stack_atomic = F),
+               list(a = c("1", "11", "21"),
+                    a.2 = c("2", "12", "22"),
+                    a.ix = c("b", "c", "d")))
+  expect_equal(unnest(dd, s("a/", stack = "ix"), stack_atomic = F),
+               unnest(dd, s("a/", stack = "ix", s(stack = F))))
+})
+
 test_that("Stacking atomic vectors works", {
 
   expect_equal(unnest(y, stack_atomic = T),

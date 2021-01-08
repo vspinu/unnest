@@ -4,7 +4,7 @@
 void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
                            const Spec& pspec, const Spec& spec,
                            uint_fast32_t ix, const vector<SpecMatch>& matches,
-                           const bool rep_to_max = false) {
+                           const bool parent_is_df = false) {
   P(">>> stack_nodes ---\n");
   size_t N = matches.size();
 
@@ -23,7 +23,7 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
     NodeAccumulator iacc;
     VarAccumulator ivacc(vacc.dedupe);
 
-    dispatch_match_to_child(iacc, ivacc, pspec, spec, cix, m);
+    dispatch_match_to_child(iacc, ivacc, pspec, spec, cix, m, parent_is_df);
     end += iacc.nrows;
 
     // add index
@@ -65,7 +65,7 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
     acc.pnodes.push_front(move(onode.second));
   }
 
-  if (rep_to_max || this->rep_to_max)
+  if (parent_is_df || this->rep_to_max)
     acc.nrows = max(acc.nrows, end);
   else
     acc.nrows = acc.nrows * end;
@@ -78,7 +78,7 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
 void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
                            const Spec& pspec, const Spec& spec,
                            uint_fast32_t ix, const vector<SpecMatch>& matches,
-                           const bool rep_to_max = false) {
+                           const bool parent_is_df = false) {
 
   if (accs.size() == 0) return;
 
@@ -161,7 +161,7 @@ void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
       accs[ci].pnodes.push_front(move(onode.second));
     }
 
-    if (rep_to_max || this->rep_to_max)
+    if (parent_is_df || this->rep_to_max)
       accs[ci].nrows = max(accs[ci].nrows, end[ci]);
     else
       accs[ci].nrows = accs[ci].nrows * end[ci];
@@ -181,6 +181,7 @@ extern "C" SEXP C_unnest(SEXP x, SEXP lspec, SEXP dedupe,
   Unnester unnester;
   unnester.dedupe = sexp2bool(dedupe);
   unnester.stack_atomic = sexp2bool(stack_atomic);
+  unnester.stack_atomic_df = stack_atomic == R_NilValue;
   unnester.process_atomic = sexp2process(process_atomic);
   unnester.rep_to_max = !sexp2bool(cross_join);
 

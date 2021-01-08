@@ -169,7 +169,8 @@ convert_to_dt <- function(x) {
 #' @param dedupe whether to dedupe repeated elements. If TRUE, if a node is
 #'   visited for a second time and is not explicitly declared in the `spec` the
 #'   node is skipped. This is particularly useful with `group`ed specs.
-#' @param stack_atomic Whether atomic leaf vectors should be stacked or not.
+#' @param stack_atomic Whether atomic leaf vectors should be stacked or not. If
+#'   NULL, the default, data.frame vectors are stacked, all others are spread.
 #' @param process_atomic Process spec for atomic leaf vectors. (Unstable: Might
 #'   be removed in the future as the use case is not clear.)
 #' @param cross_join Specifies how the results from sibling nodes are joined
@@ -239,7 +240,7 @@ convert_to_dt <- function(x) {
 #'
 #' @export
 unnest <- function(x, spec = NULL, dedupe = FALSE,
-                   stack_atomic = FALSE,
+                   stack_atomic = NULL,
                    process_atomic = NULL,
                    cross_join = TRUE) {
   if (!is.null(spec) && !inherits(spec, "unnest.spec")) {
