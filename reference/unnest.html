@@ -166,7 +166,7 @@ spec (a spec which can be consumed directly by the C++ routines).</p>
   <span class='va'>x</span>,
   spec <span class='op'>=</span> <span class='cn'>NULL</span>,
   dedupe <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  stack_atomic <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  stack_atomic <span class='op'>=</span> <span class='cn'>NULL</span>,
   process_atomic <span class='op'>=</span> <span class='cn'>NULL</span>,
   cross_join <span class='op'>=</span> <span class='cn'>TRUE</span>
 <span class='op'>)</span></pre>
@@ -242,7 +242,8 @@ node is skipped. This is particularly useful with <code>group</code>ed specs.</p
     </tr>
     <tr>
       <th>stack_atomic</th>
-      <td><p>Whether atomic leaf vectors should be stacked or not.</p></td>
+      <td><p>Whether atomic leaf vectors should be stacked or not. If
+NULL, the default, data.frame vectors are stacked, all others are spread.</p></td>
     </tr>
     <tr>
       <th>process_atomic</th>
