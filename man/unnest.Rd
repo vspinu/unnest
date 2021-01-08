@@ -34,7 +34,7 @@ unnest(
   x,
   spec = NULL,
   dedupe = FALSE,
-  stack_atomic = FALSE,
+  stack_atomic = NULL,
   process_atomic = NULL,
   cross_join = TRUE
 )
@@ -84,7 +84,8 @@ list column, "paste" to paste elements together into a character column.}
 visited for a second time and is not explicitly declared in the \code{spec} the
 node is skipped. This is particularly useful with \code{group}ed specs.}
 
-\item{stack_atomic}{Whether atomic leaf vectors should be stacked or not.}
+\item{stack_atomic}{Whether atomic leaf vectors should be stacked or not. If
+NULL, the default, data.frame vectors are stacked, all others are spread.}
 
 \item{process_atomic}{Process spec for atomic leaf vectors. (Unstable: Might
 be removed in the future as the use case is not clear.)}
