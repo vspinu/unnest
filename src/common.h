@@ -36,12 +36,14 @@ void fill_vector(SEXP source, SEXP target, R_xlen_t from, R_xlen_t to);
 void fill_vector_1(SEXP source, R_xlen_t source_ix, SEXP target, R_xlen_t from, R_xlen_t to);
 
 // fixme: use algorithm instead
-inline bool is_char_in_strvec(SEXP ch, const vector<SEXP>& str) {
+inline R_xlen_t ix_char_in_strvec(SEXP ch, const vector<SEXP>& str) {
+  R_xlen_t ix = 0;
   for (const SEXP& strel : str) {
     if (ch == strel)
-      return true;
+      return ix;
+    ix++;
   }
-  return false;
+  return -1;
 }
 
 template <typename T>

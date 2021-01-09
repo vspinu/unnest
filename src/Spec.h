@@ -39,6 +39,7 @@ struct Spec {
   bool terminal = true;
 
   SEXP name = R_NilValue; //FIXME: rename into "as"
+  SEXP defsexp = R_NilValue;
   string type = "";
   vector<int> include_ixes;
   vector<SEXP> include_names;

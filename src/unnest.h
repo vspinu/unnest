@@ -41,15 +41,17 @@ template<class UT, class AT>
 void add_node(UT& U, AT& acc, VarAccumulator& vacc,
               const Spec& pspec, const Spec& spec,
               uint_fast32_t ix, SEXP x,
-              bool parent_is_df = false) {
-  if (x == R_NilValue || XLENGTH(x) == 0)
-    return; // XLENGTH doesn't work on NULL
+              bool stack_atomic = false) {
+  // XLENGTH doesn't work on NULL
+  if (x == R_NilValue || XLENGTH(x) == 0) {
+    return;
+  }
   P("-> add_node(%ld); vacc: %p; has_var: %d %s\n", ix, &vacc, vacc.has_var(ix), spec.to_string().c_str());
   if (pspec.terminal && vacc.has_var(ix)) {
     P("   already has var %ld\n", ix);
     return;
   }
-  U.add_node_impl(acc, vacc, pspec, spec, ix, x, parent_is_df);
+  U.add_node_impl(acc, vacc, pspec, spec, ix, x, stack_atomic);
   if (spec.terminal) {
     vacc.insert(ix);
   }
@@ -159,7 +161,7 @@ struct Unnester {
 
   void add_node_impl(NodeAccumulator& acc, VarAccumulator& vacc,
                      const Spec& pspec, const Spec& spec,
-                     uint_fast32_t ix, SEXP x, bool parent_is_df) {
+                     uint_fast32_t ix, SEXP x, bool stack_atomic) {
     // LENGTH(X) > 0 here
     if (pspec.process == Spec::Process::ASIS) {
       acc.pnodes.push_front(make_unique<AsIsNode>(ix, x));
@@ -171,15 +173,14 @@ struct Unnester {
         full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
     } else if (TYPEOF(x) == VECSXP) {
       // Lists
+      stack_atomic = stack_atomic || this->stack_atomic_df && is_data_frame(x);
       P("--> add_node_impl:%s(%ld) %s\n", full_name(ix).c_str(), ix, spec.to_string().c_str());
       const vector<SpecMatch>& matches = spec.match(x);
-      P("    nr. matches: %ld\n", matches.size());
+      P("    nr. matches: %ld, stack_atomic: %d\n", matches.size(), stack_atomic);
       if (spec.stack == Spec::Stack::STACK) {
-        stack_nodes(acc, vacc, pspec, spec, ix, matches,
-                    this->stack_atomic_df && is_data_frame(x));
+        stack_nodes(acc, vacc, pspec, spec, ix, matches, stack_atomic);
       } else {
-        spread_nodes(acc, vacc, pspec, spec, ix, matches,
-                     this->stack_atomic_df && is_data_frame(x));
+        spread_nodes(acc, vacc, pspec, spec, ix, matches, stack_atomic);
       }
       P("<-- added node impl:%s(%ld) acc[%ld,%ld]\n",
         full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
@@ -214,9 +215,9 @@ struct Unnester {
           }
         } else if (spec.stack == Spec::Stack::STACK ||
                    (spec.stack == Spec::Stack::AUTO &&
-                    (parent_is_df || this->stack_atomic))) {
+                    (stack_atomic || this->stack_atomic))) {
           acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
-          if (parent_is_df || this->rep_to_max)
+          if (stack_atomic || this->rep_to_max)
             acc.nrows = max(acc.nrows, N);
           else
             acc.nrows *= N;
@@ -241,12 +242,12 @@ struct Unnester {
 
   void add_node_impl(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
                      const Spec& pspec, const Spec& spec,
-                     uint_fast32_t ix, SEXP x, bool parent_is_df = false) {
+                     uint_fast32_t ix, SEXP x, bool stack_atomic = false) {
     if (TYPEOF(x) == VECSXP) {
       if (spec.stack == Spec::Stack::STACK) {
         const vector<SpecMatch>& matches = spec.match(x);
         stack_nodes(accs, vacc, pspec, spec, 0, matches,
-                    this->stack_atomic_df && is_data_frame(x));
+                    stack_atomic || this->stack_atomic_df && is_data_frame(x));
       } else {
         Rf_error("Grouped spreading is not yet implemented");
       }
@@ -259,13 +260,13 @@ struct Unnester {
   inline void dispatch_match_to_child(NodeAccumulator& acc, VarAccumulator& vacc,
                                       const Spec& pspec, const Spec& spec,
                                       uint_fast32_t cix, const SpecMatch& m,
-                                      bool parent_is_df = false) {
+                                      bool stack_atomic = false) {
     P("---> dispatching cix:%ld %s %s\n", cix, m.to_string().c_str(), spec.to_string().c_str());
     if (spec.children.empty()) {
-      add_node(*this, acc, vacc, spec, NilSpec, cix, m.obj, parent_is_df);
+      add_node(*this, acc, vacc, spec, NilSpec, cix, m.obj, stack_atomic);
     } else {
       for (const Spec& cspec: spec.children) {
-        add_node(*this, acc, vacc, spec, cspec, cix, m.obj, parent_is_df);
+        add_node(*this, acc, vacc, spec, cspec, cix, m.obj, stack_atomic);
       }
     }
   }
@@ -273,10 +274,10 @@ struct Unnester {
   inline void spread_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
                            const Spec& pspec, const Spec& spec,
                            uint_fast32_t ix, const vector<SpecMatch>& matches,
-                           bool parent_is_df) {
+                           bool stack_atomic) {
     for (const SpecMatch& m: matches) {
       uint_fast32_t cix = child_ix(ix, m);
-      dispatch_match_to_child(acc, vacc, pspec, spec, cix, m, parent_is_df);
+      dispatch_match_to_child(acc, vacc, pspec, spec, cix, m, stack_atomic);
     }
   }
 

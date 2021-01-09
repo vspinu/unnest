@@ -15,7 +15,8 @@ s(
   include = NULL,
   exclude = NULL,
   stack = NULL,
-  process = NULL
+  process = NULL,
+  default = NULL
 )
 
 spec(
@@ -27,7 +28,8 @@ spec(
   include = NULL,
   exclude = NULL,
   stack = NULL,
-  process = NULL
+  process = NULL,
+  default = NULL
 )
 
 unnest(
@@ -75,6 +77,9 @@ indexes and character elements to extract.}
 \item{process}{Extra processing step for this element. Either NULL for no
 processing (the default), "asis" to return the entire element "as is" in a
 list column, "paste" to paste elements together into a character column.}
+
+\item{default}{Default value to insert if the \code{include} specification hasn't
+matched.}
 
 \item{x}{a nested list to unnest}
 
@@ -170,5 +175,9 @@ str(unnest(xxx, s(stack = "id", s("a/b", process = "asis"))))
 str(unnest(x, s("a/b/y", process = "paste")))
 str(unnest(xxx, s(stack = TRUE, s("a/b/", process = "paste"))))
 str(unnest(xxx, s(stack = TRUE, s("a/b", process = "paste"))))
+
+## default
+unnest(x, s("a/b/c/", s("b", default = 100)))
+unnest(x, s("a/b/c/", stack = "ix", s("b", default = 100)))
 
 }

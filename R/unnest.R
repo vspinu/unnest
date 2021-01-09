@@ -59,6 +59,8 @@ print.unnest.spec <- function(x, ...) {
 #' @param process Extra processing step for this element. Either NULL for no
 #'   processing (the default), "asis" to return the entire element "as is" in a
 #'   list column, "paste" to paste elements together into a character column.
+#' @param default Default value to insert if the `include` specification hasn't
+#'   matched.
 #' @return `spec()`: a canonical spec - a list consumed by C++ unnesting
 #'   routines.
 #' @examples
@@ -72,7 +74,8 @@ print.unnest.spec <- function(x, ...) {
 s <- function(selector = NULL, ..., as = NULL,
               children = NULL, groups = NULL,
               include = NULL, exclude = NULL,
-              stack = NULL, process = NULL) {
+              stack = NULL, process = NULL,
+              default = NULL) {
   children <- c(children, list(...))
   children <- children[!sapply(children, is.null)]
   if (is.unnest.spec(selector)) {
@@ -106,10 +109,11 @@ s <- function(selector = NULL, ..., as = NULL,
           if (!is.null(as)) list(as = as),
           if (!is.null(include)) list(include = include),
           if (!is.null(exclude)) list(exclude = exclude),
-          if (!is.null(stack))  list(stack = stack),
-          if (!is.null(process))  list(process = process),
+          if (!is.null(stack)) list(stack = stack),
+          if (!is.null(process)) list(process = process),
+          if (!is.null(default)) list(default = default),
           if (length(children) > 0) list(children = children),
-          if (!is.null(groups)) list(groups = groups))
+          if (length(groups) > 0) list(groups = groups))
 
   first <- TRUE
   tel <- el
@@ -131,11 +135,12 @@ s <- function(selector = NULL, ..., as = NULL,
              else if (!is.null(el[["as"]])) "",
         stack = stack,
         process = process,
+        default = default,
         include = include,
         exclude = exclude,
         children = if(first) el[["children"]] else list(tel),
         groups = groups))
-    include <- exclude <- stack <- process <- groups <- NULL
+    include <- exclude <- stack <- process <- default <- groups <- NULL
     first <- FALSE
   }
   el <- tel
@@ -237,6 +242,10 @@ convert_to_dt <- function(x) {
 #' str(unnest(x, s("a/b/y", process = "paste")))
 #' str(unnest(xxx, s(stack = TRUE, s("a/b/", process = "paste"))))
 #' str(unnest(xxx, s(stack = TRUE, s("a/b", process = "paste"))))
+#'
+#' ## default
+#' unnest(x, s("a/b/c/", s("b", default = 100)))
+#' unnest(x, s("a/b/c/", stack = "ix", s("b", default = 100)))
 #'
 #' @export
 unnest <- function(x, spec = NULL, dedupe = FALSE,
