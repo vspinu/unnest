@@ -1,5 +1,18 @@
 #include "unnest.h"
 
+Unnester::Unnamed sexp2unnamed(SEXP x) {
+  if (x == R_NilValue)
+    return Unnester::Unnamed::NONE;
+  if (TYPEOF(x) == STRSXP) {
+    const char* nm = CHAR(STRING_ELT(x, 0));
+    if (!strcmp(nm, "stack"))
+      return Unnester::Unnamed::STACK;
+    else if (!strcmp(nm, "exclude"))
+      return Unnester::Unnamed::EXCLUDE;
+  }
+  Rf_error("Invalid `unnamed_list` argument. Must be one of 'stack', 'exclude' or NULL");
+}
+
 // simple stacker
 void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
                            const Spec& pspec, const Spec& spec,
@@ -171,8 +184,8 @@ void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
 }
 
 extern "C" SEXP C_unnest(SEXP x, SEXP lspec, SEXP dedupe,
-                         SEXP stack_atomic, SEXP process_atomic,
-                         SEXP cross_join) {
+                         SEXP stack_atomic, SEXP unnamed_list,
+                         SEXP process_atomic, SEXP cross_join) {
   SEXPTYPE type = TYPEOF(x);
   if (TYPEOF(x) != VECSXP) {
 	Rf_error("x must be a list vector");
@@ -183,6 +196,7 @@ extern "C" SEXP C_unnest(SEXP x, SEXP lspec, SEXP dedupe,
   unnester.stack_atomic = sexp2bool(stack_atomic);
   unnester.stack_atomic_df = stack_atomic == R_NilValue;
   unnester.process_atomic = sexp2process(process_atomic);
+  unnester.unnamed_list = sexp2unnamed(unnamed_list);
   unnester.rep_to_max = !sexp2bool(cross_join);
 
   return unnester.process(x, lspec);

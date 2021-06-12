@@ -36,7 +36,8 @@ struct NodeAccumulator {
 };
 
 
-// cannot define templates in non-templates class, so have to do this extraction
+// Need to extract this method as C++ does not allows templates in a
+// non-templated class.
 template<class UT, class AT>
 void add_node(UT& U, AT& acc, VarAccumulator& vacc,
               const Spec& pspec, const Spec& spec,
@@ -59,10 +60,15 @@ void add_node(UT& U, AT& acc, VarAccumulator& vacc,
 
 struct Unnester {
 
+  enum Unnamed {NONE, STACK, EXCLUDE};
+  Unnamed sexp2unnamed(SEXP x);
+
+
   bool dedupe;
   bool stack_atomic;
   bool stack_atomic_df;
   Spec::Process process_atomic;
+  Unnamed unnamed_list;
   bool rep_to_max;
 
   cpair2ix_map cp2i;
@@ -162,7 +168,7 @@ struct Unnester {
   void add_node_impl(NodeAccumulator& acc, VarAccumulator& vacc,
                      const Spec& pspec, const Spec& spec,
                      uint_fast32_t ix, SEXP x, bool stack_atomic) {
-    // LENGTH(X) > 0 here
+    // LENGTH(X) > 0 and X != NULL in here
     if (pspec.process == Spec::Process::ASIS) {
       acc.pnodes.push_front(make_unique<AsIsNode>(ix, x));
       P("<--- added ASIS node impl:%s(%ld) acc[%ld,%ld]\n",
@@ -173,11 +179,20 @@ struct Unnester {
         full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
     } else if (TYPEOF(x) == VECSXP) {
       // Lists
+      if (this->unnamed_list == Unnamed::EXCLUDE &&
+          pspec.terminal &&
+          Rf_getAttrib(x, R_NamesSymbol) == R_NilValue) {
+        /* PP("pspec: %s\n", pspec.to_string().c_str()); */
+        /* PP("spec: %s\n", spec.to_string().c_str()); */
+        return;
+      }
       stack_atomic = stack_atomic || this->stack_atomic_df && is_data_frame(x);
       P("--> add_node_impl:%s(%ld) %s\n", full_name(ix).c_str(), ix, spec.to_string().c_str());
       const vector<SpecMatch>& matches = spec.match(x);
       P("    nr. matches: %ld, stack_atomic: %d\n", matches.size(), stack_atomic);
-      if (spec.stack == Spec::Stack::STACK) {
+      if (spec.stack == Spec::Stack::STACK ||
+          (this->unnamed_list == Unnamed::STACK &&
+           Rf_getAttrib(x, R_NamesSymbol) == R_NilValue)) {
         stack_nodes(acc, vacc, pspec, spec, ix, matches, stack_atomic);
       } else {
         spread_nodes(acc, vacc, pspec, spec, ix, matches, stack_atomic);

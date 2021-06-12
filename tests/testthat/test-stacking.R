@@ -116,3 +116,36 @@ test_that("stacking attomics work", {
   #                           s(stack = "el.id"))))
 
 })
+
+
+
+test_that("Unnamed stacking works", {
+
+
+  x <- l(a = l(
+           b = l(
+             c = list(c = 1, d = 2),
+             d = list(1, 2),
+             e = l(
+               l(a = 1, b = 1),
+               l(a = 2, c = 2),
+               l(a = 3, b = 3)))))
+
+  expect_equal(unnestl(x, unnamed_lists = "stack"),
+               list(a.b.c.c = c(1, 1, 1, 1, 1, 1),
+                    a.b.c.d = c(2, 2, 2, 2, 2, 2),
+                    a.b.d = c(1, 2, 1, 2, 1, 2),
+                    a.b.e.a = c(1, 2, 3, 1, 2, 3),
+                    a.b.e.b = c(1, NA, 3, 1, NA, 3),
+                    a.b.e.c = c(NA, 2, NA, NA, 2, NA)))
+
+  expect_equal(unnestl(x, unnamed_lists = "exclude"),
+               list(a.b.c.c = 1, a.b.c.d = 2))
+
+  expect_equal(unnestl(x, s("a/b/c,d"), unnamed_lists = "exclude"),
+               list(a.b.c.c = 1, a.b.c.d = 2, a.b.d.1 = 1, a.b.d.2 = 2))
+
+  expect_equal(unnestl(x, s("a/b", s("c"), s("d/", stack = T)), unnamed_lists = "exclude"),
+               list(a.b.c.c = c(1, 1), a.b.c.d = c(2, 2), a.b.d = c(1, 2)))
+
+})

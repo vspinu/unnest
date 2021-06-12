@@ -21,28 +21,36 @@ print.unnest.spec <- function(x, ...) {
   str(x, give.head = FALSE, no.list = TRUE, give.attr = FALSE)
 }
 
-#' @title Unnest nested lists
+#' @title Unnest spec
 #'
 #' @description Unnest spec is a nested list with the same structure as the
-#'   nested json. It specifies concisely how the deeply nested components ought
-#'   to be unnested. `s()` is a shorthand for `spec()` and returns the canonical
-#'   spec (a spec which can be consumed directly by the C++ routines).
+#'   nested json. It specifies how the deeply nested lists ought to be
+#'   unnested. `spec()` is a handy constructor for spec lists. `s()` is a
+#'   shorthand alias for `spec()`.
 #'
-#' @rdname unnest
-#' @param selector A shorthand syntax for an `include` selector. When a list,
-#'   each element of the list is expanded into the `include` element at the
-#'   respective level. When a string, it is expanded into a list according to
-#'   the following rules:
+#' @rdname spec
+#' @param selector A shorthand syntax for an `include` parameter. Can be a list
+#'   or a character vector.
 #'
-#'   \enumerate{ \item When selector is of length 1 and contains "/" characters
-#'      it is split with the "/" separator. For instance `s(c("a", "b"), ...)`,
-#'      `s("a/b", ...)` and `s("a", s("b", ...))` are all converted to the
-#'      canonical `s(include = "a", s(include = "b", ...))`. Components
-#'      consisting entirely of digits are converted to integers. For example
-#'      `s("a/2/b" ...)` is equivalent to `s("a", s(2, s("b", ...)))` \item Each
-#'      element of the resulting from the previous step vector is split with
-#'      `,`. Thus `s("a/b,c/d")` is equivalent to `s("a", s(include = c("b",
-#'      "c"), s("d", ...)))` }
+#' \enumerate{
+#'
+#'    \item When `selector` is a list or a character vector with length greater
+#'    than 1, each element is an include parameter at the corresponding
+#'    level. For example `s(c("a", "b"), ...)` is equivalent to `s(include =
+#'    "a", s(include = "b", ...))`
+#'
+#'    \item When `selector` is a character of length 1 and contains "/"
+#'    characters it is split with "/" first. For instance `s(c("a", "b"), ...)`,
+#'    `s("a/b", ...)` and `s("a", s("b", ...))` are all equivalent to the
+#'    canonical `s(include = "a", s(include = "b", ...))`. Components consisting
+#'    entirely of digits are converted to integers. For example `s("a/2/b" ...)`
+#'    is equivalent to `s("a", s(2, s("b", ...)))`
+#'
+#'    \item Multiple `include` fields can be separated with `,`. For example
+#'      `s("a/b,c/d")` is equivalent to `s("a", s(include = c("b", "c"), s("d",
+#'      ...)))`
+#'
+#' }
 #' @param as name for this field in the extracted data.frame
 #' @param children,... Unnamed list of children spec. `...` is merged into
 #'   `children`. `children` is part of the canonical spec.
@@ -61,17 +69,16 @@ print.unnest.spec <- function(x, ...) {
 #'   list column, "paste" to paste elements together into a character column.
 #' @param default Default value to insert if the `include` specification hasn't
 #'   matched.
-#' @return `spec()`: a canonical spec - a list consumed by C++ unnesting
+#' @return `s()`: a canonical spec - a list consumed by C++ unnesting
 #'   routines.
 #' @examples
 #'
-#' ## `s()` returns a canonical spec list
 #' s("a")
 #' s("a//c2")
 #' s("a/2/c2,cid")
 #'
 #' @export
-s <- function(selector = NULL, ..., as = NULL,
+spec <- function(selector = NULL, ..., as = NULL,
               children = NULL, groups = NULL,
               include = NULL, exclude = NULL,
               stack = NULL, process = NULL,
@@ -147,9 +154,9 @@ s <- function(selector = NULL, ..., as = NULL,
   unnest.spec(el)
 }
 
-#' @rdname unnest
+#' @rdname spec
 #' @export
-spec <- s
+s <- spec
 
 convert_to_tible <- function(x) {
   if (!is.data.frame(x))
@@ -169,6 +176,10 @@ convert_to_dt <- function(x) {
 }
 
 
+#' Unnest lists
+#'
+#' Unnest nested lists into a flat data.frames.
+#'
 #' @param x a nested list to unnest
 #' @param spec spec to use for unnesting. See [`spec()`].
 #' @param dedupe whether to dedupe repeated elements. If TRUE, if a node is
@@ -176,16 +187,22 @@ convert_to_dt <- function(x) {
 #'   node is skipped. This is particularly useful with `group`ed specs.
 #' @param stack_atomic Whether atomic leaf vectors should be stacked or not. If
 #'   NULL, the default, data.frame vectors are stacked, all others are spread.
-#' @param process_atomic Process spec for atomic leaf vectors. (Unstable: Might
-#'   be removed in the future as the use case is not clear.)
+#' @param unnamed_lists What to do with unnamed lists. If "stack" all unnamed
+#'   lists are automatically stacked; if "exclude", they are ignored, unless
+#'   explicitly included in the spec. If NULL, do nothing - process them
+#'   normally according to the specs.
+#' @param process_atomic Process spec for atomic leaf vectors. (Unstable: Will
+#'   probably be removed in the future as the use case is not clear.)
 #' @param cross_join Specifies how the results from sibling nodes are joined
-#'   (`cbind`) together. The shorter data.frames (in terms o number of rows) can
-#'   be either recycled to the max number of rows across all components as with
-#'   standard R's recycling (`cross_join = FALSE`). Or, with `cross_join =
-#'   TRUE`, the results are cross joined (aka form all combinations of rows
-#'   across joined components). `cross_join = TRUE` is the default because of no
-#'   data loss and it is more conducive for earlier error detection with
-#'   incorrect specs.
+#'   (`cbind`ed) together. The shorter data.frames (fewer rows) can be either
+#'   recycled to the max number of rows across all joined components with
+#'   `cross_join = FALSE`. Or, the results are cross joined (produce all
+#'   combinations of rows across all components) with `cross_join =
+#'   TRUE`. `cross_join = TRUE` is the default because of no data loss and it is
+#'   more conducive for earlier error detection with incorrect specs
+#'
+#' @return A `data.frame`, `data.table` or a `tibble` as specified by the option
+#'   `unnest.return.type`. Defaults to `data.frame`.
 #' @examples
 #'
 #' x <- list(a = list(b = list(x = 1, y = 1:2, z = 10),
@@ -250,14 +267,15 @@ convert_to_dt <- function(x) {
 #' @export
 unnest <- function(x, spec = NULL, dedupe = FALSE,
                    stack_atomic = NULL,
+                   unnamed_lists = NULL,
                    process_atomic = NULL,
                    cross_join = TRUE) {
   if (!is.null(spec) && !inherits(spec, "unnest.spec")) {
     stop("`spec` argument must be of class `unnest.spec`", call. = FALSE)
   }
   out <- .Call(C_unnest, x, spec, dedupe,
-               stack_atomic, process_atomic,
-               cross_join)
+               stack_atomic, unnamed_lists,
+               process_atomic, cross_join)
   switch(getOption("unnest.return.type", "data.frame"),
          data.frame = out,
          tibble = convert_to_tible(out),

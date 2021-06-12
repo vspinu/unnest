@@ -25,7 +25,6 @@ using namespace std;
 
 #define PP(...) printf(__VA_ARGS__)
 
-
 // utils.cpp
 bool is_data_frame(SEXP s);
 bool sexp2bool(SEXP x);
