@@ -148,4 +148,8 @@ test_that("Unnamed stacking works", {
   expect_equal(unnestl(x, s("a/b", s("c"), s("d/", stack = T)), unnamed_lists = "exclude"),
                list(a.b.c.c = c(1, 1), a.b.c.d = c(2, 2), a.b.d = c(1, 2)))
 
+  x <- l(l(a = 1), l(a = 2))
+
+  expect_equal(unnestl(x, s(stack = T), unnamed_lists = "exclude"),
+               list(a = c(1, 2)))
 })

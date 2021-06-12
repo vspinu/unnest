@@ -180,7 +180,7 @@ struct Unnester {
     } else if (TYPEOF(x) == VECSXP) {
       // Lists
       if (this->unnamed_list == Unnamed::EXCLUDE &&
-          pspec.terminal &&
+          pspec.terminal && spec.stack == Spec::Stack::AUTO &&
           Rf_getAttrib(x, R_NamesSymbol) == R_NilValue) {
         /* PP("pspec: %s\n", pspec.to_string().c_str()); */
         /* PP("spec: %s\n", spec.to_string().c_str()); */
