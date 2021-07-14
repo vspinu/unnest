@@ -23,7 +23,7 @@ Spec::Process sexp2process(SEXP x) {
     return Spec::Process::NONE;
   if (TYPEOF(x) == STRSXP) {
     const char* nm = CHAR(STRING_ELT(x, 0));
-    if (!strcmp(nm, "asis"))
+    if (!strcmp(nm, "as_is") || !strcmp(nm, "as.is") || !strcmp(nm, "asis"))
       return Spec::Process::ASIS;
     else if (!strcmp(nm, "paste"))
       return Spec::Process::PASTE;
@@ -32,7 +32,7 @@ Spec::Process sexp2process(SEXP x) {
   }
   // don't popularize paste_strings as yet. Not very useful in practice as
   // string vectors come as lists usually.
-  Rf_error("Invalid `process` or `process_atomic` argument. Must be one of 'asis', 'paste' or NULL");
+  Rf_error("Invalid `process` or `process_atomic` argument. Must be one of 'as_is', 'paste' or NULL");
 }
 
 vector<SpecMatch> Spec::match(SEXP obj) const {

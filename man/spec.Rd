@@ -72,15 +72,14 @@ indexes and character elements to extract.}
 \code{stack} is a string an index column is created with that name.}
 
 \item{process}{Extra processing step for this element. Either NULL for no
-processing (the default), "asis" to return the entire element "as is" in a
-list column, "paste" to paste elements together into a character column.}
+processing (the default), "asis" to return the entire element in a list
+column, "paste" to paste elements together into a character column.}
 
 \item{default}{Default value to insert if the \code{include} specification hasn't
 matched.}
 }
 \value{
-\code{s()}: a canonical spec - a list consumed by C++ unnesting
-routines.
+\code{s()}: a canonical spec - a list consumed by C++ unnesting routines.
 }
 \description{
 Unnest spec is a nested list with the same structure as the

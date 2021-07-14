@@ -65,12 +65,11 @@ print.unnest.spec <- function(x, ...) {
 #' @param stack Whether to stack this node (TRUE) or to spread it (FALSE). When
 #'   `stack` is a string an index column is created with that name.
 #' @param process Extra processing step for this element. Either NULL for no
-#'   processing (the default), "asis" to return the entire element "as is" in a
-#'   list column, "paste" to paste elements together into a character column.
+#'   processing (the default), "as_is" to return the entire element in a list
+#'   column, "paste" to paste elements together into a character column.
 #' @param default Default value to insert if the `include` specification hasn't
 #'   matched.
-#' @return `s()`: a canonical spec - a list consumed by C++ unnesting
-#'   routines.
+#' @return `s()`: a canonical spec - a list consumed by C++ unnesting routines.
 #' @examples
 #'
 #' s("a")
@@ -187,12 +186,14 @@ convert_to_dt <- function(x) {
 #'   node is skipped. This is particularly useful with `group`ed specs.
 #' @param stack_atomic Whether atomic leaf vectors should be stacked or not. If
 #'   NULL, the default, data.frame vectors are stacked, all others are spread.
-#' @param unnamed_lists What to do with unnamed lists. If "stack" all unnamed
-#'   lists are automatically stacked; if "exclude", they are ignored, unless
-#'   explicitly included in the spec. If NULL, do nothing - process them
-#'   normally according to the specs.
-#' @param process_atomic Process spec for atomic leaf vectors. (Unstable: Will
-#'   probably be removed in the future as the use case is not clear.)
+#' @param process_atomic Process spec for atomic leaf vectors. Either NULL for
+#'   no processing (the default), "as_is" to return the entire element in a list
+#'   column, "paste" to paste elements together into a character column.
+#' @param process_unnamed_lists How to process unnamed lists. Can be one of
+#'   "as_is" - return a list column, "exclude" - drop these elements unless they
+#'   are explicitly included in the spec, "paste" - return a character column,
+#'   "stack" - automatically stack. If NULL (the default), do nothing - process
+#'   them normally according to the specs.
 #' @param cross_join Specifies how the results from sibling nodes are joined
 #'   (`cbind`ed) together. The shorter data.frames (fewer rows) can be either
 #'   recycled to the max number of rows across all joined components with
@@ -248,12 +249,12 @@ convert_to_dt <- function(x) {
 #'          groups = list(first = s("a/b/x,y"),
 #'                        second = s("a/b"))))
 #'
-#' ## processing asis
+#' ## processing as_is
 #' str(unnest(xxx, s(stack = "id",
-#'                   s("a/b/y", process = "asis"),
-#'                   s("a/c", process = "asis"))))
-#' str(unnest(xxx, s(stack = "id", s("a/b/", process = "asis"))))
-#' str(unnest(xxx, s(stack = "id", s("a/b", process = "asis"))))
+#'                   s("a/b/y", process = "as_is"),
+#'                   s("a/c", process = "as_is"))))
+#' str(unnest(xxx, s(stack = "id", s("a/b/", process = "as_is"))))
+#' str(unnest(xxx, s(stack = "id", s("a/b", process = "as_is"))))
 #'
 #' ## processing paste
 #' str(unnest(x, s("a/b/y", process = "paste")))
@@ -267,15 +268,15 @@ convert_to_dt <- function(x) {
 #' @export
 unnest <- function(x, spec = NULL, dedupe = FALSE,
                    stack_atomic = NULL,
-                   unnamed_lists = NULL,
                    process_atomic = NULL,
+                   process_unnamed_lists = NULL,
                    cross_join = TRUE) {
   if (!is.null(spec) && !inherits(spec, "unnest.spec")) {
     stop("`spec` argument must be of class `unnest.spec`", call. = FALSE)
   }
-  out <- .Call(C_unnest, x, spec, dedupe,
-               stack_atomic, unnamed_lists,
-               process_atomic, cross_join)
+  out <- .Call(C_unnest, x, spec, dedupe, stack_atomic,
+               process_atomic, process_unnamed_lists,
+               cross_join)
   switch(getOption("unnest.return.type", "data.frame"),
          data.frame = out,
          tibble = convert_to_tible(out),

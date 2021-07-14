@@ -9,8 +9,8 @@ unnest(
   spec = NULL,
   dedupe = FALSE,
   stack_atomic = NULL,
-  unnamed_lists = NULL,
   process_atomic = NULL,
+  process_unnamed_lists = NULL,
   cross_join = TRUE
 )
 }
@@ -26,13 +26,15 @@ node is skipped. This is particularly useful with \code{group}ed specs.}
 \item{stack_atomic}{Whether atomic leaf vectors should be stacked or not. If
 NULL, the default, data.frame vectors are stacked, all others are spread.}
 
-\item{unnamed_lists}{What to do with unnamed lists. If "stack" all unnamed
-lists are automatically stacked; if "exclude", they are ignored, unless
-explicitly included in the spec. If NULL, do nothing - process them
-normally according to the specs.}
+\item{process_atomic}{Process spec for atomic leaf vectors. Either NULL for
+no processing (the default), "asis" to return the entire element in a list
+column, "paste" to paste elements together into a character column.}
 
-\item{process_atomic}{Process spec for atomic leaf vectors. (Unstable: Will
-probably be removed in the future as the use case is not clear.)}
+\item{process_unnamed_lists}{How to process unnamed lists. Can be one of
+"asis" - return a list column, "exclude" - drop these elements unless they
+are explicitly included in the spec, "paste" - return a character column,
+"stack" - automatically stack. If NULL (the default), do nothing - process
+them normally according to the specs.}
 
 \item{cross_join}{Specifies how the results from sibling nodes are joined
 (\code{cbind}ed) together. The shorter data.frames (fewer rows) can be either
