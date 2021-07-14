@@ -137,8 +137,8 @@
   spec <span class='op'>=</span> <span class='cn'>NULL</span>,
   dedupe <span class='op'>=</span> <span class='cn'>FALSE</span>,
   stack_atomic <span class='op'>=</span> <span class='cn'>NULL</span>,
-  unnamed_lists <span class='op'>=</span> <span class='cn'>NULL</span>,
   process_atomic <span class='op'>=</span> <span class='cn'>NULL</span>,
+  process_unnamed_lists <span class='op'>=</span> <span class='cn'>NULL</span>,
   cross_join <span class='op'>=</span> <span class='cn'>TRUE</span>
 <span class='op'>)</span></pre>
 
@@ -165,16 +165,18 @@ node is skipped. This is particularly useful with <code>group</code>ed specs.</p
 NULL, the default, data.frame vectors are stacked, all others are spread.</p></td>
     </tr>
     <tr>
-      <th>unnamed_lists</th>
-      <td><p>What to do with unnamed lists. If "stack" all unnamed
-lists are automatically stacked; if "exclude", they are ignored, unless
-explicitly included in the spec. If NULL, do nothing - process them
-normally according to the specs.</p></td>
+      <th>process_atomic</th>
+      <td><p>Process spec for atomic leaf vectors. Either NULL for
+no processing (the default), "asis" to return the entire element in a list
+column, "paste" to paste elements together into a character column.</p></td>
     </tr>
     <tr>
-      <th>process_atomic</th>
-      <td><p>Process spec for atomic leaf vectors. (Unstable: Will
-probably be removed in the future as the use case is not clear.)</p></td>
+      <th>process_unnamed_lists</th>
+      <td><p>How to process unnamed lists. Can be one of
+"asis" - return a list column, "exclude" - drop these elements unless they
+are explicitly included in the spec, "paste" - return a character column,
+"stack" - automatically stack. If NULL (the default), do nothing - process
+them normally according to the specs.</p></td>
     </tr>
     <tr>
       <th>cross_join</th>
