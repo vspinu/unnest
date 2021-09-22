@@ -127,7 +127,7 @@
       homepage <span class="op">=</span> <span class="st">"homepage"</span>,
       watchers <span class="op">=</span> <span class="st">"watchers_count"</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">repo</span><span class="op">)</span>
-<span class="co">#&gt; # A tibble: 176 x 4</span>
+<span class="co">#&gt; # A tibble: 176 × 4</span>
 <span class="co">#&gt;    login       name        homepage watchers</span>
 <span class="co">#&gt;    &lt;chr&gt;       &lt;chr&gt;       &lt;chr&gt;       &lt;int&gt;</span>
 <span class="co">#&gt;  1 gaborcsardi after        &lt;NA&gt;           5</span>
@@ -151,7 +151,7 @@
             <span class="fu"><a href="../reference/spec.html">s</a></span><span class="op">(</span><span class="st">"owner"</span>,
               <span class="fu"><a href="../reference/spec.html">s</a></span><span class="op">(</span><span class="st">"login"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
 <span class="fu"><a href="../reference/unnest.html">unnest</a></span><span class="op">(</span><span class="va">gh_repos</span>, <span class="va">spec</span><span class="op">)</span>
-<span class="co">#&gt; # A tibble: 176 x 4</span>
+<span class="co">#&gt; # A tibble: 176 × 4</span>
 <span class="co">#&gt;    homepage name        owner.login watchers</span>
 <span class="co">#&gt;    &lt;chr&gt;    &lt;chr&gt;       &lt;chr&gt;          &lt;int&gt;</span>
 <span class="co">#&gt;  1  &lt;NA&gt;    after       gaborcsardi        5</span>
@@ -185,19 +185,19 @@
             <span class="fu"><a href="../reference/spec.html">s</a></span><span class="op">(</span><span class="st">"watchers_count"</span>, as <span class="op">=</span> <span class="st">"watchers"</span><span class="op">)</span>,
             <span class="fu"><a href="../reference/spec.html">s</a></span><span class="op">(</span><span class="st">"owner"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
 <span class="fu"><a href="../reference/unnest.html">unnest</a></span><span class="op">(</span><span class="va">gh_repos</span>, <span class="va">spec</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span><span class="op">)</span>
-<span class="co">#&gt; # A tibble: 176 x 20</span>
-<span class="co">#&gt;    homepage name   owner.avatar_url     owner.events_url     owner.followers_url</span>
-<span class="co">#&gt;    &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;                &lt;chr&gt;                &lt;chr&gt;              </span>
-<span class="co">#&gt;  1  &lt;NA&gt;    after  https://avatars.git… https://api.github.… https://api.github…</span>
-<span class="co">#&gt;  2  &lt;NA&gt;    argufy https://avatars.git… https://api.github.… https://api.github…</span>
-<span class="co">#&gt;  3  &lt;NA&gt;    ask    https://avatars.git… https://api.github.… https://api.github…</span>
-<span class="co">#&gt;  4  &lt;NA&gt;    basei… https://avatars.git… https://api.github.… https://api.github…</span>
-<span class="co">#&gt;  5  &lt;NA&gt;    citest https://avatars.git… https://api.github.… https://api.github…</span>
-<span class="co">#&gt;  6 ""       clisy… https://avatars.git… https://api.github.… https://api.github…</span>
-<span class="co">#&gt;  7  &lt;NA&gt;    cmaker https://avatars.git… https://api.github.… https://api.github…</span>
-<span class="co">#&gt;  8  &lt;NA&gt;    cmark  https://avatars.git… https://api.github.… https://api.github…</span>
-<span class="co">#&gt;  9  &lt;NA&gt;    condi… https://avatars.git… https://api.github.… https://api.github…</span>
-<span class="co">#&gt; 10  &lt;NA&gt;    crayon https://avatars.git… https://api.github.… https://api.github…</span>
+<span class="co">#&gt; # A tibble: 176 × 20</span>
+<span class="co">#&gt;    homepage name        owner.avatar_url   owner.events_url    owner.followers_…</span>
+<span class="co">#&gt;    &lt;chr&gt;    &lt;chr&gt;       &lt;chr&gt;              &lt;chr&gt;               &lt;chr&gt;            </span>
+<span class="co">#&gt;  1  &lt;NA&gt;    after       https://avatars.g… https://api.github… https://api.gith…</span>
+<span class="co">#&gt;  2  &lt;NA&gt;    argufy      https://avatars.g… https://api.github… https://api.gith…</span>
+<span class="co">#&gt;  3  &lt;NA&gt;    ask         https://avatars.g… https://api.github… https://api.gith…</span>
+<span class="co">#&gt;  4  &lt;NA&gt;    baseimports https://avatars.g… https://api.github… https://api.gith…</span>
+<span class="co">#&gt;  5  &lt;NA&gt;    citest      https://avatars.g… https://api.github… https://api.gith…</span>
+<span class="co">#&gt;  6 ""       clisymbols  https://avatars.g… https://api.github… https://api.gith…</span>
+<span class="co">#&gt;  7  &lt;NA&gt;    cmaker      https://avatars.g… https://api.github… https://api.gith…</span>
+<span class="co">#&gt;  8  &lt;NA&gt;    cmark       https://avatars.g… https://api.github… https://api.gith…</span>
+<span class="co">#&gt;  9  &lt;NA&gt;    conditions  https://avatars.g… https://api.github… https://api.gith…</span>
+<span class="co">#&gt; 10  &lt;NA&gt;    crayon      https://avatars.g… https://api.github… https://api.gith…</span>
 <span class="co">#&gt; # … with 166 more rows, and 15 more variables: owner.following_url &lt;chr&gt;,</span>
 <span class="co">#&gt; #   owner.gists_url &lt;chr&gt;, owner.gravatar_id &lt;chr&gt;, owner.html_url &lt;chr&gt;,</span>
 <span class="co">#&gt; #   owner.id &lt;int&gt;, owner.login &lt;chr&gt;, owner.organizations_url &lt;chr&gt;,</span>
@@ -224,7 +224,7 @@
   <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="va">name</span>, <span class="va">books</span>, <span class="va">tvSeries</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span><span class="op">(</span><span class="va">books</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span><span class="op">(</span><span class="va">tvSeries</span><span class="op">)</span>
-<span class="co">#&gt; # A tibble: 236 x 3</span>
+<span class="co">#&gt; # A tibble: 236 × 3</span>
 <span class="co">#&gt;    name          books             tvSeries</span>
 <span class="co">#&gt;    &lt;chr&gt;         &lt;chr&gt;             &lt;chr&gt;   </span>
 <span class="co">#&gt;  1 Theon Greyjoy A Game of Thrones Season 1</span>
@@ -238,12 +238,11 @@
 <span class="co">#&gt;  9 Theon Greyjoy A Storm of Swords Season 3</span>
 <span class="co">#&gt; 10 Theon Greyjoy A Storm of Swords Season 4</span>
 <span class="co">#&gt; # … with 226 more rows</span>
-
 <span class="fu"><a href="../reference/unnest.html">unnest</a></span><span class="op">(</span><span class="va">got_chars</span>,
        <span class="fu"><a href="../reference/spec.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span>,
          <span class="fu"><a href="../reference/spec.html">s</a></span><span class="op">(</span><span class="st">"name"</span><span class="op">)</span>,
          <span class="fu"><a href="../reference/spec.html">s</a></span><span class="op">(</span><span class="st">"books,tvSeries/"</span>, stack <span class="op">=</span> <span class="cn">T</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; # A tibble: 236 x 3</span>
+<span class="co">#&gt; # A tibble: 236 × 3</span>
 <span class="co">#&gt;    books             name          tvSeries</span>
 <span class="co">#&gt;    &lt;chr&gt;             &lt;chr&gt;         &lt;chr&gt;   </span>
 <span class="co">#&gt;  1 A Game of Thrones Theon Greyjoy Season 1</span>
@@ -265,7 +264,7 @@
   <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">hoist</a></span><span class="op">(</span><span class="va">char</span>, name <span class="op">=</span> <span class="st">"name"</span>, title <span class="op">=</span> <span class="st">"titles"</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">char</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span><span class="op">(</span><span class="va">title</span><span class="op">)</span>
-<span class="co">#&gt; # A tibble: 60 x 2</span>
+<span class="co">#&gt; # A tibble: 60 × 2</span>
 <span class="co">#&gt;    name              title                                                 </span>
 <span class="co">#&gt;    &lt;chr&gt;             &lt;chr&gt;                                                 </span>
 <span class="co">#&gt;  1 Theon Greyjoy     "Prince of Winterfell"                                </span>
@@ -279,12 +278,11 @@
 <span class="co">#&gt;  9 Areo Hotah        "Captain of the Guard at Sunspear"                    </span>
 <span class="co">#&gt; 10 Chett             ""                                                    </span>
 <span class="co">#&gt; # … with 50 more rows</span>
-
 <span class="fu"><a href="../reference/unnest.html">unnest</a></span><span class="op">(</span><span class="va">got_chars</span>,
        <span class="fu"><a href="../reference/spec.html">s</a></span><span class="op">(</span>stack <span class="op">=</span> <span class="cn">T</span>,
          <span class="fu"><a href="../reference/spec.html">s</a></span><span class="op">(</span><span class="st">"name"</span><span class="op">)</span>,
          <span class="fu"><a href="../reference/spec.html">s</a></span><span class="op">(</span><span class="st">"titles/"</span>, stack <span class="op">=</span> <span class="cn">T</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; # A tibble: 60 x 2</span>
+<span class="co">#&gt; # A tibble: 60 × 2</span>
 <span class="co">#&gt;    name              titles                                                </span>
 <span class="co">#&gt;    &lt;chr&gt;             &lt;chr&gt;                                                 </span>
 <span class="co">#&gt;  1 Theon Greyjoy     "Prince of Winterfell"                                </span>
@@ -397,21 +395,20 @@
   <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span>disc_id <span class="op">=</span> <span class="va">id</span>, <span class="va">artist</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span><span class="op">(</span><span class="va">artist</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span><span class="op">(</span><span class="va">artist</span><span class="op">)</span>
-<span class="co">#&gt; # A tibble: 167 x 8</span>
-<span class="co">#&gt;     disc_id join  name          anv   tracks role  resource_url               id</span>
-<span class="co">#&gt;       &lt;int&gt; &lt;chr&gt; &lt;chr&gt;         &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;                   &lt;int&gt;</span>
-<span class="co">#&gt;  1  7496378 ""    Mollot        ""    ""     ""    https://api.discogs.c… 4.62e6</span>
-<span class="co">#&gt;  2  4490852 ""    Una Bèstia I… ""    ""     ""    https://api.discogs.c… 3.19e6</span>
-<span class="co">#&gt;  3  9827276 ""    S.H.I.T. (3)  ""    ""     ""    https://api.discogs.c… 2.77e6</span>
-<span class="co">#&gt;  4  9769203 ""    Rata Negra    ""    ""     ""    https://api.discogs.c… 4.28e6</span>
-<span class="co">#&gt;  5  7237138 ""    Ivy (18)      ""    ""     ""    https://api.discogs.c… 3.60e6</span>
-<span class="co">#&gt;  6 13117042 ""    Tashme        ""    ""     ""    https://api.discogs.c… 5.21e6</span>
-<span class="co">#&gt;  7  7113575 ""    Desgraciados  ""    ""     ""    https://api.discogs.c… 4.45e6</span>
-<span class="co">#&gt;  8 10540713 ""    Phantom Head  ""    ""     ""    https://api.discogs.c… 4.27e6</span>
-<span class="co">#&gt;  9 11260950 ""    Sub Space (2) ""    ""     ""    https://api.discogs.c… 5.69e6</span>
-<span class="co">#&gt; 10 11726853 ""    Small Man (2) ""    ""     ""    https://api.discogs.c… 6.37e6</span>
+<span class="co">#&gt; # A tibble: 167 × 8</span>
+<span class="co">#&gt;     disc_id join  name                     anv   tracks role  resource_url     id</span>
+<span class="co">#&gt;       &lt;int&gt; &lt;chr&gt; &lt;chr&gt;                    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;         &lt;int&gt;</span>
+<span class="co">#&gt;  1  7496378 ""    Mollot                   ""    ""     ""    https://api… 4.62e6</span>
+<span class="co">#&gt;  2  4490852 ""    Una Bèstia Incontrolable ""    ""     ""    https://api… 3.19e6</span>
+<span class="co">#&gt;  3  9827276 ""    S.H.I.T. (3)             ""    ""     ""    https://api… 2.77e6</span>
+<span class="co">#&gt;  4  9769203 ""    Rata Negra               ""    ""     ""    https://api… 4.28e6</span>
+<span class="co">#&gt;  5  7237138 ""    Ivy (18)                 ""    ""     ""    https://api… 3.60e6</span>
+<span class="co">#&gt;  6 13117042 ""    Tashme                   ""    ""     ""    https://api… 5.21e6</span>
+<span class="co">#&gt;  7  7113575 ""    Desgraciados             ""    ""     ""    https://api… 4.45e6</span>
+<span class="co">#&gt;  8 10540713 ""    Phantom Head             ""    ""     ""    https://api… 4.27e6</span>
+<span class="co">#&gt;  9 11260950 ""    Sub Space (2)            ""    ""     ""    https://api… 5.69e6</span>
+<span class="co">#&gt; 10 11726853 ""    Small Man (2)            ""    ""     ""    https://api… 6.37e6</span>
 <span class="co">#&gt; # … with 157 more rows</span>
-
 <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>disc <span class="op">=</span> <span class="va">discog</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span><span class="op">(</span><span class="va">disc</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">hoist</a></span><span class="op">(</span><span class="va">basic_information</span>, format <span class="op">=</span> <span class="st">"formats"</span><span class="op">)</span> <span class="op">%&gt;%</span>
@@ -419,7 +416,7 @@
   <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span><span class="op">(</span><span class="va">format</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_wider</a></span><span class="op">(</span><span class="va">format</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://tidyr.tidyverse.org/reference/hoist.html">unnest_longer</a></span><span class="op">(</span><span class="va">descriptions</span><span class="op">)</span>
-<span class="co">#&gt; # A tibble: 281 x 5</span>
+<span class="co">#&gt; # A tibble: 281 × 5</span>
 <span class="co">#&gt;     disc_id descriptions text  name     qty  </span>
 <span class="co">#&gt;       &lt;int&gt; &lt;chr&gt;        &lt;chr&gt; &lt;chr&gt;    &lt;chr&gt;</span>
 <span class="co">#&gt;  1  7496378 "Numbered"   Black Cassette 1    </span>
