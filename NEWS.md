@@ -1,5 +1,5 @@
-Version 0.0.2.9000 [Dev]
-========================
+Version 0.0.3
+=============
 
 - New `default` argument in `s()` specification.
 - Data frame columns are now stacked by default (`stack_atomic = NULL` parameter)

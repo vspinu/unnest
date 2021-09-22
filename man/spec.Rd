@@ -72,7 +72,7 @@ indexes and character elements to extract.}
 \code{stack} is a string an index column is created with that name.}
 
 \item{process}{Extra processing step for this element. Either NULL for no
-processing (the default), "asis" to return the entire element in a list
+processing (the default), "as_is" to return the entire element in a list
 column, "paste" to paste elements together into a character column.}
 
 \item{default}{Default value to insert if the \code{include} specification hasn't

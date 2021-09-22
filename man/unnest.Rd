@@ -27,11 +27,11 @@ node is skipped. This is particularly useful with \code{group}ed specs.}
 NULL, the default, data.frame vectors are stacked, all others are spread.}
 
 \item{process_atomic}{Process spec for atomic leaf vectors. Either NULL for
-no processing (the default), "asis" to return the entire element in a list
+no processing (the default), "as_is" to return the entire element in a list
 column, "paste" to paste elements together into a character column.}
 
 \item{process_unnamed_lists}{How to process unnamed lists. Can be one of
-"asis" - return a list column, "exclude" - drop these elements unless they
+"as_is" - return a list column, "exclude" - drop these elements unless they
 are explicitly included in the spec, "paste" - return a character column,
 "stack" - automatically stack. If NULL (the default), do nothing - process
 them normally according to the specs.}
@@ -95,12 +95,12 @@ unnest(xxx, stack_atomic = TRUE, dedupe = TRUE,
          groups = list(first = s("a/b/x,y"),
                        second = s("a/b"))))
 
-## processing asis
+## processing as_is
 str(unnest(xxx, s(stack = "id",
-                  s("a/b/y", process = "asis"),
-                  s("a/c", process = "asis"))))
-str(unnest(xxx, s(stack = "id", s("a/b/", process = "asis"))))
-str(unnest(xxx, s(stack = "id", s("a/b", process = "asis"))))
+                  s("a/b/y", process = "as_is"),
+                  s("a/c", process = "as_is"))))
+str(unnest(xxx, s(stack = "id", s("a/b/", process = "as_is"))))
+str(unnest(xxx, s(stack = "id", s("a/b", process = "as_is"))))
 
 ## processing paste
 str(unnest(x, s("a/b/y", process = "paste")))

@@ -4,10 +4,10 @@
 
 ## Description
 
-[unnest][] is a 0-dependency R package for very fast, single-copy and single-pass,
+[unnest][] is a zero-dependency R package for a very fast single-copy and single-pass
 unnesting of hierarchical data structures.
 
-`unnest(..)` function takes a hierarchical list as an input (json, xml etc.) and
+`unnest(..)` function takes a nested list as an input (`JSON`, `XML` etc.) and
 produces a `data.frame` according to an unnesting spec.
 
 ## Installation
