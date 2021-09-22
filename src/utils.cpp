@@ -120,7 +120,7 @@ SEXP extract_scalar(SEXP x, R_xlen_t ix) {
 
 SEXP rep_vector(SEXP x, R_xlen_t N) {
 
-  R_xlen_t i, j, n = XLENGTH(x);
+  R_xlen_t n = XLENGTH(x);
   if (n == 0)
     Rf_error("[Bug] Cannot replicate empty vector");
 

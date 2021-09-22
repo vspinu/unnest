@@ -111,7 +111,6 @@ class PasteNode: public Node {
     }
     SEXP str = (TYPEOF(obj) == STRSXP)? obj : Rf_coerceVector(obj, STRSXP);
     PROTECT(str);
-    bool isUTF8 = false;
     R_xlen_t N = XLENGTH(str);
     cetype_t cet = Rf_getCharCE(STRING_ELT(str, 0));
     std::ostringstream stream;
@@ -131,7 +130,6 @@ class PasteNode: public Node {
 class IxNode: public Node {
 
   R_xlen_t _size = 0;
-  SEXPTYPE _type = NILSXP;
   vector<tuple<R_xlen_t, R_xlen_t, int>> _int_ixs;
   vector<tuple<R_xlen_t, R_xlen_t, SEXP>> _chr_ixs;
 
@@ -159,7 +157,6 @@ class IxNode: public Node {
   }
 
   void copy_into_INTSXP(SEXP target, R_xlen_t beg, R_xlen_t end) const {
-    size_t N = _int_ixs.size();
     int* IX = INTEGER(target);
     P("ix copy of %ld: beg:%ld, end:%ld N-ixes:%ld\n", ix, beg, end, N);
 	for (R_xlen_t beg1 = beg; beg1 < end; beg1 += _size) {
@@ -201,7 +198,6 @@ class IxNode: public Node {
   }
 
   void copy_into(SEXP target, R_xlen_t beg, R_xlen_t end) const override {
-    size_t N = _int_ixs.size();
     if (TYPEOF(target) == INTSXP)
       copy_into_INTSXP(target, beg, end);
     else if (TYPEOF(target) == STRSXP)

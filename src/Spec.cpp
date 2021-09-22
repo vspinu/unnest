@@ -217,7 +217,7 @@ Spec sexp2spec(SEXP lspec) {
 
   if (groups != R_NilValue) {
     R_xlen_t NG = XLENGTH(groups);
-    SEXP gnames = Rf_getAttrib(groups, R_NamesSymbol);
+    SEXP gnames = PROTECT(Rf_getAttrib(groups, R_NamesSymbol));
     if (gnames == R_NilValue)
       Rf_error("groups must be a named list");
     spec.groups.reserve(NG);
@@ -226,6 +226,7 @@ Spec sexp2spec(SEXP lspec) {
         spec_group(STRING_ELT(gnames, g), VECTOR_ELT(groups, g));
       spec.groups.push_back(gr);
     }
+    UNPROTECT(1);
   }
 
   spec.set_terminal();

@@ -194,7 +194,7 @@ struct Unnester {
           return;
         }
       }
-      stack_atomic = stack_atomic || this->stack_atomic_df && is_data_frame(x);
+      stack_atomic = stack_atomic || (this->stack_atomic_df && is_data_frame(x));
       P("--> add_node_impl:%s(%ld) %s\n", full_name(ix).c_str(), ix, spec.to_string().c_str());
       const vector<SpecMatch>& matches = spec.match(x);
       P("    nr. matches: %ld, stack_atomic: %d\n", matches.size(), stack_atomic);
@@ -269,7 +269,7 @@ struct Unnester {
       if (spec.stack == Spec::Stack::STACK) {
         const vector<SpecMatch>& matches = spec.match(x);
         stack_nodes(accs, vacc, pspec, spec, 0, matches,
-                    stack_atomic || this->stack_atomic_df && is_data_frame(x));
+                    stack_atomic || (this->stack_atomic_df && is_data_frame(x)));
       } else {
         Rf_error("Grouped spreading is not yet implemented");
       }
@@ -325,7 +325,8 @@ struct Unnester {
     if (Ngr == 0) {
       NodeAccumulator acc;
       add_node(*this, acc, vacc, NilSpec, spec, 0, x);
-      return build_df(acc, vacc);
+      SEXP out = build_df(acc, vacc);
+      return out;
     } else {
       SEXP names = PROTECT(Rf_allocVector(STRSXP, Ngr));
       SEXP out = PROTECT(Rf_allocVector(VECSXP, Ngr));

@@ -23,8 +23,6 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
                            uint_fast32_t ix, const vector<SpecMatch>& matches,
                            const bool stack_atomic = false) {
   P(">>> stack_nodes ---\n");
-  size_t N = matches.size();
-
   R_xlen_t beg = 0, end=0;
   unordered_map<uint_fast32_t, unique_ptr<RangeNode>> out_nodes;
 
@@ -35,7 +33,6 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
 
   uint_fast32_t cix = child_ix(ix, spec.name);
 
-  int i = 1;
   for (const SpecMatch& m: matches) {
     NodeAccumulator iacc;
     VarAccumulator ivacc(vacc.dedupe);
@@ -101,7 +98,7 @@ void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
 
   P(">>> gstack_nodes ---\n");
 
-  size_t Ngr = spec.groups.size(), N = matches.size();;
+  size_t Ngr = spec.groups.size();
   if (accs.size() != Ngr)
     Rf_error("Internal: Invalid grouped stack. Accumulator size (%ld) and spec size (%l) mismatch.",
              accs.size(), Ngr);
@@ -191,7 +188,6 @@ extern "C" SEXP C_unnest(SEXP x, SEXP lspec, SEXP dedupe,
                          SEXP stack_atomic, SEXP process_atomic,
                          SEXP process_unnamed_list,
                          SEXP cross_join) {
-  SEXPTYPE type = TYPEOF(x);
   if (TYPEOF(x) != VECSXP) {
 	Rf_error("x must be a list vector");
   }
