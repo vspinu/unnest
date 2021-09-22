@@ -1,6 +1,10 @@
 options(unnest.return.type = NULL)
 l <- base::list
 
+df <- function(...) {
+  data.frame(..., stringsAsFactors = FALSE)
+}
+
 unnestl <- function(x, ...) {
   out <- unnest(x, ...)
   if (is.data.frame(out)) as.list(out)

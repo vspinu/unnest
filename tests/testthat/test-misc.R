@@ -1,7 +1,7 @@
 context("Misc")
 
 test_that("Automatic treatment of data.frames works",  {
-  dd <- list(a = data.frame(b = 1:2, c = 11:12, d = c("21", "22")))
+  dd <- list(a = df(b = 1:2, c = 11:12, d = c("21", "22")))
   expect_equal(unnestl(dd, s("a")),
                list(a.b = 1:2, a.c = 11:12, a.d = c("21", "22")))
   expect_equal(unnestl(dd, s("a"), stack_atomic = F),
@@ -31,7 +31,7 @@ test_that("Automatic treatment of data.frames works",  {
 
 # test_that("List columns in data.frames work",  {
 #   ## not entire sure about this behavior but it seems safer to not stack list nodes
-#   dd <- list(a = data.frame(b = 1:2))
+#   dd <- list(a = df(b = 1:2))
 #   dd$a$c <- list(c("a1", "a2"), "b")
 #   unnest(dd, s("a/"))
 #   unnest(dd, s("a//", stack = T))
