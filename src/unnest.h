@@ -200,9 +200,9 @@ struct Unnester {
       P("    nr. matches: %ld, stack_atomic: %d\n", matches.size(), stack_atomic);
       if (spec.stack == Spec::Stack::STACK ||
           (is_unnamed && this->process_unnamed_list == ProcessUnnamed::STACK)) {
-        stack_nodes(acc, vacc, pspec, spec, ix, matches, stack_atomic);
+        stack_nodes(acc, vacc, spec, ix, matches, stack_atomic);
       } else {
-        spread_nodes(acc, vacc, pspec, spec, ix, matches, stack_atomic);
+        spread_nodes(acc, vacc, spec, ix, matches, stack_atomic);
       }
       P("<-- added node impl:%s(%ld) acc[%ld,%ld]\n",
         full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
@@ -263,12 +263,12 @@ struct Unnester {
   }
 
   void add_node_impl(std::vector<NodeAccumulator>& accs, VarAccumulator& vacc,
-                     const Spec& pspec, const Spec& spec,
-                     uint_fast32_t ix, SEXP x, bool stack_atomic = false) {
+                     const Spec& /*unused*/, const Spec& spec,
+                     uint_fast32_t /*unused*/, SEXP x, bool stack_atomic = false) {
     if (TYPEOF(x) == VECSXP) {
       if (spec.stack == Spec::Stack::STACK) {
         const std::vector<SpecMatch>& matches = spec.match(x);
-        stack_nodes(accs, vacc, pspec, spec, 0, matches,
+        stack_nodes(accs, vacc, spec, 0, matches,
                     stack_atomic || (this->stack_atomic_df && is_data_frame(x)));
       } else {
         Rf_error("Grouped spreading is not yet implemented");
@@ -280,7 +280,7 @@ struct Unnester {
   }
 
   inline void dispatch_match_to_child(NodeAccumulator& acc, VarAccumulator& vacc,
-                                      const Spec& pspec, const Spec& spec,
+                                      const Spec& spec,
                                       uint_fast32_t cix, const SpecMatch& m,
                                       bool stack_atomic = false) {
     P("---> dispatching cix:%ld %s %s\n", cix, m.to_string().c_str(), spec.to_string().c_str());
@@ -294,22 +294,20 @@ struct Unnester {
   }
 
   inline void spread_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
-                           const Spec& pspec, const Spec& spec,
-                           uint_fast32_t ix, const std::vector<SpecMatch>& matches,
+                           const Spec& spec, uint_fast32_t ix,
+                           const std::vector<SpecMatch>& matches,
                            bool stack_atomic) {
     for (const SpecMatch& m: matches) {
       uint_fast32_t cix = child_ix(ix, m);
-      dispatch_match_to_child(acc, vacc, pspec, spec, cix, m, stack_atomic);
+      dispatch_match_to_child(acc, vacc, spec, cix, m, stack_atomic);
     }
   }
 
-  void stack_nodes(NodeAccumulator&, VarAccumulator& vacc,
-                   const Spec& pspec, const Spec& spec,
+  void stack_nodes(NodeAccumulator&, VarAccumulator& vacc, const Spec& spec,
                    uint_fast32_t ix, const std::vector<SpecMatch>& matches,
                    const bool rep_to_max);
 
-  void stack_nodes(std::vector<NodeAccumulator>&, VarAccumulator& vacc,
-                   const Spec& pspec, const Spec& spec,
+  void stack_nodes(std::vector<NodeAccumulator>&, VarAccumulator& vacc, const Spec& spec,
                    uint_fast32_t ix, const std::vector<SpecMatch>& matches,
                    const bool rep_to_max);
 
@@ -325,7 +323,7 @@ struct Unnester {
     if (Ngr == 0) {
       NodeAccumulator acc;
       add_node(*this, acc, vacc, NilSpec, spec, 0, x);
-      SEXP out = build_df(acc, vacc);
+      SEXP out = build_df(acc);
       return out;
     } else {
       SEXP names = PROTECT(Rf_allocVector(STRSXP, Ngr));
@@ -336,7 +334,7 @@ struct Unnester {
 
       for (size_t gi = 0; gi < Ngr; gi++) {
         SET_STRING_ELT(names, gi, std::get<0>(spec.groups[gi]));
-        SET_VECTOR_ELT(out, gi, build_df(accs[gi], vacc));
+        SET_VECTOR_ELT(out, gi, build_df(accs[gi]));
       }
 
       Rf_setAttrib(out, R_NamesSymbol, names);
@@ -345,7 +343,7 @@ struct Unnester {
     }
   }
 
-  SEXP build_df(NodeAccumulator& acc, VarAccumulator& vacc) {
+  SEXP build_df(NodeAccumulator& acc) {
 
     size_t ncols = acc.pnodes.size();
     size_t nrows = (ncols > 0 ? acc.nrows : 0);

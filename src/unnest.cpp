@@ -19,8 +19,7 @@ Unnester::ProcessUnnamed sexp2unnamed(SEXP x) {
 
 // simple stacker
 void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
-                           const Spec& pspec, const Spec& spec,
-                           uint_fast32_t ix, const std::vector<SpecMatch>& matches,
+                           const Spec& spec, uint_fast32_t ix, const std::vector<SpecMatch>& matches,
                            const bool stack_atomic = false) {
   P(">>> stack_nodes ---\n");
   R_xlen_t beg = 0, end=0;
@@ -37,7 +36,7 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
     NodeAccumulator iacc;
     VarAccumulator ivacc(vacc.dedupe);
 
-    dispatch_match_to_child(iacc, ivacc, pspec, spec, cix, m, stack_atomic);
+    dispatch_match_to_child(iacc, ivacc, spec, cix, m, stack_atomic);
     end += iacc.nrows;
 
     // add index
@@ -90,8 +89,7 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
 
 // grouped stacker
 void Unnester::stack_nodes(std::vector<NodeAccumulator>& accs, VarAccumulator& vacc,
-                           const Spec& pspec, const Spec& spec,
-                           uint_fast32_t ix, const std::vector<SpecMatch>& matches,
+                           const Spec& spec, uint_fast32_t ix, const std::vector<SpecMatch>& matches,
                            const bool stack_atomic = false) {
 
   if (accs.size() == 0) return;

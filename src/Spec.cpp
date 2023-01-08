@@ -35,12 +35,12 @@ Spec::Process sexp2process(SEXP x) {
   Rf_error("Invalid `process` or `process_atomic` argument. Must be one of 'as_is', 'paste' or NULL");
 }
 
-vector<SpecMatch> Spec::match(SEXP obj) const {
+std::vector<SpecMatch> Spec::match(SEXP obj) const {
   int N = LENGTH(obj);
   SEXP obj_names = Rf_getAttrib(obj, R_NamesSymbol);
   bool has_names = obj_names != R_NilValue;
 
-  vector<SpecMatch> out;
+  std::vector<SpecMatch> out;
 
   // NULL node matches all
   if (include_names.size() == 0 && exclude_names.size() == 0 &&
@@ -82,7 +82,7 @@ vector<SpecMatch> Spec::match(SEXP obj) const {
     if (exclude_names.size() > 0)
       out.reserve(N);
 
-    vector<bool> processed(include_names.size(), false);
+    std::vector<bool> processed(include_names.size(), false);
 
     for (int i = 0; i < N; i++) {
       SEXP nm = R_NilValue;
@@ -112,7 +112,7 @@ vector<SpecMatch> Spec::match(SEXP obj) const {
   return out;
 }
 
-void fill_spec_ixes(const char* name, SEXP obj, vector<int>& int_ixes, vector<SEXP>& str_ixes) {
+void fill_spec_ixes(const char* name, SEXP obj, std::vector<int>& int_ixes, std::vector<SEXP>& str_ixes) {
   R_xlen_t n = XLENGTH(obj);
   switch (TYPEOF(obj)) {
    case STRSXP:
@@ -222,7 +222,7 @@ Spec sexp2spec(SEXP lspec) {
       Rf_error("groups must be a named list");
     spec.groups.reserve(NG);
     for (R_xlen_t g = 0; g < NG; g++) {
-      tuple<SEXP, vector<Spec>> gr =
+      std::tuple<SEXP, std::vector<Spec>> gr =
         spec_group(STRING_ELT(gnames, g), VECTOR_ELT(groups, g));
       spec.groups.push_back(gr);
     }
@@ -245,8 +245,8 @@ bool isSpec(SEXP s) {
    return false;
  }
 
-tuple<SEXP, vector<Spec>> spec_group(SEXP name, SEXP obj) {
-  vector<Spec> specs;
+std::tuple<SEXP, std::vector<Spec>> spec_group(SEXP name, SEXP obj) {
+  std::vector<Spec> specs;
   if (TYPEOF(obj) != VECSXP)
     Rf_error("Spec group must be an `unnest.spec` or a list of `unnest.spec`s");
   if (isSpec(obj)) {
@@ -260,5 +260,5 @@ tuple<SEXP, vector<Spec>> spec_group(SEXP name, SEXP obj) {
       specs.push_back(sexp2spec(s));
     }
   }
-  return tuple<SEXP, vector<Spec>>(name, specs);
+  return std::tuple<SEXP, std::vector<Spec>>(name, specs);
 }
