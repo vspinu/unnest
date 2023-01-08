@@ -1,3 +1,8 @@
+Version 0.0.4
+=============
+
+- Fix CRAN clang compile warnings
+
 Version 0.0.3
 =============
 
