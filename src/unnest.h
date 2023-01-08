@@ -16,23 +16,23 @@
 
 struct hash_pair {
   template <class T1, class T2>
-  size_t operator()(const pair<T1, T2>& p) const
+  size_t operator()(const std::pair<T1, T2>& p) const
   {
-	auto hash1 = hash<T1>{}(p.first);
-	auto hash2 = hash<T2>{}(p.second);
+	auto hash1 = std::hash<T1>{}(p.first);
+	auto hash2 = std::hash<T2>{}(p.second);
 	return hash1 ^ hash2;
   }
 };
 
-typedef unordered_map<pair<uint_fast32_t, const char*>, uint_fast32_t, hash_pair> cpair2ix_map;
-typedef unordered_map<uint_fast32_t, pair<uint_fast32_t, const char*>> ix2cpair_map;
+typedef std::unordered_map<std::pair<uint_fast32_t, const char*>, uint_fast32_t, hash_pair> cpair2ix_map;
+typedef std::unordered_map<uint_fast32_t, std::pair<uint_fast32_t, const char*>> ix2cpair_map;
 
-typedef unordered_map<pair<uint_fast32_t, int>, uint_fast32_t, hash_pair> ipair2ix_map;
-typedef unordered_map<uint_fast32_t, pair<uint_fast32_t, int>> ix2ipair_map;
+typedef std::unordered_map<std::pair<uint_fast32_t, int>, uint_fast32_t, hash_pair> ipair2ix_map;
+typedef std::unordered_map<uint_fast32_t, std::pair<uint_fast32_t, int>> ix2ipair_map;
 
 struct NodeAccumulator {
   R_xlen_t nrows = 1;
-  deque<unique_ptr<Node>> pnodes;
+  std::deque<std::unique_ptr<Node>> pnodes;
 };
 
 
@@ -77,19 +77,19 @@ struct Unnester {
   ipair2ix_map ip2i;
   ix2ipair_map i2ip;
 
-  vector<string> num_cache;
-  string delimiter = ".";
+  std::vector<std::string> num_cache;
+  std::string delimiter = ".";
   uint_fast32_t next_ix = 1;
 
   uint_fast32_t child_ix(uint_fast32_t parent_ix, const char* cname) {
     //  pname: aka pair name, <parent ix, char* this name>
-    auto pname = make_pair(parent_ix, cname);
+    auto pname = std::make_pair(parent_ix, cname);
     uint_fast32_t ix;
     cpair2ix_map::iterator pnameit = cp2i.find(pname);
     if (pnameit == cp2i.end()) {
       ix = next_ix++;
-      cp2i.insert(make_pair(pname, ix));
-      i2cp.insert(make_pair(ix, pname));
+      cp2i.insert(std::make_pair(pname, ix));
+      i2cp.insert(std::make_pair(ix, pname));
     } else {
       ix = pnameit->second;
     }
@@ -97,13 +97,13 @@ struct Unnester {
   }
 
   uint_fast32_t child_ix(uint_fast32_t parent_ix, int cix) {
-    auto pix = make_pair(parent_ix, cix);
+    auto pix = std::make_pair(parent_ix, cix);
     uint_fast32_t ix;
     ipair2ix_map::iterator pixit = ip2i.find(pix);
     if (pixit == ip2i.end()) {
       ix = next_ix++;
-      ip2i.insert(make_pair(pix, ix));
-      i2ip.insert(make_pair(ix, pix));
+      ip2i.insert(std::make_pair(pix, ix));
+      i2ip.insert(std::make_pair(ix, pix));
     } else {
       ix = pixit->second;
     }
@@ -125,7 +125,7 @@ struct Unnester {
       child_ix(parent_ix, CHAR(cname));
   }
 
-  string full_name(uint_fast32_t ix) {
+  std::string full_name(uint_fast32_t ix) {
 
 	if (ix == 0)
 	  return "";
@@ -133,7 +133,7 @@ struct Unnester {
 	ix2cpair_map::iterator pcit;
     ix2ipair_map::iterator piit;
 
-    forward_list<string> acc;
+    std::forward_list<std::string> acc;
 
 	do {
       pcit = i2cp.find(ix);
@@ -142,7 +142,7 @@ struct Unnester {
         if (piit == i2ip.end())
           Rf_error("[Bug] Iname not in index hashmaps, please report");
         ix = piit->second.first;
-        acc.push_front(to_string(piit->second.second + 1));
+        acc.push_front(std::to_string(piit->second.second + 1));
       } else {
         ix = pcit->second.first;
         if (*(pcit->second.second) != '\0') {
@@ -154,7 +154,7 @@ struct Unnester {
     if (acc.empty())
       return "";
 
-	string out = acc.front();
+	std::string out = acc.front();
 	acc.pop_front();
 
 	while (!acc.empty()) {
@@ -170,10 +170,10 @@ struct Unnester {
                      uint_fast32_t ix, SEXP x, bool stack_atomic) {
     // LENGTH(X) > 0 and X != NULL in here
     if (pspec.process == Spec::Process::ASIS) {
-      acc.pnodes.push_front(make_unique<AsIsNode>(ix, x));
+      acc.pnodes.push_front(std::make_unique<AsIsNode>(ix, x));
       P("<--- added ASIS node impl:%s(%ld) acc[%ld,%ld]\n", full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
     } else if (pspec.process == Spec::Process::PASTE) {
-      acc.pnodes.push_front(make_unique<PasteNode>(ix, x));
+      acc.pnodes.push_front(std::make_unique<PasteNode>(ix, x));
       P("<--- added PASTE node impl:%s(%ld) acc[%ld,%ld]\n", full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
     } else if (TYPEOF(x) == VECSXP) {
       // Lists
@@ -185,18 +185,18 @@ struct Unnester {
           P("<--- excluded UNNAMED node impl:%s(%ld) acc[%ld,%ld]\n", full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
           return;
         } else if (this->process_unnamed_list == ProcessUnnamed::ASIS) {
-          acc.pnodes.push_front(make_unique<AsIsNode>(ix, x));
+          acc.pnodes.push_front(std::make_unique<AsIsNode>(ix, x));
           P("<--- added UNNAMED-ASIS node impl:%s(%ld) acc[%ld,%ld]\n", full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
           return;
         } else if (this->process_unnamed_list == ProcessUnnamed::PASTE) {
-          acc.pnodes.push_front(make_unique<PasteNode>(ix, x));
+          acc.pnodes.push_front(std::make_unique<PasteNode>(ix, x));
           P("<--- added UNNAMED-PASTE node impl:%s(%ld) acc[%ld,%ld]\n", full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
           return;
         }
       }
       stack_atomic = stack_atomic || (this->stack_atomic_df && is_data_frame(x));
       P("--> add_node_impl:%s(%ld) %s\n", full_name(ix).c_str(), ix, spec.to_string().c_str());
-      const vector<SpecMatch>& matches = spec.match(x);
+      const std::vector<SpecMatch>& matches = spec.match(x);
       P("    nr. matches: %ld, stack_atomic: %d\n", matches.size(), stack_atomic);
       if (spec.stack == Spec::Stack::STACK ||
           (is_unnamed && this->process_unnamed_list == ProcessUnnamed::STACK)) {
@@ -216,11 +216,11 @@ struct Unnester {
             (spec.process != Spec::Process::PASTE_STRING ||
              TYPEOF(x) == STRSXP)) {
           if (spec.process == Spec::Process::ASIS) {
-            acc.pnodes.push_front(make_unique<AsIsNode>(ix, x));
+            acc.pnodes.push_front(std::make_unique<AsIsNode>(ix, x));
             P("<--- added ASIS atomic node impl:%s(%ld) acc[%ld,%ld]\n", full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
           } else if (spec.process == Spec::Process::PASTE ||
                      spec.process == Spec::Process::PASTE_STRING) {
-            acc.pnodes.push_front(make_unique<PasteNode>(ix, x));
+            acc.pnodes.push_front(std::make_unique<PasteNode>(ix, x));
             P("<--- added PASTE atomic node impl:%s(%ld) acc[%ld,%ld]\n", full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
           }
         } else if (this->process_atomic != Spec::Process::NONE &&
@@ -228,19 +228,19 @@ struct Unnester {
                     TYPEOF(x) == STRSXP)) {
           P("this->process_atomic: %s\n", spec.process_names.at(this->process_atomic).c_str());
           if (this->process_atomic == Spec::Process::ASIS) {
-            acc.pnodes.push_front(make_unique<AsIsNode>(ix, x));
+            acc.pnodes.push_front(std::make_unique<AsIsNode>(ix, x));
             P("<--- added ASIS atomic node impl:%s(%ld) acc[%ld,%ld]\n", full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
           } else if (this->process_atomic == Spec::Process::PASTE ||
                      this->process_atomic == Spec::Process::PASTE_STRING) {
-            acc.pnodes.push_front(make_unique<PasteNode>(ix, x));
+            acc.pnodes.push_front(std::make_unique<PasteNode>(ix, x));
             P("<--- added PASTE atomic node impl:%s(%ld) acc[%ld,%ld]\n", full_name(ix).c_str(), ix, acc.nrows, acc.pnodes.size());
           }
         } else if (spec.stack == Spec::Stack::STACK ||
                    (spec.stack == Spec::Stack::AUTO &&
                     (stack_atomic || this->stack_atomic))) {
-          acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
+          acc.pnodes.push_front(std::make_unique<SexpNode>(ix, x));
           if (stack_atomic || this->rep_to_max)
-            acc.nrows = max(acc.nrows, N);
+            acc.nrows = std::max(acc.nrows, N);
           else
             acc.nrows *= N;
           P("<--- added stacked atomic node impl:%s(%ld) acc[%ld,%ld]\n",
@@ -248,11 +248,11 @@ struct Unnester {
         } else {
           // current implementation doesn't allow spec at a sub-vector level
           if (N == 1) {
-            acc.pnodes.push_front(make_unique<SexpNode>(ix, x));
+            acc.pnodes.push_front(std::make_unique<SexpNode>(ix, x));
           } else {
-            acc.pnodes.push_front(make_unique<ElNode>(ix, 0, x));
+            acc.pnodes.push_front(std::make_unique<ElNode>(ix, 0, x));
             for (R_xlen_t i = 1; i < N; i++) {
-              acc.pnodes.push_front(make_unique<ElNode>(child_ix(ix, i), i, x));
+              acc.pnodes.push_front(std::make_unique<ElNode>(child_ix(ix, i), i, x));
             }
           }
           P("<--- added spreaded atomic node impl:%s(%ld) acc[%ld,%ld]\n",
@@ -262,12 +262,12 @@ struct Unnester {
     }
   }
 
-  void add_node_impl(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
+  void add_node_impl(std::vector<NodeAccumulator>& accs, VarAccumulator& vacc,
                      const Spec& pspec, const Spec& spec,
                      uint_fast32_t ix, SEXP x, bool stack_atomic = false) {
     if (TYPEOF(x) == VECSXP) {
       if (spec.stack == Spec::Stack::STACK) {
-        const vector<SpecMatch>& matches = spec.match(x);
+        const std::vector<SpecMatch>& matches = spec.match(x);
         stack_nodes(accs, vacc, pspec, spec, 0, matches,
                     stack_atomic || (this->stack_atomic_df && is_data_frame(x)));
       } else {
@@ -295,7 +295,7 @@ struct Unnester {
 
   inline void spread_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
                            const Spec& pspec, const Spec& spec,
-                           uint_fast32_t ix, const vector<SpecMatch>& matches,
+                           uint_fast32_t ix, const std::vector<SpecMatch>& matches,
                            bool stack_atomic) {
     for (const SpecMatch& m: matches) {
       uint_fast32_t cix = child_ix(ix, m);
@@ -305,12 +305,12 @@ struct Unnester {
 
   void stack_nodes(NodeAccumulator&, VarAccumulator& vacc,
                    const Spec& pspec, const Spec& spec,
-                   uint_fast32_t ix, const vector<SpecMatch>& matches,
+                   uint_fast32_t ix, const std::vector<SpecMatch>& matches,
                    const bool rep_to_max);
 
-  void stack_nodes(vector<NodeAccumulator>&, VarAccumulator& vacc,
+  void stack_nodes(std::vector<NodeAccumulator>&, VarAccumulator& vacc,
                    const Spec& pspec, const Spec& spec,
-                   uint_fast32_t ix, const vector<SpecMatch>& matches,
+                   uint_fast32_t ix, const std::vector<SpecMatch>& matches,
                    const bool rep_to_max);
 
  public:
@@ -330,12 +330,12 @@ struct Unnester {
     } else {
       SEXP names = PROTECT(Rf_allocVector(STRSXP, Ngr));
       SEXP out = PROTECT(Rf_allocVector(VECSXP, Ngr));
-      vector<NodeAccumulator> accs(Ngr);
+      std::vector<NodeAccumulator> accs(Ngr);
 
       add_node(*this, accs, vacc, NilSpec, spec, 0, x);
 
       for (size_t gi = 0; gi < Ngr; gi++) {
-        SET_STRING_ELT(names, gi, get<0>(spec.groups[gi]));
+        SET_STRING_ELT(names, gi, std::get<0>(spec.groups[gi]));
         SET_VECTOR_ELT(out, gi, build_df(accs[gi], vacc));
       }
 
@@ -356,12 +356,12 @@ struct Unnester {
     P("FINAL: nrow:%ld ncol:%ld\n", nrows, ncols);
     // temporary output holder to avoid protecting each element
     SEXP tout = PROTECT(Rf_allocVector(VECSXP, ncols));
-    vector<string> str_names;
+    std::vector<std::string> str_names;
     str_names.reserve(ncols);
 
     R_xlen_t i = 0;
 
-	for (unique_ptr<Node>& p: acc.pnodes) {
+	for (std::unique_ptr<Node>& p: acc.pnodes) {
       P("alloc type: %s\n", Rf_type2char(p->type()));
       SEXP obj = make_na_vector(p->type(), nrows);
 	  SET_VECTOR_ELT(tout, i, obj);
@@ -374,10 +374,10 @@ struct Unnester {
     SEXP names = PROTECT(Rf_allocVector(STRSXP, ncols));
     SEXP out = PROTECT(Rf_allocVector(VECSXP, ncols));
 
-    vector<size_t> ixes = orderix(str_names);
+    std::vector<size_t> ixes = orderix(str_names);
 
     for (size_t i: ixes) {
-      const string& nm = str_names[ixes[i]];
+      const std::string& nm = str_names[ixes[i]];
 	  SET_STRING_ELT(names, i, Rf_mkCharLenCE(nm.c_str(), nm.size(), CE_UTF8));
       SET_VECTOR_ELT(out, i, VECTOR_ELT(tout, ixes[i]));
     }

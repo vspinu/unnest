@@ -13,7 +13,7 @@ struct SpecMatch {
   SpecMatch(int ix, SEXP spec_name, SEXP elem_name, SEXP obj):
     ix(ix), spec_name(spec_name), elem_name(elem_name), obj(obj) {};
 
-  string to_string() const {
+  std::string to_string() const {
     std::ostringstream stream;
     stream << "match[ix:" << ix <<
       " spec_name:" << (spec_name == R_NilValue ? "NULL" : CHAR(spec_name)) <<
@@ -40,20 +40,20 @@ struct Spec {
 
   SEXP name = R_NilValue; //FIXME: rename into "as"
   SEXP defsexp = R_NilValue;
-  string type = "";
-  vector<int> include_ixes;
-  vector<SEXP> include_names;
-  vector<int> exclude_ixes;
-  vector<SEXP> exclude_names;
+  std::string type = "";
+  std::vector<int> include_ixes;
+  std::vector<SEXP> include_names;
+  std::vector<int> exclude_ixes;
+  std::vector<SEXP> exclude_names;
 
-  vector<Spec> children;
-  vector<tuple<SEXP, vector<Spec>>> groups;
+  std::vector<Spec> children;
+  std::vector<std::tuple<SEXP, std::vector<Spec>>> groups;
   SEXP ix_name = R_NilValue;
 
   Spec() {};
-  Spec(string type): type(type) {};
+  Spec(std::string type): type(type) {};
 
-  vector<SpecMatch> match(SEXP obj) const;
+  std::vector<SpecMatch> match(SEXP obj) const;
 
   void set_terminal() {
     terminal =
@@ -67,7 +67,7 @@ struct Spec {
     }
   }
 
-  string to_string() const {
+  std::string to_string() const {
     std::ostringstream stream;
     std::string name = this->type;
     for (SEXP nm: include_names) {
@@ -90,7 +90,7 @@ bool isSpec(SEXP s);
 Spec::Stack sexp2stack(SEXP x);
 Spec::Process sexp2process(SEXP x);
 Spec sexp2spec(SEXP lspec);
-tuple<SEXP, vector<Spec>> spec_group(SEXP name, SEXP obj);
+std::tuple<SEXP, std::vector<Spec>> spec_group(SEXP name, SEXP obj);
 
 const Spec NilSpec = Spec("NIL");
 

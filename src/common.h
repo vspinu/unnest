@@ -13,7 +13,7 @@
 #include <tuple>
 #include "Rinternals.h"
 
-using namespace std;
+/* using namespace std; */
 
 /* #define DEBUG */
 
@@ -35,7 +35,7 @@ void fill_vector(SEXP source, SEXP target, R_xlen_t from, R_xlen_t to);
 void fill_vector_1(SEXP source, R_xlen_t source_ix, SEXP target, R_xlen_t from, R_xlen_t to);
 
 // fixme: use algorithm instead
-inline R_xlen_t ix_char_in_strvec(SEXP ch, const vector<SEXP>& str) {
+inline R_xlen_t ix_char_in_strvec(SEXP ch, const std::vector<SEXP>& str) {
   R_xlen_t ix = 0;
   for (const SEXP& strel : str) {
     if (ch == strel)
@@ -46,8 +46,8 @@ inline R_xlen_t ix_char_in_strvec(SEXP ch, const vector<SEXP>& str) {
 }
 
 template <typename T>
-vector<size_t> orderix(const vector<T>& v, bool sort = true) {
-  vector<size_t> idx(v.size());
+std::vector<size_t> orderix(const std::vector<T>& v, bool sort = true) {
+  std::vector<size_t> idx(v.size());
   iota(idx.begin(), idx.end(), 0);
   if (sort)
     stable_sort(idx.begin(), idx.end(),

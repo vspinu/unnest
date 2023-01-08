@@ -130,8 +130,8 @@ class PasteNode: public Node {
 class IxNode: public Node {
 
   R_xlen_t _size = 0;
-  vector<tuple<R_xlen_t, R_xlen_t, int>> _int_ixs;
-  vector<tuple<R_xlen_t, R_xlen_t, SEXP>> _chr_ixs;
+  std::vector<std::tuple<R_xlen_t, R_xlen_t, int>> _int_ixs;
+  std::vector<std::tuple<R_xlen_t, R_xlen_t, SEXP>> _chr_ixs;
 
  public:
 
@@ -162,11 +162,11 @@ class IxNode: public Node {
 	for (R_xlen_t beg1 = beg; beg1 < end; beg1 += _size) {
       for (const auto& t: _int_ixs) {
         R_xlen_t
-          beg2 = beg1 + get<0>(t),
-          end2 = beg1 + get<1>(t);
+          beg2 = beg1 + std::get<0>(t),
+          end2 = beg1 + std::get<1>(t);
         P("  <int>beg2:%ld end2:%ld\n", beg2, end2);
         for (R_xlen_t i = beg2; i < end2; i++) {
-          IX[i] = get<2>(t);
+          IX[i] = std::get<2>(t);
         }
       }
     }
@@ -177,21 +177,21 @@ class IxNode: public Node {
 	for (R_xlen_t beg1 = beg; beg1 < end; beg1 += _size) {
       for (const auto& t: _chr_ixs) {
         R_xlen_t
-          beg2 = beg1 + get<0>(t),
-          end2 = beg1 + get<1>(t);
+          beg2 = beg1 + std::get<0>(t),
+          end2 = beg1 + std::get<1>(t);
         P("  <str>beg2:%ld end2:%ld\n", beg2, end2);
         for (R_xlen_t i = beg2; i < end2; i++) {
-          SET_STRING_ELT(target, i, get<2>(t));
+          SET_STRING_ELT(target, i, std::get<2>(t));
         }
       }
       // convert integers to chars for the rare mixed int/str case
       for (const auto& t: _int_ixs) {
         R_xlen_t
-          beg2 = beg1 + get<0>(t),
-          end2 = beg1 + get<1>(t);
+          beg2 = beg1 + std::get<0>(t),
+          end2 = beg1 + std::get<1>(t);
         P("  <int:str>beg2:%ld end2:%ld\n", beg2, end2);
         for (R_xlen_t i = beg2; i < end2; i++) {
-          SET_STRING_ELT(target, i, Rf_mkChar(to_string(get<2>(t)).c_str()));
+          SET_STRING_ELT(target, i, Rf_mkChar(std::to_string(std::get<2>(t)).c_str()));
         }
       }
     }
@@ -215,12 +215,12 @@ class RangeNode: public Node {
 
  public:
 
-  vector<tuple<R_xlen_t, R_xlen_t, unique_ptr<Node>>> pnodes;
+  std::vector<std::tuple<R_xlen_t, R_xlen_t, std::unique_ptr<Node>>> pnodes;
 
   RangeNode(uint_fast32_t ix): Node(ix) {};
   RangeNode(uint_fast32_t ix, R_xlen_t size): Node(ix), _size(size) {};
 
-  void push(R_xlen_t start, R_xlen_t end, unique_ptr<Node> pnode) {
+  void push(R_xlen_t start, R_xlen_t end, std::unique_ptr<Node> pnode) {
     if (pnodes.size() == 0) {
       _type = pnode->type();
     } else if (_type != STRSXP && _type != VECSXP) {
@@ -239,7 +239,7 @@ class RangeNode: public Node {
         }
       }
     }
-    pnodes.emplace_back(start, end, move(pnode));
+    pnodes.emplace_back(start, end, std::move(pnode));
   }
 
   R_xlen_t size() const override {
@@ -261,10 +261,10 @@ class RangeNode: public Node {
 	for (R_xlen_t beg1 = beg; beg1 < end; beg1 += _size) {
       for (size_t n = 0; n < N; n++) {
         const auto& t = pnodes[n];
-        const unique_ptr<Node>& p = get<2>(t);
+        const std::unique_ptr<Node>& p = std::get<2>(t);
         R_xlen_t
-          beg2 = beg1 + get<0>(t),
-          end2 = beg1 + get<1>(t);
+          beg2 = beg1 + std::get<0>(t),
+          end2 = beg1 + std::get<1>(t);
         P("  n:%ld beg2:%ld end2:%ld\n", n, beg2, end2);
         p->copy_into(target, beg2, end2);
       }

@@ -20,16 +20,16 @@ Unnester::ProcessUnnamed sexp2unnamed(SEXP x) {
 // simple stacker
 void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
                            const Spec& pspec, const Spec& spec,
-                           uint_fast32_t ix, const vector<SpecMatch>& matches,
+                           uint_fast32_t ix, const std::vector<SpecMatch>& matches,
                            const bool stack_atomic = false) {
   P(">>> stack_nodes ---\n");
   R_xlen_t beg = 0, end=0;
-  unordered_map<uint_fast32_t, unique_ptr<RangeNode>> out_nodes;
+  std::unordered_map<uint_fast32_t, std::unique_ptr<RangeNode>> out_nodes;
 
   bool do_ix = spec.ix_name != R_NilValue;
-  unique_ptr<IxNode> pix;
+  std::unique_ptr<IxNode> pix;
   if (do_ix)
-    pix = make_unique<IxNode>(child_ix(ix, CHAR(spec.ix_name)));
+    pix = std::make_unique<IxNode>(child_ix(ix, CHAR(spec.ix_name)));
 
   uint_fast32_t cix = child_ix(ix, spec.name);
 
@@ -46,20 +46,20 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
 
     // move to out_nodes
     while (!iacc.pnodes.empty()) {
-      unique_ptr<Node>& ip = iacc.pnodes.front();
+      std::unique_ptr<Node>& ip = iacc.pnodes.front();
       auto oit = out_nodes.find(ip->ix);
       if (oit == out_nodes.end()) {
-        unique_ptr<RangeNode> pr = make_unique<RangeNode>(ip->ix);
-        pr->push(beg, end, move(ip));
+        std::unique_ptr<RangeNode> pr = std::make_unique<RangeNode>(ip->ix);
+        pr->push(beg, end, std::move(ip));
         P("stacking new node:%s type:%s range:%ld-%ld Nnodes:%ld\n",
           full_name(pr->ix).c_str(), Rf_type2char(pr->type()),
           beg, end, pr->pnodes.size());
-        out_nodes.emplace(pr->ix, move(pr));
+        out_nodes.emplace(pr->ix, std::move(pr));
       } else {
         P("stacking old node:%s type:%s range:%ld-%ld Nnodes:%ld\n",
           full_name(ip->ix).c_str(), Rf_type2char(ip->type()),
           beg, end, oit->second->pnodes.size()+1);
-        oit->second->push(beg, end, move(ip));
+        oit->second->push(beg, end, std::move(ip));
       }
       iacc.pnodes.pop_front();
     }
@@ -69,18 +69,18 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
 
   if (do_ix) {
     pix->set_size(end);
-    acc.pnodes.push_front(move(pix));
+    acc.pnodes.push_front(std::move(pix));
   }
 
   for (auto& onode: out_nodes) {
     onode.second->set_size(end);
     P("stacked node:%s type:%s, size:%ld\n",
       full_name(onode.second->ix).c_str(), Rf_type2char(onode.second->type()), onode.second->size());
-    acc.pnodes.push_front(move(onode.second));
+    acc.pnodes.push_front(std::move(onode.second));
   }
 
   if (stack_atomic || this->rep_to_max)
-    acc.nrows = max(acc.nrows, end);
+    acc.nrows = std::max(acc.nrows, end);
   else
     acc.nrows = acc.nrows * end;
 
@@ -89,9 +89,9 @@ void Unnester::stack_nodes(NodeAccumulator& acc, VarAccumulator& vacc,
 }
 
 // grouped stacker
-void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
+void Unnester::stack_nodes(std::vector<NodeAccumulator>& accs, VarAccumulator& vacc,
                            const Spec& pspec, const Spec& spec,
-                           uint_fast32_t ix, const vector<SpecMatch>& matches,
+                           uint_fast32_t ix, const std::vector<SpecMatch>& matches,
                            const bool stack_atomic = false) {
 
   if (accs.size() == 0) return;
@@ -107,25 +107,25 @@ void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
   if (spec.children.size() > 0)
     Rf_error("Supplying both children and groups is not yet supported");
 
-  vector<unique_ptr<IxNode>> pixs;
+  std::vector<std::unique_ptr<IxNode>> pixs;
   if (do_ix) {
     uint_fast32_t cix = child_ix(ix, CHAR(spec.ix_name));
     for (size_t i = 0; i < Ngr; i++) {
-      pixs.push_back(make_unique<IxNode>(cix));
+      pixs.push_back(std::make_unique<IxNode>(cix));
     }
   }
 
-  vector<R_xlen_t> beg(Ngr, 0), end(Ngr, 0);
-  vector<unordered_map<uint_fast32_t, unique_ptr<RangeNode>>> out_nodess(Ngr);
+  std::vector<R_xlen_t> beg(Ngr, 0), end(Ngr, 0);
+  std::vector<std::unordered_map<uint_fast32_t, std::unique_ptr<RangeNode>>> out_nodess(Ngr);
 
   uint_fast32_t cix = child_ix(ix, spec.name);
 
   for (const SpecMatch& m: matches) {
-    vector<NodeAccumulator> iaccs(Ngr);
+    std::vector<NodeAccumulator> iaccs(Ngr);
     VarAccumulator ivacc(vacc.dedupe);
 
     for (size_t gi = 0; gi < Ngr; gi++) {
-      const vector<Spec>& gspecs = get<1>(spec.groups[gi]);
+      const std::vector<Spec>& gspecs = std::get<1>(spec.groups[gi]);
       for (const Spec& s: gspecs) {
         add_node(*this, iaccs[gi], ivacc, spec, s, cix, m.obj);
       }
@@ -140,20 +140,20 @@ void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
       NodeAccumulator& iacc = iaccs[gi];
       auto& out_nodes = out_nodess[gi];
       while (!iacc.pnodes.empty()) {
-        unique_ptr<Node>& ip = iacc.pnodes.front();
+        std::unique_ptr<Node>& ip = iacc.pnodes.front();
         auto oit = out_nodes.find(ip->ix);
         if (oit == out_nodes.end()) {
-          unique_ptr<RangeNode> pr = make_unique<RangeNode>(ip->ix);
-          pr->push(beg[gi], end[gi], move(ip));
+          std::unique_ptr<RangeNode> pr = std::make_unique<RangeNode>(ip->ix);
+          pr->push(beg[gi], end[gi], std::move(ip));
           P("stacking new node:%s type:%s range:%ld-%ld Nnodes:%ld\n",
             full_name(pr->ix).c_str(), Rf_type2char(pr->type()),
             beg[gi], end[gi], pr->pnodes.size());
-          out_nodes.emplace(pr->ix, move(pr));
+          out_nodes.emplace(pr->ix, std::move(pr));
         } else {
           P("stacking old node:%s type:%s range:%ld-%ld Nnodes:%ld\n",
             full_name(ip->ix).c_str(), Rf_type2char(ip->type()),
             beg[gi], end[gi], oit->second->pnodes.size()+1);
-          oit->second->push(beg[gi], end[gi], move(ip));
+          oit->second->push(beg[gi], end[gi], std::move(ip));
         }
         iacc.pnodes.pop_front();
       }
@@ -165,18 +165,18 @@ void Unnester::stack_nodes(vector<NodeAccumulator>& accs, VarAccumulator& vacc,
   for (size_t ci = 0; ci < Ngr; ci++) {
     if (do_ix) {
       pixs[ci]->set_size(end[ci]);
-      accs[ci].pnodes.push_front(move(pixs[ci]));
+      accs[ci].pnodes.push_front(std::move(pixs[ci]));
     }
 
     for (auto& onode: out_nodess[ci]) {
       onode.second->set_size(end[ci]);
       P("stacked node:%s type:%s, size:%ld\n",
         full_name(onode.second->ix).c_str(), Rf_type2char(onode.second->type()), onode.second->size());
-      accs[ci].pnodes.push_front(move(onode.second));
+      accs[ci].pnodes.push_front(std::move(onode.second));
     }
 
     if (stack_atomic || this->rep_to_max)
-      accs[ci].nrows = max(accs[ci].nrows, end[ci]);
+      accs[ci].nrows = std::max(accs[ci].nrows, end[ci]);
     else
       accs[ci].nrows = accs[ci].nrows * end[ci];
   }

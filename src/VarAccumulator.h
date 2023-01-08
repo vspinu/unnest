@@ -7,7 +7,7 @@
 
 struct VarAccumulator {
   bool dedupe = false;
-  unordered_set<uint_fast32_t> acc;
+  std::unordered_set<uint_fast32_t> acc;
   VarAccumulator(bool dedupe = false): dedupe(dedupe) {};
 
   bool has_var(uint_fast32_t ix) {
