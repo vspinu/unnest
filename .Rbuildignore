@@ -28,3 +28,4 @@
 ^\.github/workflows/pkgdown\.yaml$
 Makefile
 ^CRAN-RELEASE$
+^CRAN-SUBMISSION$
