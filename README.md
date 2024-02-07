@@ -1,5 +1,6 @@
 <!-- badges: start -->
-[![R build status](https://github.com/vspinu/unnest/workflows/R-CMD-check/badge.svg)](https://github.com/vspinu/unnest/actions)
+[![R-CMD-check](https://github.com/vspinu/unnest/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/vspinu/unnest/actions/workflows/R-CMD-check.yaml)
+[![CRAN status](https://www.r-pkg.org/badges/version/unnest)](https://CRAN.R-project.org/package=unnest)
 <!-- badges: end -->
 
 ## Description
