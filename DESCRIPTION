@@ -17,7 +17,6 @@ Suggests:
     knitr,
     repurrrsive,
     rmarkdown,
-    roxygen2,
     testthat,
     tibble,
     tidyr
