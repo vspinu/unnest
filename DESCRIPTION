@@ -1,6 +1,6 @@
 Package: unnest
 Title: Unnest Hierarchical Data Structures
-Version: 0.0.5
+Version: 0.0.6
 Authors@R:
     person(given = "Vitalie",
            family = "Spinu",
@@ -10,7 +10,7 @@ Description: Fast flattening of hierarchical data structures (e.g. JSON, XML)
              into data.frames with a flexible spec language.
 License: GPL (>= 2)
 Encoding: UTF-8
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.3
 Suggests:
     data.table,
     dplyr,

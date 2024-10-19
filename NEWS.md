@@ -1,3 +1,7 @@
+Version 0.0.6
+=============
+- Compile the package with `R_NO_REMAP` flag
+
 Version 0.0.5
 =============
 
