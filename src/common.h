@@ -17,6 +17,10 @@
 
 /* #define DEBUG */
 
+#ifndef R_NO_REMAP
+#define R_NO_REMAP
+#endif
+
 #ifdef DEBUG
 #define P(...) printf(__VA_ARGS__)
 #else

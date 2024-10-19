@@ -86,7 +86,7 @@ class AsIsNode: public Node {
       Rf_error("Invalid target type for AsIsNode copy_into");
     }
     for (R_xlen_t i = start; i < end; i++) {
-      SET_VECTOR_ELT(target, i, lazy_duplicate(obj));
+      SET_VECTOR_ELT(target, i, Rf_lazy_duplicate(obj));
     }
   }
 };
@@ -118,7 +118,7 @@ class PasteNode: public Node {
     for (R_xlen_t i = 1; i < N; i++) {
       stream << "," << CHAR(STRING_ELT(str, i));
     }
-    SEXP cs = PROTECT(mkCharCE(stream.str().c_str(), cet));
+    SEXP cs = PROTECT(Rf_mkCharCE(stream.str().c_str(), cet));
     for (R_xlen_t i = start; i < end; i++) {
       SET_STRING_ELT(target, i, cs);
     }

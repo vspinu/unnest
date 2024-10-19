@@ -42,7 +42,7 @@ void fill_vector(SEXP source, SEXP target, R_xlen_t from, R_xlen_t to) {
      REP(from, to, n, i, j, SET_STRING_ELT(target, i, STRING_ELT(source, j));); break;
    case VECSXP:
    case EXPRSXP:
-     REP(from, to, n, i, j, SET_VECTOR_ELT(target, i, lazy_duplicate(VECTOR_ELT(source, j))););
+     REP(from, to, n, i, j, SET_VECTOR_ELT(target, i, Rf_lazy_duplicate(VECTOR_ELT(source, j))););
      break;
    default:
      Rf_error("Cannot unnest lists with elements of type %s", Rf_type2char(TYPEOF(source)));
@@ -87,7 +87,7 @@ void fill_vector_1(SEXP source, R_xlen_t source_ix, SEXP target, R_xlen_t from, 
    case VECSXP:
    case EXPRSXP: {
      SEXP val = VECTOR_ELT(source, source_ix);
-     REP1(from, to, i, SET_VECTOR_ELT(target, i, lazy_duplicate(val)););
+     REP1(from, to, i, SET_VECTOR_ELT(target, i, Rf_lazy_duplicate(val)););
    }; break;
    default:
      Rf_error("Cannot unnest lists with elements of type %s", Rf_type2char(TYPEOF(source)));
@@ -124,7 +124,7 @@ SEXP rep_vector(SEXP x, R_xlen_t N) {
   if (n == 0)
     Rf_error("[Bug] Cannot replicate empty vector");
 
-  SEXP out = PROTECT(allocVector(TYPEOF(x), N));
+  SEXP out = PROTECT(Rf_allocVector(TYPEOF(x), N));
 
   fill_vector(x, out, 0, N);
 
@@ -132,7 +132,7 @@ SEXP rep_vector(SEXP x, R_xlen_t N) {
 
   // fixme: speed this up with the logic akin to that in isFrame
   if (Rf_inherits(x, "factor")) {
-    setAttrib(out, R_LevelsSymbol, Rf_getAttrib(x, R_LevelsSymbol));
+    Rf_setAttrib(out, R_LevelsSymbol, Rf_getAttrib(x, R_LevelsSymbol));
   }
 
   UNPROTECT(1);
@@ -153,9 +153,9 @@ SEXP make_na_vector(SEXPTYPE type, R_xlen_t len) {
    case EXPRSXP:
    case VECSXP:
    case RAWSXP:
-     out = allocVector(type, len); break;
+     out = Rf_allocVector(type, len); break;
    default:
-     error("Cannot make a vector of mode '%s'", Rf_type2char(type));
+     Rf_error("Cannot make a vector of mode '%s'", Rf_type2char(type));
   }
 
   switch (type) {
@@ -166,9 +166,8 @@ SEXP make_na_vector(SEXPTYPE type, R_xlen_t len) {
      FillNA(REAL(out), len, NA_REAL); break;
    case STRSXP:
      {
-       SEXP* sdata = STRING_PTR(out);
        for (R_xlen_t i = 0; i < len; i++) {
-         sdata[i] = R_NaString;
+         SET_STRING_ELT(out, i, R_NaString);
        }
      }
      break;
@@ -194,7 +193,7 @@ SEXP make_na_vector(SEXPTYPE type, R_xlen_t len) {
 bool is_data_frame(SEXP s) {
   SEXP cls;
   if (OBJECT(s)) {
-    cls = getAttrib(s, R_ClassSymbol);
+    cls = Rf_getAttrib(s, R_ClassSymbol);
     for (int i = 0; i < LENGTH(cls); i++)
       if (!strcmp(CHAR(STRING_ELT(cls, i)), "data.frame"))
         return true;

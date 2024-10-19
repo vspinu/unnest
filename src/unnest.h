@@ -384,7 +384,7 @@ struct Unnester {
 	SEXP row_names = PROTECT(Rf_allocVector(INTSXP, 2));
 	INTEGER(row_names)[0] = NA_INTEGER;
 	INTEGER(row_names)[1] = nrows;
-	Rf_setAttrib(out, R_ClassSymbol, ScalarString(mkChar("data.frame")));
+	Rf_setAttrib(out, R_ClassSymbol, Rf_ScalarString(Rf_mkChar("data.frame")));
 	Rf_setAttrib(out, R_RowNamesSymbol, row_names);
 	Rf_setAttrib(out, R_NamesSymbol, names);
 	UNPROTECT(4);
