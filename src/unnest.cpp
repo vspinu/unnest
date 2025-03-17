@@ -98,8 +98,8 @@ void Unnester::stack_nodes(std::vector<NodeAccumulator>& accs, VarAccumulator& v
 
   size_t Ngr = spec.groups.size();
   if (accs.size() != Ngr)
-    Rf_error("Internal: Invalid grouped stack. Accumulator size (%ld) and spec size (%l) mismatch.",
-             accs.size(), Ngr);
+    Rf_error("Internal: Invalid grouped stack. Accumulator size (%ld) and spec size (%ld) mismatch.",
+             long(accs.size()), long(Ngr));
   bool do_ix = spec.ix_name != R_NilValue;
 
   if (spec.children.size() > 0)
