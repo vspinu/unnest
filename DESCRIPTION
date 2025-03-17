@@ -10,14 +10,13 @@ Description: Fast flattening of hierarchical data structures (e.g. JSON, XML)
              into data.frames with a flexible spec language.
 License: GPL (>= 2)
 Encoding: UTF-8
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Suggests:
     data.table,
     dplyr,
     knitr,
     repurrrsive,
     rmarkdown,
-    roxygen2,
     testthat,
     tibble,
     tidyr
