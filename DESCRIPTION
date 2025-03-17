@@ -1,6 +1,6 @@
 Package: unnest
 Title: Unnest Hierarchical Data Structures
-Version: 0.0.6
+Version: 0.0.7
 Authors@R:
     person(given = "Vitalie",
            family = "Spinu",
