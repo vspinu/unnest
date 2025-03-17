@@ -192,7 +192,7 @@ SEXP make_na_vector(SEXPTYPE type, R_xlen_t len) {
 
 bool is_data_frame(SEXP s) {
   SEXP cls;
-  if (OBJECT(s)) {
+  if (Rf_isObject(s)) {
     cls = Rf_getAttrib(s, R_ClassSymbol);
     for (int i = 0; i < LENGTH(cls); i++)
       if (!strcmp(CHAR(STRING_ELT(cls, i)), "data.frame"))
