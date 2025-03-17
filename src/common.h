@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 #include <tuple>
+#include <cstdint>
 #include "Rinternals.h"
 
 /* using namespace std; */
