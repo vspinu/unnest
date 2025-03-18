@@ -1,3 +1,7 @@
+Version 0.0.7.9000 (DEV)
+=============
+
+
 Version 0.0.7
 =============
 - Include `<cstdint>` to accommodate GCC 15
