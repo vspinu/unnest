@@ -3,7 +3,7 @@ pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
   tidyr: tidyr.html
-last_built: 2025-03-17T22:21Z
+last_built: 2025-03-18T09:06Z
 urls:
   reference: https://vspinu.github.io/unnest/reference
   article: https://vspinu.github.io/unnest/articles
