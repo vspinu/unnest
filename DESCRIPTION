@@ -23,5 +23,5 @@ Suggests:
 Roxygen: list(markdown = TRUE)
 VignetteBuilder:
     knitr
-URL: https://github.com/vspinu/unnest, https://vspinu.github.io/unnest
+URL: https://github.com/vspinu/unnest/, https://vspinu.github.io/unnest/
 BugReports: https://github.com/vspinu/unnest/issues
