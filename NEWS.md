@@ -1,3 +1,9 @@
+Version 0.0.7
+=============
+- Include `<cstdint>` to accommodate GCC 15
+- Fix github actions PR #9 and PR #10
+
+
 Version 0.0.6
 =============
 - Compile the package with `R_NO_REMAP` flag
